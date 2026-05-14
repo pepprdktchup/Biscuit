@@ -39,9 +39,6 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .phone { width: 402px; height: 874px; background: var(--bg); border-radius: var(--radius-lg); border: 1px solid var(--border-strong); overflow: hidden; position: relative; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.08); }
 .pixel-font { font-family: "Courier New", "Lucida Console", monospace; font-weight: 700; letter-spacing: 0.5px; }
 .lbl { font-size: 10px; letter-spacing: 1.5px; font-weight: 700; color: var(--text-2); text-transform: uppercase; }
-.status-bar { flex-shrink: 0; height: 30px; display: flex; align-items: center; justify-content: space-between; padding: 6px 18px 0; font-size: 12px; }
-.status-bar .pixel-font { font-size: 13px; color: var(--text); }
-.status-bar .signal { font-size: 11px; color: var(--text-2); letter-spacing: 2px; }
 .scroll-area { flex: 1; overflow-y: auto; position: relative; overscroll-behavior: contain; }
 .scroll-area::-webkit-scrollbar { width: 4px; }
 .scroll-area::-webkit-scrollbar-track { background: transparent; }
@@ -185,7 +182,7 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .btn-primary { display: inline-block; background: var(--accent); color: white; border: none; font-family: inherit; font-size: 13px; font-weight: 600; padding: 10px 16px; border-radius: 999px; cursor: pointer; }
 .btn-ghost { background: transparent; color: var(--text-2); border: 1px solid var(--border-strong); padding: 10px 16px; border-radius: 999px; cursor: pointer; font-family: inherit; font-size: 13px; }
 .empty { text-align: center; padding: 40px 20px; color: var(--text-3); font-size: 13px; }
-.debug-badge { position: absolute; top: 6px; left: 12px; background: var(--text); color: var(--accent); font-size: 9px; padding: 2px 8px; border-radius: 999px; font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: 1px; z-index: 100; cursor: pointer; opacity: 0.8; }
+.debug-badge { align-self: flex-start; margin: 8px 0 0 12px; background: var(--text); color: var(--accent); font-size: 9px; padding: 2px 8px; border-radius: 999px; font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: 1px; cursor: pointer; opacity: 0.8; }
 .add-fab-mini { position: absolute; right: 16px; bottom: 76px; z-index: 4; background: var(--accent); color: white; border: 2px solid var(--cat-dark); width: 48px; height: 48px; border-radius: 50%; font-size: 22px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; padding-bottom: 3px; font-family: inherit; }
 
 /* MOBILE OVERRIDES — keep this block at the end so it wins the cascade against the base rules above */
@@ -205,7 +202,6 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
     padding-right: env(safe-area-inset-right, 0px);
     box-sizing: border-box;
   }
-  .status-bar { display: none; }
   .cat-fab, .add-fab-mini { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
 }
 </style>
@@ -213,10 +209,6 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 <body>
 <div class="phone">
   <div class="debug-badge" id="debug-badge" title="Click to cycle cat state (debug)">DEBUG: <span id="debug-state">--</span></div>
-  <div class="status-bar">
-    <span class="pixel-font" id="status-time">--:--</span>
-    <span class="signal">▪▪▪</span>
-  </div>
   <div class="scroll-area" id="scroll-area">
     <div class="dual-clock-wrap" id="dual-clock-wrap">
       <div class="dual-clock">
@@ -594,7 +586,6 @@ function renderClocks() {
   const trip = getActiveTrip();
   const travelZone = trip ? trip.travelZone : state.settings.homeZone;
   const travelLabel = trip ? trip.travelLabel : state.settings.homeLabel;
-  document.getElementById('status-time').textContent = fmtTimeInZone(now, state.settings.homeZone).replace(/[\s\u2009\u202F\u00A0]+(AM|PM)/i, '');
   document.getElementById('clock-home').textContent = fmtTimeInZone(now, state.settings.homeZone);
   document.getElementById('clock-travel').textContent = fmtTimeInZone(now, travelZone);
   document.getElementById('date-home').textContent = fmtDateInZone(now, state.settings.homeZone);
