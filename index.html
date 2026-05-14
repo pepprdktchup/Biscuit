@@ -2,7 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#FAF6F0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Biscuit">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <title>Biscuit</title>
 <style>
 :root {
@@ -27,15 +36,14 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; -webkit-font-smoothing: antialiased; padding: 20px; }
-@media (max-width: 480px) { body { background: var(--bg); padding: 0; } }
-.phone { width: 380px; height: 760px; background: var(--bg); border-radius: var(--radius-lg); border: 1px solid var(--border-strong); overflow: hidden; position: relative; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.08); }
-@media (max-width: 480px) { .phone { width: 100vw; height: 100vh; border-radius: 0; border: 0; box-shadow: none; } }
+.phone { width: 402px; height: 874px; background: var(--bg); border-radius: var(--radius-lg); border: 1px solid var(--border-strong); overflow: hidden; position: relative; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.08); }
+@media (max-width: 480px) { html, body { height: 100dvh; overflow: hidden; overscroll-behavior: none; } body { background: var(--bg); padding: 0; } .phone { width: 100vw; height: 100vh; height: 100dvh; border-radius: 0; border: 0; box-shadow: none; } .dual-clock-wrap { padding-top: max(env(safe-area-inset-top, 0px), 4px); } .nav { padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px); } }
 .pixel-font { font-family: "Courier New", "Lucida Console", monospace; font-weight: 700; letter-spacing: 0.5px; }
 .lbl { font-size: 10px; letter-spacing: 1.5px; font-weight: 700; color: var(--text-2); text-transform: uppercase; }
 .status-bar { flex-shrink: 0; height: 30px; display: flex; align-items: center; justify-content: space-between; padding: 6px 18px 0; font-size: 12px; }
 .status-bar .pixel-font { font-size: 13px; color: var(--text); }
 .status-bar .signal { font-size: 11px; color: var(--text-2); letter-spacing: 2px; }
-.scroll-area { flex: 1; overflow-y: auto; position: relative; }
+.scroll-area { flex: 1; overflow-y: auto; position: relative; overscroll-behavior: contain; }
 .scroll-area::-webkit-scrollbar { width: 4px; }
 .scroll-area::-webkit-scrollbar-track { background: transparent; }
 .scroll-area::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
@@ -156,8 +164,8 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .check-row:hover .check-del { opacity: 1; }
 .add-item-btn { background: transparent; border: none; color: var(--text-2); font-family: inherit; font-size: 12px; padding: 6px 0; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
 .add-item-btn:hover { color: var(--accent-text); }
-.add-cat-btn { display: block; margin: 4px auto 12px; background: transparent; border: 1px dashed var(--border-strong); color: var(--text-2); font-family: inherit; font-size: 12px; font-weight: 600; padding: 10px 16px; border-radius: 999px; cursor: pointer; }
-.add-cat-btn:hover { color: var(--accent-text); border-color: var(--accent); }
+.btn-add { display: block; margin: 8px auto 24px; background: transparent; border: 1px dashed var(--border-strong); color: var(--text-2); font-family: inherit; font-size: 12px; font-weight: 600; padding: 10px 16px; border-radius: 999px; cursor: pointer; }
+.btn-add:hover { color: var(--accent-text); border-color: var(--accent); }
 .picker-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; width: 100%; background: transparent; border: none; border-bottom: 0.5px solid var(--border); text-align: left; cursor: pointer; font-family: inherit; color: var(--text); }
 .picker-row:last-child { border-bottom: 0; }
 .picker-row.selected { background: var(--accent-bg); }
@@ -167,6 +175,14 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .trip-header-card { margin: 6px 12px 0; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; cursor: pointer; position: relative; }
 .trip-header-card:hover { border-color: var(--border-strong); }
 .trip-edit-pencil { position: absolute; top: 12px; right: 12px; color: var(--text-3); font-size: 14px; }
+.trip-chip { display: inline-flex; align-items: center; gap: 6px; margin: 8px 12px 0; padding: 6px 10px; background: var(--card); border: 1px solid var(--border); border-radius: 999px; font-size: 11px; font-weight: 500; color: var(--text-2); cursor: pointer; text-transform: uppercase; letter-spacing: 0.04em; }
+.trip-chip:hover { border-color: var(--border-strong); color: var(--text); }
+.trip-chip i.ti { font-size: 13px; }
+.trip-row-mini { display: flex; align-items: center; padding: 12px 14px; border: none; border-bottom: 0.5px solid var(--border); cursor: pointer; gap: 12px; width: 100%; background: transparent; text-align: left; font-family: inherit; color: var(--text); }
+.trip-row-mini:last-child { border-bottom: none; }
+.trip-row-mini:hover { background: var(--bg); }
+.trip-row-mini.active { background: var(--accent-bg); }
+.trip-row-mini.active:hover { background: var(--accent-bg); }
 .btn-primary { display: inline-block; background: var(--accent); color: white; border: none; font-family: inherit; font-size: 13px; font-weight: 600; padding: 10px 16px; border-radius: 999px; cursor: pointer; }
 .btn-ghost { background: transparent; color: var(--text-2); border: 1px solid var(--border-strong); padding: 10px 16px; border-radius: 999px; cursor: pointer; font-family: inherit; font-size: 13px; }
 .empty { text-align: center; padding: 40px 20px; color: var(--text-3); font-size: 13px; }
@@ -190,7 +206,6 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
       </div>
     </div>
     <div id="screen-content"></div>
-    <div style="height: 130px;"></div>
   </div>
 
   <button class="cat-fab" id="cat-fab" aria-label="Add event">
@@ -326,83 +341,146 @@ const REMINDER_OPTIONS = [5, 10, 15, 30, 60, 120, 240, 480, 1440, 2880];
 
 const state = {
   activeTab: 'trip',
-  events: [],
-  expenses: [],
-  notes: [],
+  activeTripId: null,
+  trips: [],
   settings: {
-    homeZone: 'America/New_York', travelZone: 'Asia/Tokyo',
-    homeLabel: 'ATL', travelLabel: 'TYO',
+    homeZone: 'America/New_York',
+    homeLabel: 'ATL',
     homeCurrency: 'USD', homeCurrencySymbol: '$',
-    travelCurrency: 'JPY', travelCurrencySymbol: '¥',
-    fxRate: 0.0067, showCat: true, catQuiet: true,
+    fxRates: { 'JPY': 0.0067, 'KRW': 0.00073 },
+    showCat: true, catQuiet: true,
     quietStartHour: 23, quietEndHour: 7,
     pushOn: true, autoUpdateZone: true,
     defaultReminders: [30, 60], fxLastRefresh: Date.now(),
-    budgetTotal: 1800,
-    tripName: 'Tokyo · May 2026', tripStart: null, tripEnd: null,
   },
   debugStateOverride: null,
 };
 
+function getActiveTrip() {
+  return state.trips.find(t => t.id === state.activeTripId) || state.trips[0] || null;
+}
+function newId() { return Math.random().toString(36).slice(2, 10); }
+
+const STORAGE_KEY = 'biscuit_state_v1';
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      trips: state.trips,
+      activeTripId: state.activeTripId,
+      settings: state.settings,
+    }));
+  } catch (e) { /* quota exceeded, private mode, etc. — fail silently */ }
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (!d || !Array.isArray(d.trips) || d.trips.length === 0) return false;
+    state.trips = d.trips;
+    state.activeTripId = d.activeTripId || d.trips[0].id;
+    if (d.settings) state.settings = { ...state.settings, ...d.settings };
+    return true;
+  } catch (e) { return false; }
+}
+
 function isoDateOnly(d) { const y = d.getFullYear(); const m = String(d.getMonth()+1).padStart(2,'0'); const da = String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${da}`; }
 
-function seedTripDates() {
+function seedTrips() {
   const today = new Date();
-  const s = new Date(today); s.setDate(s.getDate() - 2);
-  const e = new Date(today); e.setDate(e.getDate() + 4);
-  state.settings.tripStart = isoDateOnly(s);
-  state.settings.tripEnd = isoDateOnly(e);
-}
-function seedEvents() {
-  const now = new Date();
-  const mk = (mins, title, dur, loc, ref, opts = {}) => ({
-    id: Math.random().toString(36).slice(2, 10),
-    title, location: loc, bookingRef: ref, notes: opts.notes || '',
-    start: new Date(now.getTime() + mins * 60000).toISOString(),
-    durationMin: dur,
-    reminders: [...state.settings.defaultReminders],
-    checkedOff: false,
-    price: opts.price || null,
-    priceCurrency: opts.priceCurrency || state.settings.travelCurrency,
-    category: opts.category || 'activity',
+  const offsetDays = d => { const x = new Date(today); x.setDate(x.getDate() + d); return isoDateOnly(x); };
+
+  // Korea — today-2 through today+14 (currently in it)
+  const koreaTrip = {
+    id: 'trip-korea',
+    name: 'Korea · May 2026',
+    tripStart: offsetDays(-2), tripEnd: offsetDays(14),
+    travelZone: 'Asia/Seoul', travelLabel: 'ICN',
+    travelCurrency: 'KRW', travelCurrencySymbol: '₩',
+    budgetTotal: 2500,
+    events: [], expenses: [], notes: [],
+  };
+  const now = today.getTime();
+  const mkEvt = (mins, title, dur, loc, ref, opts = {}) => ({
+    id: newId(), title, location: loc, bookingRef: ref, notes: opts.notes || '',
+    start: new Date(now + mins * 60000).toISOString(),
+    durationMin: dur, reminders: [...state.settings.defaultReminders],
+    checkedOff: false, price: opts.price || null,
+    priceCurrency: opts.priceCurrency || 'KRW', category: opts.category || 'activity',
   });
-  state.events = [
-    mk(20, 'Tsukiji outer market food tour', 120, 'Tsukiji Outer Market', 'TYO-4827', { notes: 'Meet guide Hana at south gate', price: 8500, category: 'food' }),
-    mk(240, 'teamLab Planets', 150, 'Toyosu', '', { notes: 'Barefoot exhibit, no skirts', price: 3800, category: 'activity' }),
-    mk(540, 'Dinner at Kura', 90, 'Shibuya', 'Reservation party of 2', { price: 12000, category: 'food' }),
-    mk(660, 'Walk Shibuya crossing', 60, 'Shibuya', ''),
+  koreaTrip.events = [
+    mkEvt(25, 'Bukchon tea ceremony', 90, 'Bukchon Hanok Village', 'KOR-2245', { notes: 'Wear socks, no shoes inside', price: 35000, category: 'activity' }),
+    mkEvt(220, 'Kwangjang Market bibimbap', 60, 'Jongno-gu', '', { price: 12000, category: 'food' }),
+    mkEvt(540, 'Han River night walk', 90, 'Yeouido Park', '', { category: 'activity' }),
+    mkEvt(1440, 'Suwon Hwaseong day trip', 360, 'Suwon', 'Train 09:12', { price: 8400, category: 'transit' }),
   ];
-}
-function seedExpenses() {
-  state.expenses = [
-    { id: 's1', date: new Date(Date.now() - 30*3600000).toISOString(), category: 'food', amount: 2400, currency: 'JPY', title: 'Ichiran ramen lunch' },
-    { id: 's2', date: new Date(Date.now() - 16*3600000).toISOString(), category: 'transit', amount: 1980, currency: 'JPY', title: 'Pasmo top-up' },
-    { id: 's3', date: new Date(Date.now() - 8*3600000).toISOString(), category: 'shopping', amount: 5800, currency: 'JPY', title: 'Don Quijote' },
-    { id: 's4', date: new Date(Date.now() - 3*3600000).toISOString(), category: 'food', amount: 1450, currency: 'JPY', title: 'Convenience store dinner' },
+  koreaTrip.expenses = [
+    { id: newId(), date: new Date(now - 30*3600000).toISOString(), category: 'food', amount: 18000, currency: 'KRW', title: 'Korean BBQ dinner' },
+    { id: newId(), date: new Date(now - 16*3600000).toISOString(), category: 'transit', amount: 4500, currency: 'KRW', title: 'T-money top-up' },
+    { id: newId(), date: new Date(now - 8*3600000).toISOString(), category: 'shopping', amount: 32000, currency: 'KRW', title: 'Olive Young haul' },
   ];
-}
-function seedNotes() {
-  state.notes = [
-    { id: 'n1', title: 'Packing essentials', type: 'checklist', items: [
-      { id: 'i1', text: 'Passport + JR Pass voucher', checked: true },
-      { id: 'i2', text: 'Camera + extra battery', checked: true },
-      { id: 'i3', text: 'Adapter (Type A — same as US)', checked: false },
-      { id: 'i4', text: 'Comfortable walking shoes', checked: false },
-      { id: 'i5', text: 'Refillable water bottle', checked: false },
+  koreaTrip.notes = [
+    { id: newId(), title: 'Packing essentials', type: 'checklist', items: [
+      { id: newId(), text: 'Passport + ARC if you have one', checked: true },
+      { id: newId(), text: 'Adapter (Type C/F — different from US)', checked: false },
+      { id: newId(), text: 'Comfortable walking shoes', checked: false },
+      { id: newId(), text: 'Cash for older markets', checked: false },
     ], text: '' },
-    { id: 'n2', title: 'Restaurants to try', type: 'text', items: [],
-      text: 'Tsuta — Michelin star ramen, line by 9 AM\nGonpachi Nishiazabu — Kill Bill set piece\nIchiran for late-night solo bowl\nDepachika basement at Isetan for cheap fancy food' },
-    { id: 'n3', title: 'Phrases', type: 'checklist', items: [
-      { id: 'i6', text: 'sumimasen (excuse me / sorry)', checked: true },
-      { id: 'i7', text: 'arigatou gozaimasu (thank you formal)', checked: true },
-      { id: 'i8', text: 'oishii (delicious)', checked: false },
-      { id: 'i9', text: 'kore o kudasai (this one please)', checked: false },
-      { id: 'i10', text: 'eigo o hanasemasu ka? (do you speak English)', checked: false },
-    ], text: '' }
+    { id: newId(), title: 'Korean phrases', type: 'checklist', items: [
+      { id: newId(), text: '감사합니다 (gam-sa-ham-ni-da · thank you)', checked: true },
+      { id: newId(), text: '죄송합니다 (joe-song-ham-ni-da · sorry)', checked: true },
+      { id: newId(), text: '이거 주세요 (i-geo ju-se-yo · this one please)', checked: false },
+      { id: newId(), text: '맛있어요 (ma-shi-sseo-yo · delicious)', checked: false },
+    ], text: '' },
+    { id: newId(), title: 'Restaurants to try', type: 'text', items: [],
+      text: 'Mukshidonna — tteokbokki, Samcheong-dong\nGwangjang Market — bindaetteok stalls\nJungsik — modern Korean tasting menu (book ahead)\nIsaac Toast — breakfast cult fave' },
   ];
+
+  // Japan — today+2 through today+9 (nested inside Korea trip)
+  const japanTrip = {
+    id: 'trip-japan',
+    name: 'Japan · May 2026',
+    tripStart: offsetDays(2), tripEnd: offsetDays(9),
+    travelZone: 'Asia/Tokyo', travelLabel: 'TYO',
+    travelCurrency: 'JPY', travelCurrencySymbol: '¥',
+    budgetTotal: 1800,
+    events: [], expenses: [], notes: [],
+  };
+  const jStart = new Date(japanTrip.tripStart + 'T09:00:00').getTime();
+  const mkJ = (offsetHrs, title, dur, loc, ref, opts = {}) => ({
+    id: newId(), title, location: loc, bookingRef: ref, notes: opts.notes || '',
+    start: new Date(jStart + offsetHrs * 3600000).toISOString(),
+    durationMin: dur, reminders: [...state.settings.defaultReminders],
+    checkedOff: false, price: opts.price || null,
+    priceCurrency: opts.priceCurrency || 'JPY', category: opts.category || 'activity',
+  });
+  japanTrip.events = [
+    mkJ(0, 'Tsukiji outer market food tour', 120, 'Tsukiji Outer Market', 'TYO-4827', { notes: 'Meet guide Hana at south gate', price: 8500, category: 'food' }),
+    mkJ(4, 'teamLab Planets', 150, 'Toyosu', '', { notes: 'Barefoot exhibit, no skirts', price: 3800, category: 'activity' }),
+    mkJ(9, 'Dinner at Kura', 90, 'Shibuya', 'Reservation party of 2', { price: 12000, category: 'food' }),
+    mkJ(11, 'Walk Shibuya crossing', 60, 'Shibuya', ''),
+  ];
+  japanTrip.notes = [
+    { id: newId(), title: 'Packing additions for Japan', type: 'checklist', items: [
+      { id: newId(), text: 'IC card (Suica/Pasmo) or set up Apple Wallet', checked: false },
+      { id: newId(), text: 'Pocket WiFi pickup voucher', checked: true },
+    ], text: '' },
+    { id: newId(), title: 'Japanese phrases', type: 'checklist', items: [
+      { id: newId(), text: 'sumimasen (excuse me / sorry)', checked: true },
+      { id: newId(), text: 'arigatou gozaimasu (thank you)', checked: true },
+      { id: newId(), text: 'oishii (delicious)', checked: false },
+    ], text: '' },
+  ];
+
+  state.trips = [koreaTrip, japanTrip];
+  state.activeTripId = koreaTrip.id;
 }
 
-function fmtTimeInZone(d, z) { return new Intl.DateTimeFormat('en-US', { timeZone: z, hour: 'numeric', minute: '2-digit', hour12: true }).format(d); }
+function fmtTimeInZone(d, z) {
+  return new Intl.DateTimeFormat('en-US', { timeZone: z, hour: '2-digit', minute: '2-digit', hour12: true })
+    .format(d)
+    .replace(/[\s\u202F\u00A0]+(AM|PM)/i, '\u2009$1');
+}
 function fmtDateInZone(d, z) { return new Intl.DateTimeFormat('en-US', { timeZone: z, weekday: 'short', month: 'short', day: 'numeric' }).format(d); }
 function fmtDayShort(d, z) { return new Intl.DateTimeFormat('en-US', { timeZone: z, weekday: 'short' }).format(d); }
 function fmtFullDate(d, z) { return new Intl.DateTimeFormat('en-US', { timeZone: z, weekday: 'long', month: 'long', day: 'numeric' }).format(d); }
@@ -419,24 +497,37 @@ function minutesUntil(iso) { return (new Date(iso) - new Date()) / 60000; }
 function fmtDuration(m) { m = Math.max(0, Math.round(m)); if (m < 60) return `${m}m`; const h = Math.floor(m/60), x = m%60; return x === 0 ? `${h}h` : `${h}h ${x}m`; }
 function fmtRelativeTime(ts) { const dm = (Date.now() - ts) / 60000; if (dm < 1) return 'just now'; if (dm < 60) return Math.round(dm) + ' min ago'; return Math.round(dm/60) + ' h ago'; }
 function computeTripDay() {
-  const s = state.settings;
-  if (!s.tripStart || !s.tripEnd) return { dayOf: 1, total: 1 };
-  const start = new Date(s.tripStart + 'T00:00:00');
-  const end = new Date(s.tripEnd + 'T00:00:00');
-  const total = Math.max(1, Math.round((end - start) / 86400000) + 1);
-  const today = new Date(isoDateOnly(new Date()) + 'T00:00:00');
-  const dayOf = Math.max(1, Math.min(total, Math.round((today - start) / 86400000) + 1));
+  const t = getActiveTrip();
+  if (!t || !t.tripStart || !t.tripEnd) return { dayOf: 1, total: 1 };
+  const s = new Date(t.tripStart + 'T00:00:00');
+  const e = new Date(t.tripEnd + 'T23:59:59');
+  const now = new Date();
+  const total = Math.max(1, Math.round((e - s) / (24*3600000)));
+  const dayOf = Math.max(1, Math.min(total, Math.ceil((now - s) / (24*3600000))));
   return { dayOf, total };
 }
 function fmtMoneyHome(a) { return '$' + a.toFixed(2); }
-function fmtMoneyNative(a, c) { if (c === 'JPY') return '¥' + a.toLocaleString(); if (c === 'USD') return '$' + a.toFixed(2); return a + ' ' + c; }
-function toHomeCurrency(a, c) { if (c === state.settings.homeCurrency) return a; if (c === state.settings.travelCurrency) return a * state.settings.fxRate; return a; }
+function fmtMoneyNative(a, c) {
+  if (c === 'JPY') return '¥' + a.toLocaleString();
+  if (c === 'KRW') return '₩' + a.toLocaleString();
+  if (c === 'USD') return '$' + a.toFixed(2);
+  if (c === 'EUR') return '€' + a.toFixed(2);
+  if (c === 'GBP') return '£' + a.toFixed(2);
+  return a + ' ' + c;
+}
+function toHomeCurrency(a, c) {
+  if (c === state.settings.homeCurrency) return a;
+  const r = state.settings.fxRates[c];
+  return r ? a * r : a;
+}
 
 function computeCatState() {
-  if (state.debugStateOverride) { const n = state.events.find(e => !e.checkedOff); return { state: state.debugStateOverride, event: n || null }; }
+  const trip = getActiveTrip();
+  const events = trip ? trip.events : [];
+  if (state.debugStateOverride) { const n = events.find(e => !e.checkedOff); return { state: state.debugStateOverride, event: n || null }; }
   const now = new Date();
   if (state.settings.catQuiet && isQuietHoursNow()) return { state: 'idle', event: null };
-  const active = state.events.filter(e => !e.checkedOff).map(e => ({ ...e, sd: new Date(e.start) })).sort((a, b) => a.sd - b.sd);
+  const active = events.filter(e => !e.checkedOff).map(e => ({ ...e, sd: new Date(e.start) })).sort((a, b) => a.sd - b.sd);
   const go = active.find(e => { const m = (e.sd - now)/60000; return m <= 0 && m > -5; });
   if (go) return { state: 'go', event: go };
   const oops = active.find(e => { const m = (e.sd - now)/60000; return m <= -5 && m > -30; });
@@ -445,7 +536,14 @@ function computeCatState() {
   if (next) { const m = (next.sd - now) / 60000; if (m <= 30) return { state: 'headsup', event: next }; return { state: 'idle', event: next }; }
   return { state: 'idle', event: null };
 }
-function isQuietHoursNow() { const h = getHourInZone(new Date(), state.settings.travelZone); const qs = state.settings.quietStartHour, qe = state.settings.quietEndHour; if (qs > qe) return h >= qs || h < qe; return h >= qs && h < qe; }
+function isQuietHoursNow() {
+  const trip = getActiveTrip();
+  const zone = trip ? trip.travelZone : state.settings.homeZone;
+  const h = getHourInZone(new Date(), zone);
+  const qs = state.settings.quietStartHour, qe = state.settings.quietEndHour;
+  if (qs > qe) return h >= qs || h < qe;
+  return h >= qs && h < qe;
+}
 function bubbleText(s, e) {
   if (!e) return '';
   const sn = e.title.split(/\s+/)[0];
@@ -473,37 +571,51 @@ function renderCat() {
 }
 function renderClocks() {
   const now = new Date();
-  document.getElementById('status-time').textContent = fmtTimeInZone(now, state.settings.homeZone).replace(' AM','').replace(' PM','');
+  const trip = getActiveTrip();
+  const travelZone = trip ? trip.travelZone : state.settings.homeZone;
+  const travelLabel = trip ? trip.travelLabel : state.settings.homeLabel;
+  document.getElementById('status-time').textContent = fmtTimeInZone(now, state.settings.homeZone).replace(/[\s\u2009\u202F\u00A0]+(AM|PM)/i, '');
   document.getElementById('clock-home').textContent = fmtTimeInZone(now, state.settings.homeZone);
-  document.getElementById('clock-travel').textContent = fmtTimeInZone(now, state.settings.travelZone);
+  document.getElementById('clock-travel').textContent = fmtTimeInZone(now, travelZone);
   document.getElementById('date-home').textContent = fmtDateInZone(now, state.settings.homeZone);
-  document.getElementById('date-travel').textContent = fmtDateInZone(now, state.settings.travelZone);
+  document.getElementById('date-travel').textContent = fmtDateInZone(now, travelZone);
   document.getElementById('home-label').textContent = state.settings.homeLabel;
-  document.getElementById('travel-label').textContent = state.settings.travelLabel;
-  document.getElementById('offset-display').textContent = offsetDeltaLabel(state.settings.homeZone, state.settings.travelZone, now);
+  document.getElementById('travel-label').textContent = travelLabel;
+  document.getElementById('offset-display').textContent = offsetDeltaLabel(state.settings.homeZone, travelZone, now);
 }
 
 function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function escapeAttr(s) { return escapeHtml(s); }
 
 function allExpensesForView() {
-  const fromEvents = state.events.filter(e => e.price && e.price > 0).map(e => ({
+  const trip = getActiveTrip();
+  if (!trip) return [];
+  const fromEvents = trip.events.filter(e => e.price && e.price > 0).map(e => ({
     id: 'evt-' + e.id, date: e.start, category: e.category || 'activity',
-    amount: e.price, currency: e.priceCurrency || state.settings.travelCurrency,
+    amount: e.price, currency: e.priceCurrency || trip.travelCurrency,
     title: e.title, fromEvent: true, eventId: e.id,
   }));
-  return [...state.expenses, ...fromEvents].sort((a, b) => new Date(b.date) - new Date(a.date));
+  return [...trip.expenses, ...fromEvents].sort((a, b) => new Date(b.date) - new Date(a.date));
 }
 
 function renderTrip() {
+  const trip = getActiveTrip();
+  if (!trip) { document.getElementById('screen-content').innerHTML = `<div class="empty" style="padding: 60px 24px;">No trips yet. Create one from the Money tab.</div>`; return; }
   const now = new Date();
-  const tz = state.settings.travelZone;
+  const tz = trip.travelZone;
   const todayKey = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
-  const sorted = [...state.events].sort((a, b) => new Date(a.start) - new Date(b.start));
+  const sorted = [...trip.events].sort((a, b) => new Date(a.start) - new Date(b.start));
   const today = sorted.filter(e => new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(e.start)) === todayKey);
   const upcoming = sorted.find(e => !e.checkedOff && new Date(e.start) > now);
   const { dayOf, total: dayTotal } = computeTripDay();
   let html = '';
+
+  // Trip switcher chip — only show if more than one trip
+  if (state.trips.length > 1) {
+    html += `<div class="trip-chip" id="trip-chip-trip" role="button" tabindex="0">
+      <i class="ti ti-plane"></i><span>${escapeHtml(trip.name)}</span><i class="ti ti-chevron-right" style="transform: rotate(90deg); opacity: 0.5;"></i>
+    </div>`;
+  }
 
   if (upcoming) {
     const m = Math.max(0, Math.round(minutesUntil(upcoming.start)));
@@ -535,40 +647,48 @@ function renderTrip() {
 
   const all = allExpensesForView();
   const spent = all.reduce((s, x) => s + toHomeCurrency(x.amount, x.currency), 0);
-  const todaySpent = all.filter(x => new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date(x.date)) === todayKey).reduce((s, x) => s + (x.currency === state.settings.travelCurrency ? x.amount : 0), 0);
-  const pace = state.settings.budgetTotal * (dayOf / dayTotal);
+  const todaySpentNative = all.filter(x => new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date(x.date)) === todayKey).reduce((s, x) => s + (x.currency === trip.travelCurrency ? x.amount : 0), 0);
+  const pace = trip.budgetTotal * (dayOf / dayTotal);
   const onTrack = spent <= pace;
   html += `<div class="budget-card" id="budget-card">
     <div><div class="lbl">DAY ${dayOf} OF ${dayTotal} · BUDGET</div>
-      <div style="font-size: 16px; font-weight: 500; margin-top: 3px;">${fmtMoneyHome(spent)} <span style="color: var(--text-2); font-size: 12px; font-weight: 400;">of ${fmtMoneyHome(state.settings.budgetTotal)}</span></div></div>
+      <div style="font-size: 16px; font-weight: 500; margin-top: 3px;">${fmtMoneyHome(spent)} <span style="color: var(--text-2); font-size: 12px; font-weight: 400;">of ${fmtMoneyHome(trip.budgetTotal)}</span></div></div>
     <div style="text-align: right;"><div class="pixel-font" style="font-size: 11px; color: ${onTrack ? 'var(--success)' : 'var(--accent-text)'};">${onTrack ? 'ON TRACK' : 'OVER PACE'}</div>
-      <div style="font-size: 10px; color: var(--text-3); margin-top: 2px;">¥${todaySpent.toLocaleString()} today</div></div>
+      <div style="font-size: 10px; color: var(--text-3); margin-top: 2px;">${escapeHtml(fmtMoneyNative(todaySpentNative, trip.travelCurrency))} today</div></div>
   </div>`;
 
+  // Bottom space so the last item isn't hidden behind the cat FAB (Trip tab only)
+  html += `<div style="height: 110px;"></div>`;
+
   document.getElementById('screen-content').innerHTML = html;
-  document.querySelectorAll('[data-toggle]').forEach(b => b.addEventListener('click', ev => { ev.stopPropagation(); const e = state.events.find(x => x.id === b.getAttribute('data-toggle')); if (e) { e.checkedOff = !e.checkedOff; render(); } }));
-  document.querySelectorAll('.evt-row').forEach(r => r.addEventListener('click', () => { const e = state.events.find(x => x.id === r.getAttribute('data-event-id')); if (e) openAddEventModal(e); }));
+  if (state.trips.length > 1) {
+    document.getElementById('trip-chip-trip').addEventListener('click', openTripSwitcher);
+  }
+  document.querySelectorAll('[data-toggle]').forEach(b => b.addEventListener('click', ev => { ev.stopPropagation(); const e = trip.events.find(x => x.id === b.getAttribute('data-toggle')); if (e) { e.checkedOff = !e.checkedOff; render(); } }));
+  document.querySelectorAll('.evt-row').forEach(r => r.addEventListener('click', () => { const e = trip.events.find(x => x.id === r.getAttribute('data-event-id')); if (e) openAddEventModal(e); }));
 }
 
 function renderBudget() {
-  const tz = state.settings.travelZone;
+  const trip = getActiveTrip();
+  if (!trip) { document.getElementById('screen-content').innerHTML = `<div class="empty" style="padding: 60px 24px;">No trips yet.</div>`; return; }
+  const tz = trip.travelZone;
   const all = allExpensesForView();
   const total = all.reduce((s, x) => s + toHomeCurrency(x.amount, x.currency), 0);
   const evtCount = all.filter(x => x.fromEvent).length;
   const icons = { food: 'ti ti-tools-kitchen-2', transit: 'ti ti-train', shopping: 'ti ti-shopping-bag', lodging: 'ti ti-bed', activity: 'ti ti-ticket', other: 'ti ti-receipt' };
   const { dayOf, total: dayTotal } = computeTripDay();
-  const pace = state.settings.budgetTotal * (dayOf / dayTotal);
+  const pace = trip.budgetTotal * (dayOf / dayTotal);
   const onTrack = total <= pace;
 
   let html = `<div class="trip-header-card" id="trip-header-card" role="button" tabindex="0">
     <i class="ti ti-pencil trip-edit-pencil"></i>
-    <div class="lbl">${escapeHtml((state.settings.tripName || 'Untitled trip').toUpperCase())}</div>
-    <div style="font-size: 11px; color: var(--text-2); margin-top: 4px;">Day ${dayOf} of ${dayTotal} · ${escapeHtml(s_fmtDate(state.settings.tripStart))} → ${escapeHtml(s_fmtDate(state.settings.tripEnd))}</div>
+    <div class="lbl">${escapeHtml((trip.name || 'Untitled trip').toUpperCase())}</div>
+    <div style="font-size: 11px; color: var(--text-2); margin-top: 4px;">Day ${dayOf} of ${dayTotal} · ${escapeHtml(s_fmtDate(trip.tripStart))} → ${escapeHtml(s_fmtDate(trip.tripEnd))}</div>
     <div style="height: 8px;"></div>
     <div style="display: flex; align-items: baseline; justify-content: space-between;">
       <div>
         <div class="pixel-font" style="font-size: 26px; font-weight: 500;">${fmtMoneyHome(total)}</div>
-        <div style="font-size: 11px; color: var(--text-2);">of ${fmtMoneyHome(state.settings.budgetTotal)} · ${all.length} item${all.length === 1 ? '' : 's'}${evtCount > 0 ? ` · ${evtCount} from events` : ''}</div>
+        <div style="font-size: 11px; color: var(--text-2);">of ${fmtMoneyHome(trip.budgetTotal)} · ${all.length} item${all.length === 1 ? '' : 's'}${evtCount > 0 ? ` · ${evtCount} from events` : ''}</div>
       </div>
       <div class="pixel-font" style="font-size: 11px; color: ${onTrack ? 'var(--success)' : 'var(--accent-text)'};">${onTrack ? 'ON TRACK' : 'OVER PACE'}</div>
     </div>
@@ -580,7 +700,7 @@ function renderBudget() {
   else all.forEach(x => {
     const icon = icons[x.category] || icons.other;
     const ha = toHomeCurrency(x.amount, x.currency);
-    html += `<div class="expense-row ${x.fromEvent ? 'from-event' : ''}" data-event-id="${escapeAttr(x.eventId || '')}">
+    html += `<div class="expense-row ${x.fromEvent ? 'from-event' : ''}" data-event-id="${escapeAttr(x.eventId || '')}" data-expense-id="${escapeAttr(x.id)}">
       <div class="expense-cat-icon"><i class="${icon}"></i></div>
       <div class="expense-content">
         <div class="expense-title">${escapeHtml(x.title)}${x.fromEvent ? '<span class="link-mark">EVENT</span>' : ''}</div>
@@ -591,9 +711,15 @@ function renderBudget() {
   });
   html += `</div>`;
   document.getElementById('screen-content').innerHTML = html;
-  document.getElementById('trip-header-card').addEventListener('click', openBudgetSheet);
+  document.getElementById('trip-header-card').addEventListener('click', openTripSwitcher);
   document.getElementById('add-expense-btn').addEventListener('click', openAddExpenseSheet);
-  document.querySelectorAll('.expense-row').forEach(r => r.addEventListener('click', () => { const id = r.getAttribute('data-event-id'); if (id) { const e = state.events.find(x => x.id === id); if (e) openAddEventModal(e); } }));
+  document.querySelectorAll('.expense-row').forEach(r => r.addEventListener('click', () => {
+    const eid = r.getAttribute('data-event-id');
+    if (eid) { const e = trip.events.find(x => x.id === eid); if (e) openAddEventModal(e); return; }
+    const xid = r.getAttribute('data-expense-id');
+    const exp = trip.expenses.find(x => x.id === xid);
+    if (exp) openAddExpenseSheet(exp);
+  }));
 }
 function s_fmtDate(iso) {
   if (!iso) return '?';
@@ -602,9 +728,17 @@ function s_fmtDate(iso) {
 }
 
 function renderNotes() {
-  let html = `<div class="day-header" style="margin-top: 6px;"><div class="lbl">NOTES &amp; LISTS</div><div style="font-size: 11px; color: var(--text-3);">${state.notes.length} categor${state.notes.length === 1 ? 'y' : 'ies'}</div></div>
+  const trip = getActiveTrip();
+  if (!trip) { document.getElementById('screen-content').innerHTML = `<div class="empty" style="padding: 60px 24px;">No trips yet.</div>`; return; }
+  let html = '';
+  if (state.trips.length > 1) {
+    html += `<div class="trip-chip" id="trip-chip-notes" role="button" tabindex="0">
+      <i class="ti ti-plane"></i><span>${escapeHtml(trip.name)}</span><i class="ti ti-chevron-right" style="transform: rotate(90deg); opacity: 0.5;"></i>
+    </div>`;
+  }
+  html += `<div class="day-header" style="margin-top: 6px;"><div class="lbl">NOTES &amp; LISTS</div><div style="font-size: 11px; color: var(--text-3);">${trip.notes.length} categor${trip.notes.length === 1 ? 'y' : 'ies'}</div></div>
     <div class="dotted-rule" style="margin: 4px 16px;"></div>`;
-  state.notes.forEach(note => {
+  trip.notes.forEach(note => {
     html += `<div class="note-card" data-note-id="${escapeAttr(note.id)}">
       <div class="note-card-header">
         <input class="note-title-input" data-note-title="${escapeAttr(note.id)}" value="${escapeAttr(note.title)}" placeholder="Untitled list">
@@ -630,18 +764,19 @@ function renderNotes() {
     }
     html += `</div></div>`;
   });
-  html += `<button class="add-cat-btn" id="add-category"><i class="ti ti-plus"></i> new category</button>`;
+  html += `<button class="btn-add" id="add-category"><i class="ti ti-plus"></i> new category</button>`;
   document.getElementById('screen-content').innerHTML = html;
 
-  document.querySelectorAll('[data-note-title]').forEach(el => el.addEventListener('input', () => { const n = state.notes.find(x => x.id === el.getAttribute('data-note-title')); if (n) n.title = el.value; }));
-  document.querySelectorAll('[data-note-type]').forEach(b => b.addEventListener('click', () => { const n = state.notes.find(x => x.id === b.getAttribute('data-note-id')); const t = b.getAttribute('data-note-type'); if (n && n.type !== t) { n.type = t; renderNotes(); } }));
-  document.querySelectorAll('[data-note-delete]').forEach(b => b.addEventListener('click', () => { const id = b.getAttribute('data-note-delete'); const n = state.notes.find(x => x.id === id); if (!n) return; if (confirm(`Delete category "${n.title || 'Untitled'}"?`)) { state.notes = state.notes.filter(x => x.id !== id); renderNotes(); } }));
-  document.querySelectorAll('[data-note-text]').forEach(el => el.addEventListener('input', () => { const n = state.notes.find(x => x.id === el.getAttribute('data-note-text')); if (n) n.text = el.value; }));
-  document.querySelectorAll('[data-check-toggle]').forEach(b => b.addEventListener('click', () => { const [nid, iid] = b.getAttribute('data-check-toggle').split('__'); const n = state.notes.find(x => x.id === nid); const it = n && n.items.find(x => x.id === iid); if (it) { it.checked = !it.checked; renderNotes(); } }));
-  document.querySelectorAll('[data-check-text]').forEach(el => el.addEventListener('input', () => { const [nid, iid] = el.getAttribute('data-check-text').split('__'); const n = state.notes.find(x => x.id === nid); const it = n && n.items.find(x => x.id === iid); if (it) it.text = el.value; }));
-  document.querySelectorAll('[data-check-delete]').forEach(b => b.addEventListener('click', () => { const [nid, iid] = b.getAttribute('data-check-delete').split('__'); const n = state.notes.find(x => x.id === nid); if (!n) return; n.items = n.items.filter(x => x.id !== iid); renderNotes(); }));
-  document.querySelectorAll('[data-add-item]').forEach(b => b.addEventListener('click', () => { const id = b.getAttribute('data-add-item'); const n = state.notes.find(x => x.id === id); if (!n) return; n.items.push({ id: Math.random().toString(36).slice(2,10), text: '', checked: false }); renderNotes(); const inputs = document.querySelectorAll(`[data-note-id="${id}"] .check-text`); if (inputs.length) inputs[inputs.length-1].focus(); }));
-  document.getElementById('add-category').addEventListener('click', () => { state.notes.push({ id: Math.random().toString(36).slice(2,10), title: '', type: 'checklist', items: [], text: '' }); renderNotes(); const titles = document.querySelectorAll('.note-title-input'); if (titles.length) titles[titles.length-1].focus(); });
+  if (state.trips.length > 1) document.getElementById('trip-chip-notes').addEventListener('click', openTripSwitcher);
+  document.querySelectorAll('[data-note-title]').forEach(el => el.addEventListener('input', () => { const n = trip.notes.find(x => x.id === el.getAttribute('data-note-title')); if (n) n.title = el.value; }));
+  document.querySelectorAll('[data-note-type]').forEach(b => b.addEventListener('click', () => { const n = trip.notes.find(x => x.id === b.getAttribute('data-note-id')); const t = b.getAttribute('data-note-type'); if (n && n.type !== t) { n.type = t; renderNotes(); } }));
+  document.querySelectorAll('[data-note-delete]').forEach(b => b.addEventListener('click', () => { const id = b.getAttribute('data-note-delete'); const n = trip.notes.find(x => x.id === id); if (!n) return; if (confirm(`Delete category "${n.title || 'Untitled'}"?`)) { trip.notes = trip.notes.filter(x => x.id !== id); renderNotes(); } }));
+  document.querySelectorAll('[data-note-text]').forEach(el => el.addEventListener('input', () => { const n = trip.notes.find(x => x.id === el.getAttribute('data-note-text')); if (n) n.text = el.value; }));
+  document.querySelectorAll('[data-check-toggle]').forEach(b => b.addEventListener('click', () => { const [nid, iid] = b.getAttribute('data-check-toggle').split('__'); const n = trip.notes.find(x => x.id === nid); const it = n && n.items.find(x => x.id === iid); if (it) { it.checked = !it.checked; renderNotes(); } }));
+  document.querySelectorAll('[data-check-text]').forEach(el => el.addEventListener('input', () => { const [nid, iid] = el.getAttribute('data-check-text').split('__'); const n = trip.notes.find(x => x.id === nid); const it = n && n.items.find(x => x.id === iid); if (it) it.text = el.value; }));
+  document.querySelectorAll('[data-check-delete]').forEach(b => b.addEventListener('click', () => { const [nid, iid] = b.getAttribute('data-check-delete').split('__'); const n = trip.notes.find(x => x.id === nid); if (!n) return; n.items = n.items.filter(x => x.id !== iid); renderNotes(); }));
+  document.querySelectorAll('[data-add-item]').forEach(b => b.addEventListener('click', () => { const id = b.getAttribute('data-add-item'); const n = trip.notes.find(x => x.id === id); if (!n) return; n.items.push({ id: newId(), text: '', checked: false }); renderNotes(); const inputs = document.querySelectorAll(`[data-note-id="${id}"] .check-text`); if (inputs.length) inputs[inputs.length-1].focus(); }));
+  document.getElementById('add-category').addEventListener('click', () => { trip.notes.push({ id: newId(), title: '', type: 'checklist', items: [], text: '' }); renderNotes(); const titles = document.querySelectorAll('.note-title-input'); if (titles.length) titles[titles.length-1].focus(); });
 }
 
 function renderSettings() {
@@ -653,8 +788,7 @@ function renderSettings() {
 
   <div class="lbl section-label">ZONES</div>
   <div class="card-block">
-    <div class="field-row" data-open="home-zone" style="cursor: pointer;"><div class="field-icon"><i class="ti ti-home"></i></div><div class="field-content"><div class="field-label">HOME</div><div class="field-value">${escapeHtml(s.homeZone)} · ${escapeHtml(s.homeLabel)}</div></div><div class="chevron"><i class="ti ti-chevron-right"></i></div></div>
-    <div class="field-row" data-open="travel-zone" style="cursor: pointer;"><div class="field-icon"><i class="ti ti-plane"></i></div><div class="field-content"><div class="field-label">TRAVEL</div><div class="field-value">${escapeHtml(s.travelZone)} · ${escapeHtml(s.travelLabel)}</div></div><div class="chevron"><i class="ti ti-chevron-right"></i></div></div>
+    <div class="field-row" data-open="home-zone" style="cursor: pointer;"><div class="field-icon"><i class="ti ti-home"></i></div><div class="field-content"><div class="field-label">HOME</div><div class="field-value">${escapeHtml(s.homeZone)} · ${escapeHtml(s.homeLabel)}</div><div class="field-hint">Travel zone is set per trip</div></div><div class="chevron"><i class="ti ti-chevron-right"></i></div></div>
     <div class="field-row"><div class="field-icon"><i class="ti ti-current-location"></i></div><div class="field-content"><div class="field-label">AUTO-UPDATE ON ARRIVAL</div><div class="field-hint">Detect timezone changes via GPS</div></div><button class="toggle ${s.autoUpdateZone ? 'on' : ''}" data-toggle-setting="autoUpdateZone"><div class="thumb"></div></button></div>
   </div>
 
@@ -670,9 +804,8 @@ function renderSettings() {
 
   <div class="lbl section-label">MONEY</div>
   <div class="card-block">
-    <div class="field-row" data-open="home-currency" style="cursor: pointer;"><div class="field-icon"><i class="ti ti-coin"></i></div><div class="field-content"><div class="field-label">HOME CURRENCY</div><div class="field-value">${escapeHtml(s.homeCurrency)} <span style="color: var(--text-3); font-weight: 400;">· ${escapeHtml(s.homeCurrencySymbol)}</span></div></div><div class="chevron"><i class="ti ti-chevron-right"></i></div></div>
-    <div class="field-row" data-open="travel-currency" style="cursor: pointer;"><div class="field-icon"><i class="ti ti-cash"></i></div><div class="field-content"><div class="field-label">TRAVEL CURRENCY</div><div class="field-value">${escapeHtml(s.travelCurrency)} <span style="color: var(--text-3); font-weight: 400;">· ${escapeHtml(s.travelCurrencySymbol)}</span></div></div><div class="chevron"><i class="ti ti-chevron-right"></i></div></div>
-    <div class="field-row" data-open="fx-rate" style="cursor: pointer;"><div class="field-icon"><i class="ti ti-refresh"></i></div><div class="field-content"><div class="field-label">FX RATES</div><div class="field-value">1 ${escapeHtml(s.travelCurrency)} = $${s.fxRate.toFixed(4)}</div><div class="field-hint pixel-font">Last refresh: ${fmtRelativeTime(s.fxLastRefresh)}</div></div><div class="chevron"><i class="ti ti-chevron-right"></i></div></div>
+    <div class="field-row" data-open="home-currency" style="cursor: pointer;"><div class="field-icon"><i class="ti ti-coin"></i></div><div class="field-content"><div class="field-label">HOME CURRENCY</div><div class="field-value">${escapeHtml(s.homeCurrency)} <span style="color: var(--text-3); font-weight: 400;">· ${escapeHtml(s.homeCurrencySymbol)}</span></div><div class="field-hint">Travel currency is set per trip</div></div><div class="chevron"><i class="ti ti-chevron-right"></i></div></div>
+    <div class="field-row" data-open="fx-rates" style="cursor: pointer;"><div class="field-icon"><i class="ti ti-refresh"></i></div><div class="field-content"><div class="field-label">FX RATES</div><div class="field-value pixel-font" style="font-size: 12px;">${Object.entries(s.fxRates).map(([c, r]) => `1 ${c} = $${r.toFixed(4)}`).join(' · ') || 'none yet'}</div><div class="field-hint pixel-font">Last refresh: ${fmtRelativeTime(s.fxLastRefresh)}</div></div><div class="chevron"><i class="ti ti-chevron-right"></i></div></div>
   </div>
 
   <div class="lbl section-label">MASCOT</div>
@@ -688,7 +821,7 @@ function renderSettings() {
     <div class="field-row"><div class="field-icon"><i class="ti ti-file-text"></i></div><div class="field-content"><div class="field-label">TERMS &amp; PRIVACY</div></div><div class="chevron"><i class="ti ti-chevron-right"></i></div></div>
   </div>
 
-  <div style="text-align: center; padding: 8px 16px 4px;"><button class="btn-ghost" id="reset-demo">Reset demo data</button></div>`;
+  <div style="text-align: center; padding: 8px 16px 24px;"><button class="btn-ghost" id="reset-demo">Reset demo data</button></div>`;
   document.getElementById('screen-content').innerHTML = html;
 
   document.querySelectorAll('[data-toggle-setting]').forEach(b => b.addEventListener('click', () => { const k = b.getAttribute('data-toggle-setting'); state.settings[k] = !state.settings[k]; b.classList.toggle('on'); renderCat(); }));
@@ -697,13 +830,11 @@ function renderSettings() {
   document.querySelectorAll('[data-open]').forEach(row => row.addEventListener('click', () => {
     const a = row.getAttribute('data-open');
     if (a === 'home-zone') openTimezonePicker('home');
-    else if (a === 'travel-zone') openTimezonePicker('travel');
     else if (a === 'quiet-hours') openQuietHoursPicker();
     else if (a === 'home-currency') openCurrencyPicker('home');
-    else if (a === 'travel-currency') openCurrencyPicker('travel');
-    else if (a === 'fx-rate') openFxRatePicker();
+    else if (a === 'fx-rates') openFxRatesSheet();
   }));
-  document.getElementById('reset-demo').addEventListener('click', () => { if (confirm('Wipe all events, expenses, and notes? This re-seeds demo data.')) { seedTripDates(); seedEvents(); seedExpenses(); seedNotes(); state.debugStateOverride = null; render(); } });
+  document.getElementById('reset-demo').addEventListener('click', () => { if (confirm('Wipe all trips, events, expenses, and notes? This re-seeds demo data.')) { try { localStorage.removeItem(STORAGE_KEY); } catch (e) {} seedTrips(); state.debugStateOverride = null; render(); } });
 }
 function fmtReminder(r) {
   if (r >= 1440) { const d = r / 1440; return `${d} day${d === 1 ? '' : 's'}`; }
@@ -712,24 +843,27 @@ function fmtReminder(r) {
 }
 
 function openAddEventModal(existingEvent) {
+  const trip = getActiveTrip();
+  if (!trip) { alert('Create a trip first.'); return; }
   const modal = document.getElementById('modal');
   const body = document.getElementById('modal-body');
   document.getElementById('modal-title').textContent = existingEvent ? 'Edit event' : 'New event';
   const now = new Date();
-  const tz = state.settings.travelZone;
+  const tz = trip.travelZone;
   const ds = existingEvent ? new Date(existingEvent.start) : new Date(now.getTime() + 3600000);
   const isoLocal = d => { const p = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12: false }).formatToParts(d); const o = {}; p.forEach(x => o[x.type] = x.value); return `${o.year}-${o.month}-${o.day}T${o.hour === '24' ? '00' : o.hour}:${o.minute}`; };
-  const e = existingEvent || { title: '', start: ds.toISOString(), durationMin: 60, location: '', reminders: [...state.settings.defaultReminders], bookingRef: '', notes: '', price: null, priceCurrency: state.settings.travelCurrency, category: 'activity' };
+  const e = existingEvent || { title: '', start: ds.toISOString(), durationMin: 60, location: '', reminders: [...state.settings.defaultReminders], bookingRef: '', notes: '', price: null, priceCurrency: trip.travelCurrency, category: 'activity' };
+  const currencyOpts = `<option value="${trip.travelCurrency}" ${(e.priceCurrency || trip.travelCurrency) === trip.travelCurrency ? 'selected' : ''}>${trip.travelCurrency} ${trip.travelCurrencySymbol}</option><option value="USD" ${e.priceCurrency === 'USD' ? 'selected' : ''}>USD $</option>`;
 
   body.innerHTML = `<div class="input-card"><div class="field-label">TITLE</div><input type="text" id="ev-title" placeholder="Tsukiji food tour" value="${escapeAttr(e.title)}"></div>
-    <div class="input-card"><div class="field-label">WHEN</div>
+    <div class="input-card"><div class="field-label">WHEN <span style="font-weight: 400; color: var(--text-3); text-transform: none; letter-spacing: 0;">· ${escapeHtml(trip.travelLabel)} time</span></div>
       <div class="row" style="margin-top: 6px;"><div class="col"><input type="datetime-local" id="ev-start" value="${isoLocal(new Date(e.start))}"><div class="input-hint" id="ev-start-hint"></div></div></div>
       <div class="divider"></div>
       <div class="row"><div class="col"><div class="field-label">DURATION (MIN)</div><input type="number" id="ev-duration" min="0" step="15" value="${e.durationMin}" style="margin-top: 4px;"></div></div>
     </div>
     <div class="input-card"><div class="field-label">WHERE</div><input type="text" id="ev-location" placeholder="Tsukiji Outer Market" value="${escapeAttr(e.location || '')}"></div>
     <div class="input-card"><div class="field-label">PRICE <span style="font-weight: 400; color: var(--text-3); text-transform: none; letter-spacing: 0;">· syncs to Money</span></div>
-      <div class="row" style="margin-top: 4px;"><div class="col"><input type="number" id="ev-price" min="0" step="1" placeholder="0" value="${e.price || ''}"></div><div class="col" style="flex: 0 0 80px;"><select id="ev-price-currency"><option value="JPY" ${(e.priceCurrency || 'JPY') === 'JPY' ? 'selected' : ''}>JPY ¥</option><option value="USD" ${e.priceCurrency === 'USD' ? 'selected' : ''}>USD $</option></select></div></div>
+      <div class="row" style="margin-top: 4px;"><div class="col"><input type="number" id="ev-price" min="0" step="1" placeholder="0" value="${e.price || ''}"></div><div class="col" style="flex: 0 0 90px;"><select id="ev-price-currency">${currencyOpts}</select></div></div>
       <div class="divider"></div>
       <div class="field-label">CATEGORY</div>
       <select id="ev-category" style="margin-top: 4px;">${['food','transit','shopping','lodging','activity','other'].map(c => `<option value="${c}" ${(e.category || 'activity') === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
@@ -739,10 +873,10 @@ function openAddEventModal(existingEvent) {
     <div class="input-card"><div class="field-label">NOTES</div><textarea id="ev-notes" rows="3" placeholder="Anything else...">${escapeHtml(e.notes || '')}</textarea></div>
     ${existingEvent ? `<div style="text-align: center; padding: 8px 16px;"><button class="btn-ghost" id="delete-event" style="color: var(--accent-text); border-color: var(--accent-bg);">Delete event</button></div>` : ''}`;
 
-  const updHint = () => { const v = document.getElementById('ev-start').value; if (!v) return; const d = new Date(v); const bo = -new Date().getTimezoneOffset()/60; const to = zoneOffsetHours(state.settings.travelZone, new Date()); const adj = new Date(d.getTime() - (bo - to)*3600000); document.getElementById('ev-start-hint').textContent = `${fmtDayShort(adj, state.settings.homeZone)} ${fmtTimeInZone(adj, state.settings.homeZone)} ${state.settings.homeLabel} = start · ${state.settings.travelLabel}`; };
+  const updHint = () => { const v = document.getElementById('ev-start').value; if (!v) return; const d = new Date(v); const bo = -new Date().getTimezoneOffset()/60; const to = zoneOffsetHours(trip.travelZone, new Date()); const adj = new Date(d.getTime() - (bo - to)*3600000); document.getElementById('ev-start-hint').textContent = `${fmtDayShort(adj, state.settings.homeZone)} ${fmtTimeInZone(adj, state.settings.homeZone)} ${state.settings.homeLabel}`; };
   document.getElementById('ev-start').addEventListener('input', updHint); updHint();
 
-  const rerender = ev => { document.getElementById('reminders-edit').innerHTML = ev.reminders.map(r => `<span class="pill">${fmtReminder(r)} before<span class="x" data-mod-remove="${r}">×</span></span>`).join('') + `<button class="pill-add" id="mod-add-reminder"><i class="ti ti-plus"></i> add</button>`; bind(ev); };
+  const rerender = ev => { document.getElementById('reminders-edit').innerHTML = ev.reminders.map(r => `<span class="pill">${fmtReminder(r)} before<span class="x" data-mod-remove="${r}">×</span></span>`).join('') + `<button class="pill-add" id="mod-add-reminder"><i class="ti ti-plus"></i> add</button>`; bind(ev); applyIcons(document.getElementById('modal-body')); };
   const bind = ev => {
     document.querySelectorAll('[data-mod-remove]').forEach(x => x.addEventListener('click', () => { const r = parseInt(x.getAttribute('data-mod-remove'), 10); ev.reminders = ev.reminders.filter(v => v !== r); rerender(ev); }));
     document.getElementById('mod-add-reminder').addEventListener('click', () => openReminderPicker(ev.reminders, r => { ev.reminders.push(r); ev.reminders.sort((a, b) => a - b); rerender(ev); }));
@@ -751,11 +885,13 @@ function openAddEventModal(existingEvent) {
 
   body.__editing = e;
   body.__isNew = !existingEvent;
-  if (existingEvent) document.getElementById('delete-event').addEventListener('click', () => { if (confirm('Delete this event?')) { state.events = state.events.filter(x => x.id !== existingEvent.id); closeModal(); render(); } });
+  if (existingEvent) document.getElementById('delete-event').addEventListener('click', () => { if (confirm('Delete this event?')) { trip.events = trip.events.filter(x => x.id !== existingEvent.id); closeModal(); render(); } });
   modal.classList.add('open');
   applyIcons(document.getElementById('modal-body'));
 }
 function saveEventModal() {
+  const trip = getActiveTrip();
+  if (!trip) return;
   const body = document.getElementById('modal-body');
   const e = body.__editing;
   const isNew = body.__isNew;
@@ -765,11 +901,11 @@ function saveEventModal() {
   if (!startStr) { alert('Start time is required'); return; }
   const d = new Date(startStr);
   const bo = -new Date().getTimezoneOffset()/60;
-  const to = zoneOffsetHours(state.settings.travelZone, d);
+  const to = zoneOffsetHours(trip.travelZone, d);
   const adj = new Date(d.getTime() - (bo - to)*3600000);
   const pv = document.getElementById('ev-price').value;
   const data = {
-    id: isNew ? Math.random().toString(36).slice(2,10) : e.id,
+    id: isNew ? newId() : e.id,
     title,
     location: document.getElementById('ev-location').value.trim(),
     bookingRef: document.getElementById('ev-booking').value.trim(),
@@ -782,8 +918,8 @@ function saveEventModal() {
     priceCurrency: document.getElementById('ev-price-currency').value,
     category: document.getElementById('ev-category').value,
   };
-  if (isNew) state.events.push(data);
-  else { const i = state.events.findIndex(x => x.id === e.id); if (i >= 0) state.events[i] = data; }
+  if (isNew) trip.events.push(data);
+  else { const i = trip.events.findIndex(x => x.id === e.id); if (i >= 0) trip.events[i] = data; }
   closeModal(); render();
 }
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
@@ -804,43 +940,139 @@ function closeBottomSheet() {
   _bsOnSave = null;
 }
 
-function openAddExpenseSheet() {
-  const html = `<div class="input-card"><div class="field-label">DESCRIPTION</div><input type="text" id="ex-title" placeholder="Ichiran ramen, taxi to Roppongi..."></div>
-    <div class="input-card"><div class="field-label">AMOUNT</div><div class="row" style="margin-top: 4px;"><div class="col"><input type="number" id="ex-amount" min="0" step="1" placeholder="0"></div><div class="col" style="flex: 0 0 80px;"><select id="ex-currency"><option value="JPY">JPY ¥</option><option value="USD">USD $</option></select></div></div></div>
-    <div class="input-card"><div class="field-label">CATEGORY</div><select id="ex-category" style="margin-top: 4px;">${['food','transit','shopping','lodging','activity','other'].map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>`;
-  openBottomSheet('New expense', html, () => {
+function openAddExpenseSheet(existing) {
+  const trip = getActiveTrip();
+  if (!trip) { alert('Create a trip first.'); return; }
+  const isEdit = !!existing;
+  const e = existing || { title: '', amount: '', currency: trip.travelCurrency, category: 'food' };
+  const currencyOpts = `<option value="${trip.travelCurrency}" ${e.currency === trip.travelCurrency ? 'selected' : ''}>${trip.travelCurrency} ${trip.travelCurrencySymbol}</option><option value="USD" ${e.currency === 'USD' ? 'selected' : ''}>USD $</option>`;
+  const categories = ['food','transit','shopping','lodging','activity','other'];
+  const html = `<div class="input-card"><div class="field-label">DESCRIPTION</div><input type="text" id="ex-title" placeholder="Ichiran ramen, taxi to Roppongi..." value="${escapeAttr(e.title)}"></div>
+    <div class="input-card"><div class="field-label">AMOUNT</div><div class="row" style="margin-top: 4px;"><div class="col"><input type="number" id="ex-amount" min="0" step="1" placeholder="0" value="${e.amount || ''}"></div><div class="col" style="flex: 0 0 90px;"><select id="ex-currency">${currencyOpts}</select></div></div></div>
+    <div class="input-card"><div class="field-label">CATEGORY</div><select id="ex-category" style="margin-top: 4px;">${categories.map(c => `<option value="${c}" ${e.category === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+    ${isEdit ? `<div style="text-align: center; padding: 8px 16px 24px;"><button class="btn-ghost" id="delete-expense" style="color: var(--accent-text); border-color: var(--accent-bg);">Delete expense</button></div>` : ''}`;
+  openBottomSheet(isEdit ? 'Edit expense' : 'New expense', html, () => {
     const title = document.getElementById('ex-title').value.trim();
     const amount = parseFloat(document.getElementById('ex-amount').value);
     const currency = document.getElementById('ex-currency').value;
     const category = document.getElementById('ex-category').value;
     if (!title || !amount || amount <= 0) { alert('Description and amount required'); return false; }
-    state.expenses.push({ id: Math.random().toString(36).slice(2,10), date: new Date().toISOString(), category, amount, currency, title });
+    if (isEdit) {
+      existing.title = title; existing.amount = amount; existing.currency = currency; existing.category = category;
+    } else {
+      trip.expenses.push({ id: newId(), date: new Date().toISOString(), category, amount, currency, title });
+    }
     render();
   });
-  setTimeout(() => { const el = document.getElementById('ex-currency'); if (el) el.value = state.settings.travelCurrency; }, 0);
+  if (isEdit) {
+    document.getElementById('delete-expense').addEventListener('click', () => {
+      if (confirm(`Delete expense "${existing.title}"?`)) {
+        trip.expenses = trip.expenses.filter(x => x.id !== existing.id);
+        closeBottomSheet(); render();
+      }
+    });
+  }
 }
 
-function openBudgetSheet() {
-  const s = state.settings;
-  const html = `<div class="input-card"><div class="field-label">TRIP NAME</div><input type="text" id="trip-name" value="${escapeAttr(s.tripName || '')}" placeholder="Tokyo · May 2026"></div>
-    <div class="input-card"><div class="row" style="margin-top: 4px;"><div class="col"><div class="field-label">START DATE</div><input type="date" id="trip-start" value="${escapeAttr(s.tripStart || '')}" style="margin-top: 4px;"></div><div class="col"><div class="field-label">END DATE</div><input type="date" id="trip-end" value="${escapeAttr(s.tripEnd || '')}" style="margin-top: 4px;"></div></div></div>
-    <div class="input-card"><div class="field-label">BUDGET TOTAL (${escapeHtml(s.homeCurrencySymbol)})</div><input type="number" id="trip-budget" min="0" step="50" value="${s.budgetTotal}" style="margin-top: 4px;"><div class="input-hint">Daily pace = total ÷ trip length</div></div>`;
-  openBottomSheet('Trip details', html, () => {
+function openTripSwitcher() {
+  const cards = state.trips.map(t => {
+    const isActive = t.id === state.activeTripId;
+    return `<div class="card-block" style="margin-top: 10px;">
+      <button class="trip-row-mini ${isActive ? 'active' : ''}" data-switch-trip="${escapeAttr(t.id)}">
+        <i class="ti ti-plane" style="color: ${isActive ? 'var(--accent-text)' : 'var(--text-3)'}; font-size: 16px;"></i>
+        <div style="flex: 1; min-width: 0; text-align: left;">
+          <div style="font-size: 13px; font-weight: 500; color: var(--text);">${escapeHtml(t.name)}</div>
+          <div style="font-size: 11px; color: var(--text-3);">${escapeHtml(s_fmtDate(t.tripStart))} → ${escapeHtml(s_fmtDate(t.tripEnd))} · ${escapeHtml(t.travelLabel)} · ${escapeHtml(t.travelCurrency)}</div>
+        </div>
+        ${isActive ? '<i class="ti ti-check picker-check"></i>' : ''}
+      </button>
+      <div class="field-row" data-trip-edit="${escapeAttr(t.id)}" style="cursor: pointer;">
+        <div class="field-icon"><i class="ti ti-pencil"></i></div>
+        <div class="field-content"><div class="field-label">EDIT</div></div>
+        <div class="chevron"><i class="ti ti-chevron-right"></i></div>
+      </div>
+      <div class="field-row" data-trip-delete="${escapeAttr(t.id)}" style="cursor: pointer;">
+        <div class="field-icon"><i class="ti ti-x" style="color: var(--accent-text);"></i></div>
+        <div class="field-content"><div class="field-label" style="color: var(--accent-text);">DELETE</div></div>
+      </div>
+    </div>`;
+  }).join('');
+  const html = `<div class="lbl section-label">YOUR TRIPS</div>
+    ${cards}
+    <button class="btn-add" data-trip-new><i class="ti ti-plus"></i> new trip</button>`;
+  openBottomSheet('Trips', html, null, { hideSave: true });
+  document.querySelectorAll('[data-switch-trip]').forEach(b => b.addEventListener('click', () => {
+    state.activeTripId = b.getAttribute('data-switch-trip');
+    closeBottomSheet(); render();
+  }));
+  document.querySelectorAll('[data-trip-edit]').forEach(b => b.addEventListener('click', () => {
+    const t = state.trips.find(x => x.id === b.getAttribute('data-trip-edit'));
+    if (t) { closeBottomSheet(); setTimeout(() => openTripDetailsSheet(t), 200); }
+  }));
+  document.querySelectorAll('[data-trip-delete]').forEach(b => b.addEventListener('click', () => {
+    const t = state.trips.find(x => x.id === b.getAttribute('data-trip-delete'));
+    if (!t) return;
+    if (state.trips.length <= 1) { alert('Cannot delete your only trip. Create another one first.'); return; }
+    if (confirm(`Delete "${t.name}" and all its events, expenses, and notes? This cannot be undone.`)) {
+      const idx = state.trips.findIndex(x => x.id === t.id);
+      const wasActive = t.id === state.activeTripId;
+      state.trips = state.trips.filter(x => x.id !== t.id);
+      if (wasActive) state.activeTripId = state.trips[Math.max(0, idx - 1)].id;
+      closeBottomSheet(); render();
+    }
+  }));
+  document.querySelector('[data-trip-new]').addEventListener('click', () => {
+    closeBottomSheet(); setTimeout(() => openTripDetailsSheet(null), 200);
+  });
+}
+
+function openTripDetailsSheet(existingTrip) {
+  const isNew = !existingTrip;
+  const t = existingTrip || { name: '', tripStart: '', tripEnd: '', travelZone: 'Asia/Tokyo', travelLabel: 'TYO', travelCurrency: 'JPY', travelCurrencySymbol: '¥', budgetTotal: 1000 };
+  const tzRows = TIMEZONES.map(z => `<option value="${z.tz}" data-label="${escapeAttr(z.label)}" ${z.tz === t.travelZone ? 'selected' : ''}>${escapeHtml(z.name)} · ${escapeHtml(z.label)}</option>`).join('');
+  const curRows = CURRENCIES.map(c => `<option value="${c.code}" data-sym="${escapeAttr(c.symbol)}" ${c.code === t.travelCurrency ? 'selected' : ''}>${escapeHtml(c.code)} ${escapeHtml(c.symbol)} · ${escapeHtml(c.name)}</option>`).join('');
+  const html = `<div class="input-card"><div class="field-label">TRIP NAME</div><input type="text" id="trip-name" value="${escapeAttr(t.name || '')}" placeholder="Korea · May 2026"></div>
+    <div class="input-card"><div class="row" style="margin-top: 4px;"><div class="col"><div class="field-label">START DATE</div><input type="date" id="trip-start" value="${escapeAttr(t.tripStart || '')}" style="margin-top: 4px;"></div><div class="col"><div class="field-label">END DATE</div><input type="date" id="trip-end" value="${escapeAttr(t.tripEnd || '')}" style="margin-top: 4px;"></div></div></div>
+    <div class="input-card"><div class="field-label">TRAVEL TIMEZONE</div><select id="trip-zone" style="margin-top: 4px;">${tzRows}</select></div>
+    <div class="input-card"><div class="field-label">TRAVEL CURRENCY</div><select id="trip-currency" style="margin-top: 4px;">${curRows}</select></div>
+    <div class="input-card"><div class="field-label">BUDGET TOTAL ($)</div><input type="number" id="trip-budget" min="0" step="50" value="${t.budgetTotal}" style="margin-top: 4px;"><div class="input-hint">Daily pace = total ÷ trip length</div></div>`;
+  openBottomSheet(isNew ? 'New trip' : 'Trip details', html, () => {
+    const name = document.getElementById('trip-name').value.trim();
     const start = document.getElementById('trip-start').value;
     const end = document.getElementById('trip-end').value;
     const budget = parseFloat(document.getElementById('trip-budget').value);
+    if (!name) { alert('Trip name required'); return false; }
     if (start && end && new Date(end) < new Date(start)) { alert('End date must be after start'); return false; }
     if (isNaN(budget) || budget < 0) { alert('Budget must be a positive number'); return false; }
-    state.settings.tripName = document.getElementById('trip-name').value.trim();
-    state.settings.tripStart = start || null;
-    state.settings.tripEnd = end || null;
-    state.settings.budgetTotal = budget;
+    const zoneSel = document.getElementById('trip-zone');
+    const curSel = document.getElementById('trip-currency');
+    const zone = zoneSel.value;
+    const zoneLabel = zoneSel.options[zoneSel.selectedIndex].getAttribute('data-label');
+    const currency = curSel.value;
+    const currencySymbol = curSel.options[curSel.selectedIndex].getAttribute('data-sym');
+    if (isNew) {
+      const nt = { id: newId(), name, tripStart: start || null, tripEnd: end || null, travelZone: zone, travelLabel: zoneLabel, travelCurrency: currency, travelCurrencySymbol: currencySymbol, budgetTotal: budget, events: [], expenses: [], notes: [] };
+      state.trips.push(nt);
+      state.activeTripId = nt.id;
+      if (!state.settings.fxRates[currency] && currency !== state.settings.homeCurrency) state.settings.fxRates[currency] = 1;
+    } else {
+      existingTrip.name = name;
+      existingTrip.tripStart = start || null;
+      existingTrip.tripEnd = end || null;
+      existingTrip.travelZone = zone;
+      existingTrip.travelLabel = zoneLabel;
+      existingTrip.travelCurrency = currency;
+      existingTrip.travelCurrencySymbol = currencySymbol;
+      existingTrip.budgetTotal = budget;
+      if (!state.settings.fxRates[currency] && currency !== state.settings.homeCurrency) state.settings.fxRates[currency] = 1;
+    }
     render();
   });
 }
 
 function openTimezonePicker(field) {
-  const current = field === 'home' ? state.settings.homeZone : state.settings.travelZone;
+  // Only "home" supported now — travel zone lives in trip details
+  const current = state.settings.homeZone;
   const now = new Date();
   const rows = TIMEZONES.map(t => {
     const time = fmtTimeInZone(now, t.tz);
@@ -854,17 +1086,17 @@ function openTimezonePicker(field) {
       ${sel ? '<i class="ti ti-check picker-check"></i>' : ''}
     </button>`;
   }).join('');
-  openBottomSheet(`${field === 'home' ? 'Home' : 'Travel'} timezone`, `<div style="max-height: 55vh; overflow-y: auto;">${rows}</div>`, null, { hideSave: true });
+  openBottomSheet('Home timezone', `<div style="max-height: 55vh; overflow-y: auto;">${rows}</div>`, null, { hideSave: true });
   document.querySelectorAll('.picker-row[data-tz]').forEach(b => b.addEventListener('click', () => {
-    const tz = b.getAttribute('data-tz'), label = b.getAttribute('data-label');
-    if (field === 'home') { state.settings.homeZone = tz; state.settings.homeLabel = label; }
-    else { state.settings.travelZone = tz; state.settings.travelLabel = label; }
+    state.settings.homeZone = b.getAttribute('data-tz');
+    state.settings.homeLabel = b.getAttribute('data-label');
     closeBottomSheet(); render();
   }));
 }
 
 function openCurrencyPicker(field) {
-  const current = field === 'home' ? state.settings.homeCurrency : state.settings.travelCurrency;
+  // Only "home" supported now — travel currency lives in trip details
+  const current = state.settings.homeCurrency;
   const rows = CURRENCIES.map(c => {
     const sel = c.code === current;
     return `<button class="picker-row ${sel ? 'selected' : ''}" data-code="${escapeAttr(c.code)}" data-sym="${escapeAttr(c.symbol)}">
@@ -876,11 +1108,10 @@ function openCurrencyPicker(field) {
       ${sel ? '<i class="ti ti-check picker-check"></i>' : ''}
     </button>`;
   }).join('');
-  openBottomSheet(`${field === 'home' ? 'Home' : 'Travel'} currency`, `<div style="max-height: 55vh; overflow-y: auto;">${rows}</div>`, null, { hideSave: true });
+  openBottomSheet('Home currency', `<div style="max-height: 55vh; overflow-y: auto;">${rows}</div>`, null, { hideSave: true });
   document.querySelectorAll('.picker-row[data-code]').forEach(b => b.addEventListener('click', () => {
-    const code = b.getAttribute('data-code'), sym = b.getAttribute('data-sym');
-    if (field === 'home') { state.settings.homeCurrency = code; state.settings.homeCurrencySymbol = sym; }
-    else { state.settings.travelCurrency = code; state.settings.travelCurrencySymbol = sym; }
+    state.settings.homeCurrency = b.getAttribute('data-code');
+    state.settings.homeCurrencySymbol = b.getAttribute('data-sym');
     closeBottomSheet(); render();
   }));
 }
@@ -902,22 +1133,26 @@ function openQuietHoursPicker() {
   setTimeout(() => { document.getElementById('quiet-start').value = s.quietStartHour; document.getElementById('quiet-end').value = s.quietEndHour; }, 0);
 }
 
-function openFxRatePicker() {
+function openFxRatesSheet() {
   const s = state.settings;
-  const html = `<div class="input-card">
-    <div class="field-label">EXCHANGE RATE</div>
-    <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 6px;">
-      <span class="pixel-font" style="font-size: 12px; color: var(--text-2);">1 ${escapeHtml(s.travelCurrency)} =</span>
-      <input type="number" id="fx-rate" step="0.0001" min="0" value="${s.fxRate}" style="flex: 1; font-size: 18px; font-weight: 500;">
-      <span class="pixel-font" style="font-size: 12px; color: var(--text-2);">${escapeHtml(s.homeCurrency)}</span>
-    </div>
-    <div class="input-hint">Manual for now · auto-refresh from API not yet wired</div>
-  </div>`;
-  openBottomSheet('FX rate', html, () => {
-    const r = parseFloat(document.getElementById('fx-rate').value);
-    if (isNaN(r) || r <= 0) { alert('Rate must be positive'); return false; }
-    state.settings.fxRate = r;
-    state.settings.fxLastRefresh = Date.now();
+  // Show all currencies used by any trip
+  const usedCurrencies = new Set();
+  state.trips.forEach(t => { if (t.travelCurrency !== s.homeCurrency) usedCurrencies.add(t.travelCurrency); });
+  Object.keys(s.fxRates).forEach(c => { if (c !== s.homeCurrency) usedCurrencies.add(c); });
+  const list = Array.from(usedCurrencies);
+  if (list.length === 0) { alert('No travel currencies in use yet.'); return; }
+  const rows = list.map(c => `<div class="input-card">
+    <div class="field-label">1 ${escapeHtml(c)} = ${escapeHtml(s.homeCurrency)}</div>
+    <input type="number" data-fx="${escapeAttr(c)}" step="0.0001" min="0" value="${s.fxRates[c] || 1}" style="margin-top: 4px; font-size: 16px; font-weight: 500;">
+  </div>`).join('');
+  const html = `${rows}<div class="input-hint" style="text-align: center; margin: 4px 14px;">Manual for now · auto-refresh from API not yet wired</div>`;
+  openBottomSheet('FX rates', html, () => {
+    document.querySelectorAll('[data-fx]').forEach(el => {
+      const c = el.getAttribute('data-fx');
+      const r = parseFloat(el.value);
+      if (!isNaN(r) && r > 0) s.fxRates[c] = r;
+    });
+    s.fxLastRefresh = Date.now();
     render();
   });
 }
@@ -944,6 +1179,7 @@ function render() {
   else if (state.activeTab === 'notes') renderNotes();
   else if (state.activeTab === 'settings') renderSettings();
   applyIcons();
+  saveState();
 }
 
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { state.activeTab = t.dataset.tab; document.querySelectorAll('.tab').forEach(x => x.removeAttribute('aria-current')); t.setAttribute('aria-current', 'page'); render(); document.getElementById('scroll-area').scrollTop = 0; }));
@@ -956,8 +1192,21 @@ document.getElementById('bs-save').addEventListener('click', () => { if (_bsOnSa
 document.getElementById('bs-backdrop').addEventListener('click', closeBottomSheet);
 document.getElementById('debug-badge').addEventListener('click', () => { const c = [null, 'idle', 'headsup', 'go', 'oops']; const i = c.indexOf(state.debugStateOverride); state.debugStateOverride = c[(i + 1) % c.length]; renderCat(); if (state.activeTab === 'trip') renderTrip(); });
 
-function init() { seedTripDates(); seedEvents(); seedExpenses(); seedNotes(); render(); setInterval(() => { renderClocks(); renderCat(); if (state.activeTab === 'trip') renderTrip(); }, 30000); }
+function init() {
+  if (!loadState()) seedTrips();
+  render();
+  setInterval(() => {
+    renderClocks(); renderCat();
+    if (state.activeTab === 'trip') renderTrip();
+  }, 30000);
+}
 init();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => { /* SW unavailable — app still works, just no offline */ });
+  });
+}
 </script>
 </body>
 </html>
