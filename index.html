@@ -401,6 +401,11 @@ function loadState() {
     const d = JSON.parse(raw);
     if (!d || !Array.isArray(d.trips) || d.trips.length === 0) return false;
     state.trips = d.trips;
+    // Heal stale travelLabels — single source of truth is the TIMEZONES table.
+    state.trips.forEach(t => {
+      const z = TIMEZONES.find(z => z.tz === t.travelZone);
+      if (z && t.travelLabel !== z.label) t.travelLabel = z.label;
+    });
     state.activeTripId = d.activeTripId || d.trips[0].id;
     if (d.settings) state.settings = { ...state.settings, ...d.settings };
     return true;
@@ -418,7 +423,7 @@ function seedTrips() {
     id: 'trip-korea',
     name: 'Korea · May 2026',
     tripStart: offsetDays(-2), tripEnd: offsetDays(14),
-    travelZone: 'Asia/Seoul', travelLabel: 'ICN',
+    travelZone: 'Asia/Seoul', travelLabel: 'SEL',
     travelCurrency: 'KRW', travelCurrencySymbol: '₩',
     budgetTotal: 2500,
     events: [], expenses: [], notes: [],
