@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Biscuit</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.4.0/tabler-icons.min.css">
+<style>
+:root {
+  --bg: #FAF6F0;
+  --bg-frame: #E8E0D5;
+  --card: #FFFFFF;
+  --border: #EBE3D8;
+  --border-strong: #D4C9B8;
+  --text: #2B2620;
+  --text-2: #8A847A;
+  --text-3: #B4AEA3;
+  --accent: #FF8C73;
+  --accent-bg: #FFE3D8;
+  --accent-text: #C25840;
+  --cat-pink: #FFB0A0;
+  --cat-dark: #4A4540;
+  --cat-gray: #9A9590;
+  --success: #2A8B6B;
+  --radius: 14px;
+  --radius-lg: 28px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; -webkit-font-smoothing: antialiased; padding: 20px; }
+@media (max-width: 480px) { body { background: var(--bg); padding: 0; } }
+.phone { width: 380px; height: 760px; background: var(--bg); border-radius: var(--radius-lg); border: 1px solid var(--border-strong); overflow: hidden; position: relative; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.08); }
+@media (max-width: 480px) { .phone { width: 100vw; height: 100vh; border-radius: 0; border: 0; box-shadow: none; } }
+.pixel-font { font-family: "Courier New", "Lucida Console", monospace; font-weight: 700; letter-spacing: 0.5px; }
+.lbl { font-size: 10px; letter-spacing: 1.5px; font-weight: 700; color: var(--text-2); text-transform: uppercase; }
+.status-bar { flex-shrink: 0; height: 30px; display: flex; align-items: center; justify-content: space-between; padding: 6px 18px 0; font-size: 12px; }
+.status-bar .pixel-font { font-size: 13px; color: var(--text); }
+.status-bar .signal { font-size: 11px; color: var(--text-2); letter-spacing: 2px; }
+.scroll-area { flex: 1; overflow-y: auto; position: relative; }
+.scroll-area::-webkit-scrollbar { width: 4px; }
+.scroll-area::-webkit-scrollbar-track { background: transparent; }
+.scroll-area::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+.dual-clock-wrap { position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 4px 0 8px; }
+.dual-clock { margin: 0 12px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; display: flex; align-items: center; }
+.dual-clock .zone { flex: 1; }
+.dual-clock .zone.right { text-align: right; }
+.dual-clock .time { font-size: 19px; margin-top: 3px; color: var(--text); }
+.dual-clock .date { font-size: 10px; color: var(--text-3); margin-top: 1px; }
+.offset { background: var(--accent-bg); color: var(--accent-text); font-size: 10px; font-weight: 700; padding: 4px 9px; border-radius: 999px; letter-spacing: 0.5px; margin: 0 10px; }
+.nav { flex-shrink: 0; border-top: 0.5px solid var(--border); display: flex; padding: 10px 0 16px; background: var(--bg); }
+.tab { flex: 1; text-align: center; cursor: pointer; background: none; border: none; padding: 0; font-family: inherit; }
+.tab-icon { font-size: 20px; line-height: 1; color: var(--text-3); }
+.tab-label { font-size: 9px; color: var(--text-2); letter-spacing: 1px; font-weight: 700; margin-top: 4px; text-transform: uppercase; }
+.tab[aria-current="page"] .tab-icon, .tab[aria-current="page"] .tab-label { color: var(--accent); }
+.cat-fab { position: absolute; right: 16px; bottom: 84px; background: none; border: none; padding: 0; cursor: pointer; z-index: 5; font-family: inherit; }
+.cat-wrap { position: relative; }
+.cat-badge { position: absolute; bottom: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); border: 2px solid var(--cat-dark); color: white; font-size: 13px; font-weight: 700; line-height: 1; display: flex; align-items: center; justify-content: center; padding-bottom: 1px; }
+.cat-bubble { position: absolute; right: 12px; bottom: 52px; background: var(--card); border: 2px solid var(--cat-dark); border-radius: 4px; padding: 4px 9px; white-space: nowrap; pointer-events: none; }
+.cat-bubble .pixel-font { font-size: 11px; line-height: 1; color: var(--text); }
+.cat-bubble .tail-outer { position: absolute; bottom: -9px; right: 7px; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 9px solid var(--cat-dark); }
+.cat-bubble .tail-inner { position: absolute; bottom: -5px; right: 9px; width: 0; height: 0; border-left: 3px solid transparent; border-right: 3px solid transparent; border-top: 5px solid var(--card); }
+.cat-hidden { display: none !important; }
+.dotted-rule { height: 4px; background-image: radial-gradient(circle, #C8BFB0 1px, transparent 1.2px); background-size: 6px 4px; background-repeat: repeat-x; background-position: 0 50%; }
+.up-next { margin: 6px 12px 0; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.up-next-header { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.up-next-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+.up-next-title { font-size: 17px; font-weight: 500; line-height: 1.3; margin-bottom: 8px; }
+.up-next-meta { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+.day-header { margin: 16px 16px 4px; display: flex; align-items: center; justify-content: space-between; }
+.evt-list { margin: 0 16px; }
+.evt-row { display: flex; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid var(--border); align-items: center; cursor: pointer; }
+.evt-row:last-child { border-bottom: 0; }
+.evt-row.checked { opacity: 0.45; }
+.evt-row.checked .evt-title { text-decoration: line-through; }
+.evt-time { width: 72px; flex-shrink: 0; font-size: 12px; color: var(--text); white-space: nowrap; }
+.evt-title { font-size: 13px; font-weight: 500; color: var(--text); }
+.evt-meta { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+.evt-check { width: 20px; height: 20px; flex-shrink: 0; border-radius: 50%; border: 1.5px solid var(--border-strong); display: flex; align-items: center; justify-content: center; font-size: 11px; color: white; background: transparent; cursor: pointer; padding: 0; }
+.evt-row.checked .evt-check { background: var(--success); border-color: var(--success); }
+.evt-row.checked .evt-check i { display: block; }
+.evt-check i { display: none; }
+.evt-price { font-size: 11px; color: var(--text-2); font-family: "Courier New", monospace; font-weight: 700; flex-shrink: 0; }
+.budget-card { margin: 14px 12px 0; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; }
+.section-label { margin: 6px 18px 6px; }
+.card-block { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin: 0 12px 14px; overflow: hidden; }
+.field-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 0.5px solid var(--border); }
+.field-row:last-child { border-bottom: 0; }
+.field-icon { color: var(--text-3); font-size: 17px; line-height: 1; width: 18px; flex-shrink: 0; text-align: center; }
+.field-content { flex: 1; min-width: 0; }
+.field-label { font-size: 9px; letter-spacing: 1.5px; font-weight: 700; color: var(--text-3); line-height: 1; text-transform: uppercase; }
+.field-value { font-size: 13px; color: var(--text); margin-top: 3px; line-height: 1.3; }
+.field-hint { font-size: 11px; color: var(--text-3); margin-top: 3px; }
+.chevron { color: var(--border-strong); font-size: 14px; flex-shrink: 0; }
+.toggle { width: 36px; height: 20px; background: #C8BFB0; border-radius: 999px; position: relative; flex-shrink: 0; cursor: pointer; border: none; padding: 0; transition: background 0.2s; }
+.toggle.on { background: var(--accent); }
+.toggle .thumb { width: 14px; height: 14px; background: white; border-radius: 50%; position: absolute; top: 3px; left: 3px; transition: left 0.2s; pointer-events: none; }
+.toggle.on .thumb { left: 19px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-bg); color: var(--accent-text); font-size: 11px; font-weight: 600; padding: 5px 10px; border: 1px solid transparent; border-radius: 999px; margin-right: 6px; margin-bottom: 6px; line-height: 1; vertical-align: middle; }
+.pill .x { cursor: pointer; opacity: 0.6; font-size: 12px; line-height: 1; }
+.pill .x:hover { opacity: 1; }
+.pill-add { display: inline-flex; align-items: center; gap: 6px; background: transparent; color: var(--text-2); border: 1px dashed var(--border-strong); font-size: 11px; font-weight: 600; padding: 5px 10px; border-radius: 999px; margin-right: 6px; margin-bottom: 6px; line-height: 1; vertical-align: middle; cursor: pointer; font-family: inherit; }
+.modal-overlay { position: absolute; inset: 0; background: var(--bg); z-index: 30; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.25s ease; }
+.modal-overlay.open { transform: translateY(0); }
+.modal-header { flex-shrink: 0; padding: 14px 16px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 0.5px solid var(--border); }
+.modal-title { font-size: 15px; font-weight: 600; }
+.modal-btn { background: none; border: none; font-size: 13px; font-weight: 500; cursor: pointer; padding: 4px 8px; font-family: inherit; }
+.modal-btn.cancel { color: var(--text-2); }
+.modal-btn.save { color: var(--accent); }
+.modal-body { flex: 1; overflow-y: auto; padding: 14px 0 40px; }
+.input-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin: 0 12px 14px; }
+.input-card .field-label { margin-bottom: 6px; }
+.input-card input, .input-card textarea, .input-card select { width: 100%; border: none; background: transparent; font-family: inherit; font-size: 13px; color: var(--text); padding: 0; outline: none; resize: none; }
+.input-card input::placeholder, .input-card textarea::placeholder { color: var(--text-3); }
+.input-card .row { display: flex; gap: 14px; }
+.input-card .col { flex: 1; }
+.input-card .divider { height: 0.5px; background: var(--border); margin: 10px 0; }
+.input-hint { font-size: 10px; color: var(--text-3); margin-top: 4px; }
+.bs-backdrop { position: absolute; inset: 0; background: rgba(43, 38, 32, 0.35); z-index: 25; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+.bs-backdrop.open { opacity: 1; pointer-events: auto; }
+.bottom-sheet { position: absolute; bottom: 0; left: 0; right: 0; background: var(--bg); z-index: 30; border-top-left-radius: 22px; border-top-right-radius: 22px; box-shadow: 0 -8px 32px rgba(0,0,0,0.12); transform: translateY(100%); transition: transform 0.25s ease; max-height: 82%; display: flex; flex-direction: column; }
+.bottom-sheet.open { transform: translateY(0); }
+.bs-grabber { width: 36px; height: 4px; background: var(--border-strong); border-radius: 2px; margin: 8px auto 4px; flex-shrink: 0; }
+.bs-header { flex-shrink: 0; padding: 6px 16px 12px; display: flex; align-items: center; justify-content: space-between; }
+.bs-body { overflow-y: auto; padding: 4px 0 24px; }
+.expense-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 0.5px solid var(--border); cursor: pointer; }
+.expense-row:last-child { border-bottom: 0; }
+.expense-row.from-event { background: linear-gradient(to right, rgba(255,140,115,0.04), transparent); }
+.expense-cat-icon { width: 32px; height: 32px; background: var(--accent-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent-text); font-size: 14px; flex-shrink: 0; }
+.expense-content { flex: 1; min-width: 0; }
+.expense-title { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+.expense-title .link-mark { font-size: 9px; color: var(--accent); background: var(--accent-bg); padding: 1px 5px; border-radius: 999px; font-weight: 700; letter-spacing: 0.5px; }
+.expense-meta { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+.expense-amount { text-align: right; flex-shrink: 0; }
+.expense-amount .native { font-size: 13px; font-weight: 500; }
+.expense-amount .home { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+.note-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin: 0 12px 12px; overflow: hidden; }
+.note-card-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 0.5px solid var(--border); }
+.note-title-input { flex: 1; border: none; background: transparent; font-family: inherit; font-size: 14px; font-weight: 600; color: var(--text); padding: 4px 0; outline: none; min-width: 0; }
+.note-title-input::placeholder { color: var(--text-3); font-weight: 500; }
+.note-type-seg { display: flex; background: var(--bg); border-radius: 999px; padding: 2px; flex-shrink: 0; }
+.note-type-seg button { background: none; border: none; font-family: inherit; font-size: 9px; font-weight: 700; letter-spacing: 0.5px; padding: 4px 8px; border-radius: 999px; cursor: pointer; color: var(--text-3); }
+.note-type-seg button.active { background: var(--card); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.note-delete-btn { background: none; border: none; cursor: pointer; padding: 4px; color: var(--text-3); font-size: 16px; }
+.note-delete-btn:hover { color: var(--accent-text); }
+.note-body { padding: 8px 12px 12px; }
+.note-textarea { width: 100%; border: none; background: transparent; font-family: inherit; font-size: 13px; color: var(--text); padding: 4px 0; outline: none; resize: none; min-height: 80px; line-height: 1.5; }
+.note-textarea::placeholder { color: var(--text-3); }
+.check-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
+.check-box { width: 18px; height: 18px; flex-shrink: 0; border-radius: 4px; border: 1.5px solid var(--border-strong); display: flex; align-items: center; justify-content: center; font-size: 10px; color: white; background: transparent; cursor: pointer; padding: 0; }
+.check-row.checked .check-box { background: var(--success); border-color: var(--success); }
+.check-row.checked .check-box i { display: block; }
+.check-box i { display: none; }
+.check-text { flex: 1; border: none; background: transparent; font-family: inherit; font-size: 13px; color: var(--text); padding: 4px 0; outline: none; }
+.check-text::placeholder { color: var(--text-3); }
+.check-row.checked .check-text { text-decoration: line-through; color: var(--text-2); }
+.check-del { background: none; border: none; color: var(--text-3); cursor: pointer; padding: 0 4px; opacity: 0; transition: opacity 0.15s; font-size: 14px; }
+.check-row:hover .check-del { opacity: 1; }
+.add-item-btn { background: transparent; border: none; color: var(--text-2); font-family: inherit; font-size: 12px; padding: 6px 0; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.add-item-btn:hover { color: var(--accent-text); }
+.add-cat-btn { display: block; margin: 4px auto 12px; background: transparent; border: 1px dashed var(--border-strong); color: var(--text-2); font-family: inherit; font-size: 12px; font-weight: 600; padding: 10px 16px; border-radius: 999px; cursor: pointer; }
+.add-cat-btn:hover { color: var(--accent-text); border-color: var(--accent); }
+.picker-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; width: 100%; background: transparent; border: none; border-bottom: 0.5px solid var(--border); text-align: left; cursor: pointer; font-family: inherit; color: var(--text); }
+.picker-row:last-child { border-bottom: 0; }
+.picker-row.selected { background: var(--accent-bg); }
+.picker-row .picker-check { color: var(--accent); font-size: 16px; flex-shrink: 0; }
+.picker-row:hover { background: var(--bg-frame); }
+.picker-row.selected:hover { background: var(--accent-bg); }
+.trip-header-card { margin: 6px 12px 0; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; cursor: pointer; position: relative; }
+.trip-header-card:hover { border-color: var(--border-strong); }
+.trip-edit-pencil { position: absolute; top: 12px; right: 12px; color: var(--text-3); font-size: 14px; }
+.btn-primary { display: inline-block; background: var(--accent); color: white; border: none; font-family: inherit; font-size: 13px; font-weight: 600; padding: 10px 16px; border-radius: 999px; cursor: pointer; }
+.btn-ghost { background: transparent; color: var(--text-2); border: 1px solid var(--border-strong); padding: 10px 16px; border-radius: 999px; cursor: pointer; font-family: inherit; font-size: 13px; }
+.empty { text-align: center; padding: 40px 20px; color: var(--text-3); font-size: 13px; }
+.debug-badge { position: absolute; top: 6px; left: 12px; background: var(--text); color: var(--accent); font-size: 9px; padding: 2px 8px; border-radius: 999px; font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: 1px; z-index: 100; cursor: pointer; opacity: 0.8; }
+.add-fab-mini { position: absolute; right: 16px; bottom: 84px; z-index: 4; background: var(--accent); color: white; border: 2px solid var(--cat-dark); width: 48px; height: 48px; border-radius: 50%; font-size: 22px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; padding-bottom: 3px; font-family: inherit; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="debug-badge" id="debug-badge" title="Click to cycle cat state (debug)">DEBUG: <span id="debug-state">--</span></div>
+  <div class="status-bar">
+    <span class="pixel-font" id="status-time">--:--</span>
+    <span class="signal">▪▪▪</span>
+  </div>
+  <div class="scroll-area" id="scroll-area">
+    <div class="dual-clock-wrap" id="dual-clock-wrap">
+      <div class="dual-clock">
+        <div class="zone"><div class="lbl" id="home-label">ATL</div><div class="pixel-font time" id="clock-home">--:--</div><div class="date" id="date-home">--</div></div>
+        <div class="offset" id="offset-display">+--</div>
+        <div class="zone right"><div class="lbl" id="travel-label">TYO</div><div class="pixel-font time" id="clock-travel">--:--</div><div class="date" id="date-travel">--</div></div>
+      </div>
+    </div>
+    <div id="screen-content"></div>
+    <div style="height: 130px;"></div>
+  </div>
+
+  <button class="cat-fab" id="cat-fab" aria-label="Add event">
+    <div class="cat-wrap">
+      <div class="cat-bubble" id="cat-bubble"><span class="pixel-font" id="bubble-text">...</span><div class="tail-outer"></div><div class="tail-inner"></div></div>
+      <div id="cat-sprite"></div>
+      <div class="cat-badge">+</div>
+    </div>
+  </button>
+  <button class="add-fab-mini cat-hidden" id="add-fab-mini" aria-label="Add event">+</button>
+
+  <nav class="nav">
+    <button class="tab" data-tab="trip" aria-current="page"><div class="tab-icon"><i class="ti ti-calendar"></i></div><div class="tab-label">TRIP</div></button>
+    <button class="tab" data-tab="budget"><div class="tab-icon"><i class="ti ti-wallet"></i></div><div class="tab-label">BUDGET</div></button>
+    <button class="tab" data-tab="notes"><div class="tab-icon"><i class="ti ti-note"></i></div><div class="tab-label">NOTES</div></button>
+    <button class="tab" data-tab="settings"><div class="tab-icon"><i class="ti ti-settings"></i></div><div class="tab-label">SETTINGS</div></button>
+  </nav>
+
+  <div class="modal-overlay" id="modal">
+    <div class="modal-header"><button class="modal-btn cancel" id="modal-cancel">Cancel</button><div class="modal-title" id="modal-title">New event</div><button class="modal-btn save" id="modal-save">Save</button></div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+
+  <div class="bs-backdrop" id="bs-backdrop"></div>
+  <div class="bottom-sheet" id="bottom-sheet">
+    <div class="bs-grabber"></div>
+    <div class="bs-header"><button class="modal-btn cancel" id="bs-cancel">Cancel</button><div class="modal-title" id="bs-title">Title</div><button class="modal-btn save" id="bs-save">Save</button></div>
+    <div class="bs-body" id="bs-body"></div>
+  </div>
+</div>
+
+<script>
+const CAT_SVGS = {
+idle: `<svg width="48" height="44" viewBox="0 0 48 44" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><g fill="#9A9590"><rect x="8" y="2" width="4" height="2"/><rect x="36" y="2" width="4" height="2"/><rect x="10" y="4" width="4" height="2"/><rect x="34" y="4" width="4" height="2"/><rect x="6" y="6" width="2" height="2"/><rect x="12" y="6" width="4" height="2"/><rect x="32" y="6" width="4" height="2"/><rect x="40" y="6" width="2" height="2"/><rect x="6" y="8" width="2" height="2"/><rect x="12" y="8" width="6" height="2"/><rect x="30" y="8" width="6" height="2"/><rect x="40" y="8" width="2" height="2"/><rect x="6" y="10" width="36" height="2"/><rect x="6" y="12" width="36" height="2"/><rect x="6" y="14" width="36" height="2"/><rect x="6" y="16" width="36" height="2"/><rect x="6" y="18" width="36" height="2"/><rect x="6" y="20" width="36" height="2"/><rect x="6" y="22" width="6" height="2"/><rect x="18" y="22" width="12" height="2"/><rect x="36" y="22" width="6" height="2"/><rect x="6" y="24" width="36" height="2"/><rect x="8" y="26" width="14" height="2"/><rect x="26" y="26" width="14" height="2"/><rect x="6" y="28" width="4" height="2"/><rect x="16" y="28" width="6" height="2"/><rect x="26" y="28" width="6" height="2"/><rect x="38" y="28" width="4" height="2"/><rect x="8" y="30" width="2" height="2"/><rect x="16" y="30" width="6" height="2"/><rect x="26" y="30" width="6" height="2"/><rect x="38" y="30" width="2" height="2"/><rect x="6" y="32" width="4" height="2"/><rect x="16" y="32" width="4" height="2"/><rect x="22" y="32" width="4" height="2"/><rect x="28" y="32" width="4" height="2"/><rect x="38" y="32" width="4" height="2"/><rect x="8" y="34" width="32" height="2"/><rect x="6" y="36" width="36" height="2"/><rect x="6" y="38" width="36" height="2"/><rect x="6" y="40" width="36" height="2"/></g><g fill="#4A4540"><rect x="8" y="0" width="4" height="2"/><rect x="36" y="0" width="4" height="2"/><rect x="6" y="2" width="2" height="2"/><rect x="12" y="2" width="2" height="2"/><rect x="34" y="2" width="2" height="2"/><rect x="40" y="2" width="2" height="2"/><rect x="6" y="4" width="2" height="2"/><rect x="14" y="4" width="2" height="2"/><rect x="32" y="4" width="2" height="2"/><rect x="40" y="4" width="2" height="2"/><rect x="4" y="6" width="2" height="2"/><rect x="16" y="6" width="2" height="2"/><rect x="30" y="6" width="2" height="2"/><rect x="42" y="6" width="2" height="2"/><rect x="4" y="8" width="2" height="2"/><rect x="18" y="8" width="12" height="2"/><rect x="42" y="8" width="2" height="2"/><rect x="4" y="10" width="2" height="2"/><rect x="42" y="10" width="2" height="2"/><rect x="4" y="12" width="2" height="2"/><rect x="42" y="12" width="2" height="2"/><rect x="4" y="14" width="2" height="2"/><rect x="42" y="14" width="2" height="2"/><rect x="4" y="16" width="2" height="2"/><rect x="42" y="16" width="2" height="2"/><rect x="4" y="18" width="2" height="2"/><rect x="42" y="18" width="2" height="2"/><rect x="4" y="20" width="2" height="2"/><rect x="42" y="20" width="2" height="2"/><rect x="4" y="22" width="2" height="2"/><rect x="12" y="22" width="6" height="2"/><rect x="30" y="22" width="6" height="2"/><rect x="42" y="22" width="2" height="2"/><rect x="4" y="24" width="2" height="2"/><rect x="42" y="24" width="2" height="2"/><rect x="0" y="26" width="8" height="2"/><rect x="40" y="26" width="8" height="2"/><rect x="4" y="28" width="2" height="2"/><rect x="22" y="28" width="4" height="2"/><rect x="42" y="28" width="2" height="2"/><rect x="0" y="30" width="8" height="2"/><rect x="22" y="30" width="4" height="2"/><rect x="40" y="30" width="8" height="2"/><rect x="4" y="32" width="2" height="2"/><rect x="20" y="32" width="2" height="2"/><rect x="26" y="32" width="2" height="2"/><rect x="42" y="32" width="2" height="2"/><rect x="0" y="34" width="8" height="2"/><rect x="40" y="34" width="8" height="2"/><rect x="4" y="36" width="2" height="2"/><rect x="42" y="36" width="2" height="2"/><rect x="4" y="38" width="2" height="2"/><rect x="42" y="38" width="2" height="2"/><rect x="6" y="42" width="36" height="2"/></g><g fill="#FFB0A0"><rect x="8" y="4" width="2" height="2"/><rect x="38" y="4" width="2" height="2"/><rect x="8" y="6" width="4" height="2"/><rect x="36" y="6" width="4" height="2"/><rect x="8" y="8" width="4" height="2"/><rect x="36" y="8" width="4" height="2"/><rect x="22" y="26" width="4" height="2"/><rect x="10" y="28" width="6" height="2"/><rect x="32" y="28" width="6" height="2"/><rect x="10" y="30" width="6" height="2"/><rect x="32" y="30" width="6" height="2"/><rect x="10" y="32" width="6" height="2"/><rect x="32" y="32" width="6" height="2"/></g></svg>`,
+headsup: `<svg width="48" height="44" viewBox="0 0 48 44" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><g fill="#9A9590"><rect x="8" y="2" width="4" height="2"/><rect x="36" y="2" width="4" height="2"/><rect x="10" y="4" width="4" height="2"/><rect x="34" y="4" width="4" height="2"/><rect x="6" y="6" width="2" height="2"/><rect x="12" y="6" width="4" height="2"/><rect x="32" y="6" width="4" height="2"/><rect x="40" y="6" width="2" height="2"/><rect x="6" y="8" width="2" height="2"/><rect x="12" y="8" width="6" height="2"/><rect x="30" y="8" width="6" height="2"/><rect x="40" y="8" width="2" height="2"/><rect x="6" y="10" width="36" height="2"/><rect x="6" y="12" width="36" height="2"/><rect x="6" y="14" width="36" height="2"/><rect x="6" y="16" width="36" height="2"/><rect x="6" y="18" width="36" height="2"/><rect x="6" y="20" width="6" height="2"/><rect x="18" y="20" width="12" height="2"/><rect x="36" y="20" width="6" height="2"/><rect x="6" y="22" width="6" height="2"/><rect x="18" y="22" width="12" height="2"/><rect x="36" y="22" width="6" height="2"/><rect x="6" y="24" width="6" height="2"/><rect x="18" y="24" width="12" height="2"/><rect x="36" y="24" width="6" height="2"/><rect x="8" y="26" width="14" height="2"/><rect x="26" y="26" width="14" height="2"/><rect x="6" y="28" width="4" height="2"/><rect x="16" y="28" width="6" height="2"/><rect x="26" y="28" width="6" height="2"/><rect x="38" y="28" width="4" height="2"/><rect x="8" y="30" width="2" height="2"/><rect x="16" y="30" width="6" height="2"/><rect x="26" y="30" width="6" height="2"/><rect x="38" y="30" width="2" height="2"/><rect x="6" y="32" width="4" height="2"/><rect x="16" y="32" width="4" height="2"/><rect x="22" y="32" width="4" height="2"/><rect x="28" y="32" width="4" height="2"/><rect x="38" y="32" width="4" height="2"/><rect x="8" y="34" width="32" height="2"/><rect x="6" y="36" width="36" height="2"/><rect x="6" y="38" width="36" height="2"/><rect x="6" y="40" width="36" height="2"/></g><g fill="#4A4540"><rect x="8" y="0" width="4" height="2"/><rect x="36" y="0" width="4" height="2"/><rect x="6" y="2" width="2" height="2"/><rect x="12" y="2" width="2" height="2"/><rect x="34" y="2" width="2" height="2"/><rect x="40" y="2" width="2" height="2"/><rect x="6" y="4" width="2" height="2"/><rect x="14" y="4" width="2" height="2"/><rect x="32" y="4" width="2" height="2"/><rect x="40" y="4" width="2" height="2"/><rect x="4" y="6" width="2" height="2"/><rect x="16" y="6" width="2" height="2"/><rect x="30" y="6" width="2" height="2"/><rect x="42" y="6" width="2" height="2"/><rect x="4" y="8" width="2" height="2"/><rect x="18" y="8" width="12" height="2"/><rect x="42" y="8" width="2" height="2"/><rect x="4" y="10" width="2" height="2"/><rect x="42" y="10" width="2" height="2"/><rect x="4" y="12" width="2" height="2"/><rect x="42" y="12" width="2" height="2"/><rect x="4" y="14" width="2" height="2"/><rect x="42" y="14" width="2" height="2"/><rect x="4" y="16" width="2" height="2"/><rect x="42" y="16" width="2" height="2"/><rect x="4" y="18" width="2" height="2"/><rect x="42" y="18" width="2" height="2"/><rect x="4" y="20" width="2" height="2"/><rect x="12" y="20" width="6" height="2"/><rect x="30" y="20" width="6" height="2"/><rect x="42" y="20" width="2" height="2"/><rect x="4" y="22" width="2" height="2"/><rect x="12" y="22" width="6" height="2"/><rect x="30" y="22" width="6" height="2"/><rect x="42" y="22" width="2" height="2"/><rect x="4" y="24" width="2" height="2"/><rect x="12" y="24" width="6" height="2"/><rect x="30" y="24" width="6" height="2"/><rect x="42" y="24" width="2" height="2"/><rect x="0" y="26" width="8" height="2"/><rect x="40" y="26" width="8" height="2"/><rect x="4" y="28" width="2" height="2"/><rect x="22" y="28" width="4" height="2"/><rect x="42" y="28" width="2" height="2"/><rect x="0" y="30" width="8" height="2"/><rect x="22" y="30" width="4" height="2"/><rect x="40" y="30" width="8" height="2"/><rect x="4" y="32" width="2" height="2"/><rect x="20" y="32" width="2" height="2"/><rect x="26" y="32" width="2" height="2"/><rect x="42" y="32" width="2" height="2"/><rect x="0" y="34" width="8" height="2"/><rect x="40" y="34" width="8" height="2"/><rect x="4" y="36" width="2" height="2"/><rect x="42" y="36" width="2" height="2"/><rect x="4" y="38" width="2" height="2"/><rect x="42" y="38" width="2" height="2"/><rect x="6" y="42" width="36" height="2"/></g><g fill="#FFB0A0"><rect x="8" y="4" width="2" height="2"/><rect x="38" y="4" width="2" height="2"/><rect x="8" y="6" width="4" height="2"/><rect x="36" y="6" width="4" height="2"/><rect x="8" y="8" width="4" height="2"/><rect x="36" y="8" width="4" height="2"/><rect x="22" y="26" width="4" height="2"/><rect x="10" y="28" width="6" height="2"/><rect x="32" y="28" width="6" height="2"/><rect x="10" y="30" width="6" height="2"/><rect x="32" y="30" width="6" height="2"/><rect x="10" y="32" width="6" height="2"/><rect x="32" y="32" width="6" height="2"/></g></svg>`,
+go: `<svg width="48" height="44" viewBox="0 0 48 44" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><g fill="#9A9590"><rect x="8" y="2" width="4" height="2"/><rect x="36" y="2" width="4" height="2"/><rect x="10" y="4" width="4" height="2"/><rect x="34" y="4" width="4" height="2"/><rect x="6" y="6" width="2" height="2"/><rect x="12" y="6" width="4" height="2"/><rect x="32" y="6" width="4" height="2"/><rect x="40" y="6" width="2" height="2"/><rect x="6" y="8" width="2" height="2"/><rect x="12" y="8" width="6" height="2"/><rect x="30" y="8" width="6" height="2"/><rect x="40" y="8" width="2" height="2"/><rect x="6" y="10" width="36" height="2"/><rect x="6" y="12" width="36" height="2"/><rect x="6" y="14" width="36" height="2"/><rect x="6" y="16" width="36" height="2"/><rect x="6" y="18" width="36" height="2"/><rect x="6" y="20" width="6" height="2"/><rect x="14" y="20" width="4" height="2"/><rect x="18" y="20" width="12" height="2"/><rect x="32" y="20" width="4" height="2"/><rect x="36" y="20" width="6" height="2"/><rect x="6" y="22" width="6" height="2"/><rect x="18" y="22" width="12" height="2"/><rect x="36" y="22" width="6" height="2"/><rect x="6" y="24" width="6" height="2"/><rect x="18" y="24" width="12" height="2"/><rect x="36" y="24" width="6" height="2"/><rect x="8" y="26" width="14" height="2"/><rect x="26" y="26" width="14" height="2"/><rect x="6" y="28" width="4" height="2"/><rect x="16" y="28" width="18" height="2"/><rect x="38" y="28" width="4" height="2"/><rect x="8" y="30" width="2" height="2"/><rect x="16" y="30" width="6" height="2"/><rect x="26" y="30" width="6" height="2"/><rect x="38" y="30" width="2" height="2"/><rect x="6" y="32" width="4" height="2"/><rect x="16" y="32" width="6" height="2"/><rect x="26" y="32" width="6" height="2"/><rect x="38" y="32" width="4" height="2"/><rect x="8" y="34" width="32" height="2"/><rect x="6" y="36" width="36" height="2"/><rect x="6" y="38" width="36" height="2"/><rect x="6" y="40" width="36" height="2"/></g><g fill="#4A4540"><rect x="8" y="0" width="4" height="2"/><rect x="36" y="0" width="4" height="2"/><rect x="6" y="2" width="2" height="2"/><rect x="12" y="2" width="2" height="2"/><rect x="34" y="2" width="2" height="2"/><rect x="40" y="2" width="2" height="2"/><rect x="6" y="4" width="2" height="2"/><rect x="14" y="4" width="2" height="2"/><rect x="32" y="4" width="2" height="2"/><rect x="40" y="4" width="2" height="2"/><rect x="4" y="6" width="2" height="2"/><rect x="16" y="6" width="2" height="2"/><rect x="30" y="6" width="2" height="2"/><rect x="42" y="6" width="2" height="2"/><rect x="4" y="8" width="2" height="2"/><rect x="18" y="8" width="12" height="2"/><rect x="42" y="8" width="2" height="2"/><rect x="4" y="10" width="2" height="2"/><rect x="42" y="10" width="2" height="2"/><rect x="4" y="12" width="2" height="2"/><rect x="42" y="12" width="2" height="2"/><rect x="4" y="14" width="2" height="2"/><rect x="42" y="14" width="2" height="2"/><rect x="4" y="16" width="2" height="2"/><rect x="42" y="16" width="2" height="2"/><rect x="4" y="18" width="2" height="2"/><rect x="42" y="18" width="2" height="2"/><rect x="4" y="20" width="2" height="2"/><rect x="12" y="20" width="2" height="2"/><rect x="30" y="20" width="2" height="2"/><rect x="42" y="20" width="2" height="2"/><rect x="4" y="22" width="2" height="2"/><rect x="12" y="22" width="6" height="2"/><rect x="30" y="22" width="6" height="2"/><rect x="42" y="22" width="2" height="2"/><rect x="4" y="24" width="2" height="2"/><rect x="12" y="24" width="6" height="2"/><rect x="30" y="24" width="6" height="2"/><rect x="42" y="24" width="2" height="2"/><rect x="0" y="26" width="8" height="2"/><rect x="40" y="26" width="8" height="2"/><rect x="4" y="28" width="2" height="2"/><rect x="34" y="28" width="2" height="2"/><rect x="42" y="28" width="2" height="2"/><rect x="0" y="30" width="8" height="2"/><rect x="22" y="30" width="4" height="2"/><rect x="40" y="30" width="8" height="2"/><rect x="4" y="32" width="2" height="2"/><rect x="22" y="32" width="4" height="2"/><rect x="42" y="32" width="2" height="2"/><rect x="0" y="34" width="8" height="2"/><rect x="40" y="34" width="8" height="2"/><rect x="4" y="36" width="2" height="2"/><rect x="42" y="36" width="2" height="2"/><rect x="4" y="38" width="2" height="2"/><rect x="42" y="38" width="2" height="2"/><rect x="6" y="42" width="36" height="2"/></g><g fill="#FFFFFF"><rect x="10" y="20" width="2" height="2"/><rect x="30" y="20" width="2" height="2"/></g><g fill="#FFB0A0"><rect x="8" y="4" width="2" height="2"/><rect x="38" y="4" width="2" height="2"/><rect x="8" y="6" width="4" height="2"/><rect x="36" y="6" width="4" height="2"/><rect x="8" y="8" width="4" height="2"/><rect x="36" y="8" width="4" height="2"/><rect x="22" y="26" width="4" height="2"/><rect x="10" y="28" width="6" height="2"/><rect x="32" y="28" width="6" height="2"/><rect x="10" y="30" width="6" height="2"/><rect x="32" y="30" width="6" height="2"/><rect x="10" y="32" width="6" height="2"/><rect x="32" y="32" width="6" height="2"/></g></svg>`,
+oops: `<svg width="48" height="44" viewBox="0 0 48 44" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><g fill="#9A9590"><rect x="14" y="4" width="20" height="2"/><rect x="10" y="6" width="28" height="2"/><rect x="6" y="8" width="36" height="2"/><rect x="4" y="10" width="40" height="2"/><rect x="6" y="12" width="36" height="2"/><rect x="4" y="14" width="40" height="2"/><rect x="6" y="16" width="36" height="2"/><rect x="6" y="18" width="36" height="2"/><rect x="6" y="20" width="36" height="2"/><rect x="6" y="22" width="36" height="2"/><rect x="6" y="24" width="6" height="2"/><rect x="18" y="24" width="12" height="2"/><rect x="36" y="24" width="6" height="2"/><rect x="8" y="26" width="4" height="2"/><rect x="14" y="26" width="8" height="2"/><rect x="26" y="26" width="8" height="2"/><rect x="36" y="26" width="4" height="2"/><rect x="6" y="28" width="4" height="2"/><rect x="16" y="28" width="16" height="2"/><rect x="38" y="28" width="4" height="2"/><rect x="8" y="30" width="2" height="2"/><rect x="16" y="30" width="16" height="2"/><rect x="38" y="30" width="2" height="2"/><rect x="6" y="32" width="4" height="2"/><rect x="16" y="32" width="4" height="2"/><rect x="28" y="32" width="4" height="2"/><rect x="38" y="32" width="4" height="2"/><rect x="8" y="34" width="32" height="2"/><rect x="6" y="36" width="36" height="2"/><rect x="6" y="38" width="36" height="2"/><rect x="6" y="40" width="36" height="2"/></g><g fill="#4A4540"><rect x="14" y="2" width="20" height="2"/><rect x="10" y="4" width="4" height="2"/><rect x="34" y="4" width="4" height="2"/><rect x="6" y="6" width="4" height="2"/><rect x="38" y="6" width="4" height="2"/><rect x="4" y="8" width="2" height="2"/><rect x="42" y="8" width="2" height="2"/><rect x="0" y="10" width="4" height="2"/><rect x="44" y="10" width="4" height="2"/><rect x="0" y="12" width="4" height="2"/><rect x="44" y="12" width="4" height="2"/><rect x="0" y="14" width="4" height="2"/><rect x="44" y="14" width="4" height="2"/><rect x="4" y="16" width="2" height="2"/><rect x="42" y="16" width="2" height="2"/><rect x="4" y="18" width="2" height="2"/><rect x="42" y="18" width="2" height="2"/><rect x="4" y="20" width="2" height="2"/><rect x="42" y="20" width="2" height="2"/><rect x="4" y="22" width="2" height="2"/><rect x="42" y="22" width="2" height="2"/><rect x="4" y="24" width="2" height="2"/><rect x="12" y="24" width="6" height="2"/><rect x="30" y="24" width="6" height="2"/><rect x="42" y="24" width="2" height="2"/><rect x="0" y="26" width="8" height="2"/><rect x="40" y="26" width="8" height="2"/><rect x="4" y="28" width="2" height="2"/><rect x="42" y="28" width="2" height="2"/><rect x="0" y="30" width="8" height="2"/><rect x="40" y="30" width="8" height="2"/><rect x="4" y="32" width="2" height="2"/><rect x="20" y="32" width="8" height="2"/><rect x="42" y="32" width="2" height="2"/><rect x="0" y="34" width="8" height="2"/><rect x="40" y="34" width="8" height="2"/><rect x="4" y="36" width="2" height="2"/><rect x="42" y="36" width="2" height="2"/><rect x="4" y="38" width="2" height="2"/><rect x="42" y="38" width="2" height="2"/><rect x="6" y="42" width="36" height="2"/></g><g fill="#FFB0A0"><rect x="4" y="12" width="2" height="2"/><rect x="42" y="12" width="2" height="2"/><rect x="22" y="26" width="4" height="2"/><rect x="10" y="28" width="6" height="2"/><rect x="32" y="28" width="6" height="2"/><rect x="10" y="30" width="6" height="2"/><rect x="32" y="30" width="6" height="2"/><rect x="10" y="32" width="6" height="2"/><rect x="32" y="32" width="6" height="2"/></g><g fill="#88BFD9"><rect x="12" y="26" width="2" height="6"/><rect x="34" y="26" width="2" height="6"/></g></svg>`,
+};
+
+const TIMEZONES = [
+  { tz: 'America/Anchorage', label: 'ANC', name: 'Alaska' },
+  { tz: 'America/Los_Angeles', label: 'LAX', name: 'Pacific · Los Angeles' },
+  { tz: 'America/Denver', label: 'DEN', name: 'Mountain · Denver' },
+  { tz: 'America/Chicago', label: 'CHI', name: 'Central · Chicago' },
+  { tz: 'America/New_York', label: 'ATL', name: 'Eastern · NYC/ATL' },
+  { tz: 'America/Toronto', label: 'YYZ', name: 'Toronto' },
+  { tz: 'America/Mexico_City', label: 'MEX', name: 'Mexico City' },
+  { tz: 'America/Sao_Paulo', label: 'SAO', name: 'São Paulo' },
+  { tz: 'Pacific/Honolulu', label: 'HNL', name: 'Hawaii' },
+  { tz: 'Europe/London', label: 'LON', name: 'London' },
+  { tz: 'Europe/Paris', label: 'PAR', name: 'Paris' },
+  { tz: 'Europe/Berlin', label: 'BER', name: 'Berlin' },
+  { tz: 'Europe/Madrid', label: 'MAD', name: 'Madrid' },
+  { tz: 'Europe/Rome', label: 'ROM', name: 'Rome' },
+  { tz: 'Europe/Athens', label: 'ATH', name: 'Athens' },
+  { tz: 'Europe/Istanbul', label: 'IST', name: 'Istanbul' },
+  { tz: 'Africa/Cairo', label: 'CAI', name: 'Cairo' },
+  { tz: 'Africa/Johannesburg', label: 'JNB', name: 'Johannesburg' },
+  { tz: 'Asia/Dubai', label: 'DXB', name: 'Dubai' },
+  { tz: 'Asia/Kolkata', label: 'DEL', name: 'India' },
+  { tz: 'Asia/Bangkok', label: 'BKK', name: 'Bangkok' },
+  { tz: 'Asia/Shanghai', label: 'PEK', name: 'China' },
+  { tz: 'Asia/Hong_Kong', label: 'HKG', name: 'Hong Kong' },
+  { tz: 'Asia/Singapore', label: 'SIN', name: 'Singapore' },
+  { tz: 'Asia/Seoul', label: 'SEL', name: 'Seoul' },
+  { tz: 'Asia/Tokyo', label: 'TYO', name: 'Tokyo' },
+  { tz: 'Australia/Sydney', label: 'SYD', name: 'Sydney' },
+  { tz: 'Pacific/Auckland', label: 'AKL', name: 'Auckland' },
+];
+
+const CURRENCIES = [
+  { code: 'USD', symbol: '$', name: 'US Dollar' },
+  { code: 'EUR', symbol: '€', name: 'Euro' },
+  { code: 'GBP', symbol: '£', name: 'British Pound' },
+  { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+  { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
+  { code: 'KRW', symbol: '₩', name: 'Korean Won' },
+  { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
+  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+  { code: 'NZD', symbol: 'NZ$', name: 'New Zealand Dollar' },
+  { code: 'CHF', symbol: 'Fr', name: 'Swiss Franc' },
+  { code: 'HKD', symbol: 'HK$', name: 'Hong Kong Dollar' },
+  { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
+  { code: 'TWD', symbol: 'NT$', name: 'Taiwan Dollar' },
+  { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
+  { code: 'THB', symbol: '฿', name: 'Thai Baht' },
+  { code: 'MXN', symbol: 'MX$', name: 'Mexican Peso' },
+  { code: 'BRL', symbol: 'R$', name: 'Brazilian Real' },
+];
+
+const REMINDER_OPTIONS = [5, 10, 15, 30, 60, 120, 240, 480, 1440, 2880];
+
+const state = {
+  activeTab: 'trip',
+  events: [],
+  expenses: [],
+  notes: [],
+  settings: {
+    homeZone: 'America/New_York', travelZone: 'Asia/Tokyo',
+    homeLabel: 'ATL', travelLabel: 'TYO',
+    homeCurrency: 'USD', homeCurrencySymbol: '$',
+    travelCurrency: 'JPY', travelCurrencySymbol: '¥',
+    fxRate: 0.0067, showCat: true, catQuiet: true,
+    quietStartHour: 23, quietEndHour: 7,
+    pushOn: true, autoUpdateZone: true,
+    defaultReminders: [30, 60], fxLastRefresh: Date.now(),
+    budgetTotal: 1800,
+    tripName: 'Tokyo · May 2026', tripStart: null, tripEnd: null,
+  },
+  debugStateOverride: null,
+};
+
+function isoDateOnly(d) { const y = d.getFullYear(); const m = String(d.getMonth()+1).padStart(2,'0'); const da = String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${da}`; }
+
+function seedTripDates() {
+  const today = new Date();
+  const s = new Date(today); s.setDate(s.getDate() - 2);
+  const e = new Date(today); e.setDate(e.getDate() + 4);
+  state.settings.tripStart = isoDateOnly(s);
+  state.settings.tripEnd = isoDateOnly(e);
+}
+function seedEvents() {
+  const now = new Date();
+  const mk = (mins, title, dur, loc, ref, opts = {}) => ({
+    id: Math.random().toString(36).slice(2, 10),
+    title, location: loc, bookingRef: ref, notes: opts.notes || '',
+    start: new Date(now.getTime() + mins * 60000).toISOString(),
+    durationMin: dur,
+    reminders: [...state.settings.defaultReminders],
+    checkedOff: false,
+    price: opts.price || null,
+    priceCurrency: opts.priceCurrency || state.settings.travelCurrency,
+    category: opts.category || 'activity',
+  });
+  state.events = [
+    mk(20, 'Tsukiji outer market food tour', 120, 'Tsukiji Outer Market', 'TYO-4827', { notes: 'Meet guide Hana at south gate', price: 8500, category: 'food' }),
+    mk(240, 'teamLab Planets', 150, 'Toyosu', '', { notes: 'Barefoot exhibit, no skirts', price: 3800, category: 'activity' }),
+    mk(540, 'Dinner at Kura', 90, 'Shibuya', 'Reservation party of 2', { price: 12000, category: 'food' }),
+    mk(660, 'Walk Shibuya crossing', 60, 'Shibuya', ''),
+  ];
+}
+function seedExpenses() {
+  state.expenses = [
+    { id: 's1', date: new Date(Date.now() - 30*3600000).toISOString(), category: 'food', amount: 2400, currency: 'JPY', title: 'Ichiran ramen lunch' },
+    { id: 's2', date: new Date(Date.now() - 16*3600000).toISOString(), category: 'transit', amount: 1980, currency: 'JPY', title: 'Pasmo top-up' },
+    { id: 's3', date: new Date(Date.now() - 8*3600000).toISOString(), category: 'shopping', amount: 5800, currency: 'JPY', title: 'Don Quijote' },
+    { id: 's4', date: new Date(Date.now() - 3*3600000).toISOString(), category: 'food', amount: 1450, currency: 'JPY', title: 'Convenience store dinner' },
+  ];
+}
+function seedNotes() {
+  state.notes = [
+    { id: 'n1', title: 'Packing essentials', type: 'checklist', items: [
+      { id: 'i1', text: 'Passport + JR Pass voucher', checked: true },
+      { id: 'i2', text: 'Camera + extra battery', checked: true },
+      { id: 'i3', text: 'Adapter (Type A — same as US)', checked: false },
+      { id: 'i4', text: 'Comfortable walking shoes', checked: false },
+      { id: 'i5', text: 'Refillable water bottle', checked: false },
+    ], text: '' },
+    { id: 'n2', title: 'Restaurants to try', type: 'text', items: [],
+      text: 'Tsuta — Michelin star ramen, line by 9 AM\nGonpachi Nishiazabu — Kill Bill set piece\nIchiran for late-night solo bowl\nDepachika basement at Isetan for cheap fancy food' },
+    { id: 'n3', title: 'Phrases', type: 'checklist', items: [
+      { id: 'i6', text: 'sumimasen (excuse me / sorry)', checked: true },
+      { id: 'i7', text: 'arigatou gozaimasu (thank you formal)', checked: true },
+      { id: 'i8', text: 'oishii (delicious)', checked: false },
+      { id: 'i9', text: 'kore o kudasai (this one please)', checked: false },
+      { id: 'i10', text: 'eigo o hanasemasu ka? (do you speak English)', checked: false },
+    ], text: '' }
+  ];
+}
+
+function fmtTimeInZone(d, z) { return new Intl.DateTimeFormat('en-US', { timeZone: z, hour: 'numeric', minute: '2-digit', hour12: true }).format(d); }
+function fmtDateInZone(d, z) { return new Intl.DateTimeFormat('en-US', { timeZone: z, weekday: 'short', month: 'short', day: 'numeric' }).format(d); }
+function fmtDayShort(d, z) { return new Intl.DateTimeFormat('en-US', { timeZone: z, weekday: 'short' }).format(d); }
+function fmtFullDate(d, z) { return new Intl.DateTimeFormat('en-US', { timeZone: z, weekday: 'long', month: 'long', day: 'numeric' }).format(d); }
+function getHourInZone(d, z) { const p = new Intl.DateTimeFormat('en-US', { timeZone: z, hour: 'numeric', hour12: false }).formatToParts(d); return parseInt(p.find(x => x.type === 'hour').value, 10); }
+function zoneOffsetHours(z, d) {
+  const s = new Intl.DateTimeFormat('en-US', { timeZone: z, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12: false }).format(d);
+  const m = s.match(/(\d+)\/(\d+)\/(\d+),?\s+(\d+):(\d+):(\d+)/);
+  if (!m) return 0;
+  const [, mo, da, yr, hr, mi, se] = m.map(Number);
+  return (Date.UTC(yr, mo-1, da, hr === 24 ? 0 : hr, mi, se) - d.getTime()) / 3600000;
+}
+function offsetDeltaLabel(hz, tz, d) { const r = Math.round(zoneOffsetHours(tz, d) - zoneOffsetHours(hz, d)); if (r === 0) return '0h'; return (r > 0 ? '+' : '') + r + 'h'; }
+function minutesUntil(iso) { return (new Date(iso) - new Date()) / 60000; }
+function fmtDuration(m) { m = Math.max(0, Math.round(m)); if (m < 60) return `${m}m`; const h = Math.floor(m/60), x = m%60; return x === 0 ? `${h}h` : `${h}h ${x}m`; }
+function fmtRelativeTime(ts) { const dm = (Date.now() - ts) / 60000; if (dm < 1) return 'just now'; if (dm < 60) return Math.round(dm) + ' min ago'; return Math.round(dm/60) + ' h ago'; }
+function computeTripDay() {
+  const s = state.settings;
+  if (!s.tripStart || !s.tripEnd) return { dayOf: 1, total: 1 };
+  const start = new Date(s.tripStart + 'T00:00:00');
+  const end = new Date(s.tripEnd + 'T00:00:00');
+  const total = Math.max(1, Math.round((end - start) / 86400000) + 1);
+  const today = new Date(isoDateOnly(new Date()) + 'T00:00:00');
+  const dayOf = Math.max(1, Math.min(total, Math.round((today - start) / 86400000) + 1));
+  return { dayOf, total };
+}
+function fmtMoneyHome(a) { return '$' + a.toFixed(2); }
+function fmtMoneyNative(a, c) { if (c === 'JPY') return '¥' + a.toLocaleString(); if (c === 'USD') return '$' + a.toFixed(2); return a + ' ' + c; }
+function toHomeCurrency(a, c) { if (c === state.settings.homeCurrency) return a; if (c === state.settings.travelCurrency) return a * state.settings.fxRate; return a; }
+
+function computeCatState() {
+  if (state.debugStateOverride) { const n = state.events.find(e => !e.checkedOff); return { state: state.debugStateOverride, event: n || null }; }
+  const now = new Date();
+  if (state.settings.catQuiet && isQuietHoursNow()) return { state: 'idle', event: null };
+  const active = state.events.filter(e => !e.checkedOff).map(e => ({ ...e, sd: new Date(e.start) })).sort((a, b) => a.sd - b.sd);
+  const go = active.find(e => { const m = (e.sd - now)/60000; return m <= 0 && m > -5; });
+  if (go) return { state: 'go', event: go };
+  const oops = active.find(e => { const m = (e.sd - now)/60000; return m <= -5 && m > -30; });
+  if (oops) return { state: 'oops', event: oops };
+  const next = active.find(e => e.sd > now);
+  if (next) { const m = (next.sd - now) / 60000; if (m <= 30) return { state: 'headsup', event: next }; return { state: 'idle', event: next }; }
+  return { state: 'idle', event: null };
+}
+function isQuietHoursNow() { const h = getHourInZone(new Date(), state.settings.travelZone); const qs = state.settings.quietStartHour, qe = state.settings.quietEndHour; if (qs > qe) return h >= qs || h < qe; return h >= qs && h < qe; }
+function bubbleText(s, e) {
+  if (!e) return '';
+  const sn = e.title.split(/\s+/)[0];
+  if (s === 'go') return `${sn} NOW!`;
+  if (s === 'headsup') { const m = Math.max(1, Math.round(minutesUntil(e.start))); return `${sn} in ${fmtDuration(m)}!`; }
+  if (s === 'oops') return `missed ${sn}`;
+  return '';
+}
+
+function renderCat() {
+  const sprite = document.getElementById('cat-sprite');
+  const bubble = document.getElementById('cat-bubble');
+  const bt = document.getElementById('bubble-text');
+  const fab = document.getElementById('cat-fab');
+  const mini = document.getElementById('add-fab-mini');
+  const ds = document.getElementById('debug-state');
+  if (state.activeTab !== 'trip') { fab.classList.add('cat-hidden'); mini.classList.add('cat-hidden'); ds.textContent = '—'; return; }
+  if (!state.settings.showCat) { fab.classList.add('cat-hidden'); mini.classList.remove('cat-hidden'); ds.textContent = 'hidden'; return; }
+  fab.classList.remove('cat-hidden'); mini.classList.add('cat-hidden');
+  const { state: cs, event } = computeCatState();
+  sprite.innerHTML = CAT_SVGS[cs];
+  const t = bubbleText(cs, event);
+  if (t) { bubble.classList.remove('cat-hidden'); bt.textContent = t; } else { bubble.classList.add('cat-hidden'); }
+  ds.textContent = cs + (state.debugStateOverride ? ' [forced]' : '');
+}
+function renderClocks() {
+  const now = new Date();
+  document.getElementById('status-time').textContent = fmtTimeInZone(now, state.settings.homeZone).replace(' AM','').replace(' PM','');
+  document.getElementById('clock-home').textContent = fmtTimeInZone(now, state.settings.homeZone);
+  document.getElementById('clock-travel').textContent = fmtTimeInZone(now, state.settings.travelZone);
+  document.getElementById('date-home').textContent = fmtDateInZone(now, state.settings.homeZone);
+  document.getElementById('date-travel').textContent = fmtDateInZone(now, state.settings.travelZone);
+  document.getElementById('home-label').textContent = state.settings.homeLabel;
+  document.getElementById('travel-label').textContent = state.settings.travelLabel;
+  document.getElementById('offset-display').textContent = offsetDeltaLabel(state.settings.homeZone, state.settings.travelZone, now);
+}
+
+function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s) { return escapeHtml(s); }
+
+function allExpensesForView() {
+  const fromEvents = state.events.filter(e => e.price && e.price > 0).map(e => ({
+    id: 'evt-' + e.id, date: e.start, category: e.category || 'activity',
+    amount: e.price, currency: e.priceCurrency || state.settings.travelCurrency,
+    title: e.title, fromEvent: true, eventId: e.id,
+  }));
+  return [...state.expenses, ...fromEvents].sort((a, b) => new Date(b.date) - new Date(a.date));
+}
+
+function renderTrip() {
+  const now = new Date();
+  const tz = state.settings.travelZone;
+  const todayKey = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+  const sorted = [...state.events].sort((a, b) => new Date(a.start) - new Date(b.start));
+  const today = sorted.filter(e => new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(e.start)) === todayKey);
+  const upcoming = sorted.find(e => !e.checkedOff && new Date(e.start) > now);
+  const { dayOf, total: dayTotal } = computeTripDay();
+  let html = '';
+
+  if (upcoming) {
+    const m = Math.max(0, Math.round(minutesUntil(upcoming.start)));
+    html += `<div class="up-next">
+      <div class="up-next-header"><div class="up-next-dot"></div><div class="lbl" style="color: var(--accent-text);">UP NEXT · ${m < 1 ? 'NOW' : 'IN ' + fmtDuration(m).toUpperCase()}</div></div>
+      <div class="up-next-title">${escapeHtml(upcoming.title)}</div>
+      <div class="up-next-meta">
+        <div>${escapeHtml(fmtTimeInZone(new Date(upcoming.start), tz))}${upcoming.location ? ' · ' + escapeHtml(upcoming.location) : ''}</div>
+        ${upcoming.bookingRef ? `<div>Booking <span class="pixel-font" style="color: var(--text);">${escapeHtml(upcoming.bookingRef)}</span></div>` : ''}
+        ${upcoming.price ? `<div>Cost <span class="pixel-font" style="color: var(--text);">${escapeHtml(fmtMoneyNative(upcoming.price, upcoming.priceCurrency))}</span></div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  html += `<div class="day-header"><div class="lbl">TODAY · ${escapeHtml(fmtFullDate(now, tz).toUpperCase())}</div><div style="font-size: 11px; color: var(--text-3);">${today.length} event${today.length === 1 ? '' : 's'}</div></div>
+    <div class="dotted-rule" style="margin: 4px 16px;"></div>
+    <div class="evt-list">`;
+  if (today.length === 0) html += `<div class="empty">No events today. Tap the cat to add one.</div>`;
+  else today.forEach(e => {
+    const ck = e.checkedOff ? 'checked' : '';
+    html += `<div class="evt-row ${ck}" data-event-id="${escapeAttr(e.id)}">
+      <button class="evt-check" data-toggle="${escapeAttr(e.id)}" aria-label="Toggle done"><i class="ti ti-check"></i></button>
+      <div class="evt-time pixel-font">${escapeHtml(fmtTimeInZone(new Date(e.start), tz))}</div>
+      <div style="flex: 1; min-width: 0;"><div class="evt-title">${escapeHtml(e.title)}</div><div class="evt-meta">${fmtDuration(e.durationMin)}${e.location ? ' · ' + escapeHtml(e.location) : ''}</div></div>
+      ${e.price ? `<div class="evt-price">${escapeHtml(fmtMoneyNative(e.price, e.priceCurrency))}</div>` : ''}
+    </div>`;
+  });
+  html += `</div>`;
+
+  const all = allExpensesForView();
+  const spent = all.reduce((s, x) => s + toHomeCurrency(x.amount, x.currency), 0);
+  const todaySpent = all.filter(x => new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date(x.date)) === todayKey).reduce((s, x) => s + (x.currency === state.settings.travelCurrency ? x.amount : 0), 0);
+  const pace = state.settings.budgetTotal * (dayOf / dayTotal);
+  const onTrack = spent <= pace;
+  html += `<div class="budget-card" id="budget-card">
+    <div><div class="lbl">DAY ${dayOf} OF ${dayTotal} · BUDGET</div>
+      <div style="font-size: 16px; font-weight: 500; margin-top: 3px;">${fmtMoneyHome(spent)} <span style="color: var(--text-2); font-size: 12px; font-weight: 400;">of ${fmtMoneyHome(state.settings.budgetTotal)}</span></div></div>
+    <div style="text-align: right;"><div class="pixel-font" style="font-size: 11px; color: ${onTrack ? 'var(--success)' : 'var(--accent-text)'};">${onTrack ? 'ON TRACK' : 'OVER PACE'}</div>
+      <div style="font-size: 10px; color: var(--text-3); margin-top: 2px;">¥${todaySpent.toLocaleString()} today</div></div>
+  </div>`;
+
+  document.getElementById('screen-content').innerHTML = html;
+  document.querySelectorAll('[data-toggle]').forEach(b => b.addEventListener('click', ev => { ev.stopPropagation(); const e = state.events.find(x => x.id === b.getAttribute('data-toggle')); if (e) { e.checkedOff = !e.checkedOff; render(); } }));
+  document.querySelectorAll('.evt-row').forEach(r => r.addEventListener('click', () => { const e = state.events.find(x => x.id === r.getAttribute('data-event-id')); if (e) openAddEventModal(e); }));
+}
+
+function renderBudget() {
+  const tz = state.settings.travelZone;
+  const all = allExpensesForView();
+  const total = all.reduce((s, x) => s + toHomeCurrency(x.amount, x.currency), 0);
+  const evtCount = all.filter(x => x.fromEvent).length;
+  const icons = { food: 'ti ti-tools-kitchen-2', transit: 'ti ti-train', shopping: 'ti ti-shopping-bag', lodging: 'ti ti-bed', activity: 'ti ti-ticket', other: 'ti ti-receipt' };
+  const { dayOf, total: dayTotal } = computeTripDay();
+  const pace = state.settings.budgetTotal * (dayOf / dayTotal);
+  const onTrack = total <= pace;
+
+  let html = `<div class="trip-header-card" id="trip-header-card" role="button" tabindex="0">
+    <i class="ti ti-pencil trip-edit-pencil"></i>
+    <div class="lbl">${escapeHtml((state.settings.tripName || 'Untitled trip').toUpperCase())}</div>
+    <div style="font-size: 11px; color: var(--text-2); margin-top: 4px;">Day ${dayOf} of ${dayTotal} · ${escapeHtml(s_fmtDate(state.settings.tripStart))} → ${escapeHtml(s_fmtDate(state.settings.tripEnd))}</div>
+    <div style="height: 8px;"></div>
+    <div style="display: flex; align-items: baseline; justify-content: space-between;">
+      <div>
+        <div class="pixel-font" style="font-size: 26px; font-weight: 500;">${fmtMoneyHome(total)}</div>
+        <div style="font-size: 11px; color: var(--text-2);">of ${fmtMoneyHome(state.settings.budgetTotal)} · ${all.length} item${all.length === 1 ? '' : 's'}${evtCount > 0 ? ` · ${evtCount} from events` : ''}</div>
+      </div>
+      <div class="pixel-font" style="font-size: 11px; color: ${onTrack ? 'var(--success)' : 'var(--accent-text)'};">${onTrack ? 'ON TRACK' : 'OVER PACE'}</div>
+    </div>
+  </div>
+  <div class="day-header"><div class="lbl">EXPENSES</div><button class="pill-add" id="add-expense-btn"><i class="ti ti-plus"></i> add</button></div>
+  <div class="dotted-rule" style="margin: 4px 16px;"></div>
+  <div class="card-block">`;
+  if (all.length === 0) html += `<div class="empty">No expenses yet. The cat applauds your frugality.</div>`;
+  else all.forEach(x => {
+    const icon = icons[x.category] || icons.other;
+    const ha = toHomeCurrency(x.amount, x.currency);
+    html += `<div class="expense-row ${x.fromEvent ? 'from-event' : ''}" data-event-id="${escapeAttr(x.eventId || '')}">
+      <div class="expense-cat-icon"><i class="${icon}"></i></div>
+      <div class="expense-content">
+        <div class="expense-title">${escapeHtml(x.title)}${x.fromEvent ? '<span class="link-mark">EVENT</span>' : ''}</div>
+        <div class="expense-meta">${escapeHtml(fmtDayShort(new Date(x.date), tz))} ${escapeHtml(fmtTimeInZone(new Date(x.date), tz))} · ${escapeHtml(x.category)}</div>
+      </div>
+      <div class="expense-amount"><div class="native pixel-font">${escapeHtml(fmtMoneyNative(x.amount, x.currency))}</div><div class="home">${fmtMoneyHome(ha)}</div></div>
+    </div>`;
+  });
+  html += `</div>`;
+  document.getElementById('screen-content').innerHTML = html;
+  document.getElementById('trip-header-card').addEventListener('click', openBudgetSheet);
+  document.getElementById('add-expense-btn').addEventListener('click', openAddExpenseSheet);
+  document.querySelectorAll('.expense-row').forEach(r => r.addEventListener('click', () => { const id = r.getAttribute('data-event-id'); if (id) { const e = state.events.find(x => x.id === id); if (e) openAddEventModal(e); } }));
+}
+function s_fmtDate(iso) {
+  if (!iso) return '?';
+  const d = new Date(iso + 'T00:00:00');
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(d);
+}
+
+function renderNotes() {
+  let html = `<div class="day-header" style="margin-top: 6px;"><div class="lbl">NOTES &amp; LISTS</div><div style="font-size: 11px; color: var(--text-3);">${state.notes.length} categor${state.notes.length === 1 ? 'y' : 'ies'}</div></div>
+    <div class="dotted-rule" style="margin: 4px 16px;"></div>`;
+  state.notes.forEach(note => {
+    html += `<div class="note-card" data-note-id="${escapeAttr(note.id)}">
+      <div class="note-card-header">
+        <input class="note-title-input" data-note-title="${escapeAttr(note.id)}" value="${escapeAttr(note.title)}" placeholder="Untitled list">
+        <div class="note-type-seg">
+          <button class="${note.type === 'text' ? 'active' : ''}" data-note-type="text" data-note-id="${escapeAttr(note.id)}">TEXT</button>
+          <button class="${note.type === 'checklist' ? 'active' : ''}" data-note-type="checklist" data-note-id="${escapeAttr(note.id)}">LIST</button>
+        </div>
+        <button class="note-delete-btn" data-note-delete="${escapeAttr(note.id)}" title="Delete category"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="note-body">`;
+    if (note.type === 'text') {
+      html += `<textarea class="note-textarea" data-note-text="${escapeAttr(note.id)}" placeholder="Free-form notes...">${escapeHtml(note.text)}</textarea>`;
+    } else {
+      note.items.forEach(it => {
+        const ck = it.checked ? 'checked' : '';
+        html += `<div class="check-row ${ck}">
+          <button class="check-box" data-check-toggle="${escapeAttr(note.id)}__${escapeAttr(it.id)}" aria-label="Toggle done"><i class="ti ti-check"></i></button>
+          <input class="check-text" data-check-text="${escapeAttr(note.id)}__${escapeAttr(it.id)}" value="${escapeAttr(it.text)}" placeholder="New item">
+          <button class="check-del" data-check-delete="${escapeAttr(note.id)}__${escapeAttr(it.id)}" aria-label="Delete item"><i class="ti ti-x"></i></button>
+        </div>`;
+      });
+      html += `<button class="add-item-btn" data-add-item="${escapeAttr(note.id)}"><i class="ti ti-plus"></i> add item</button>`;
+    }
+    html += `</div></div>`;
+  });
+  html += `<button class="add-cat-btn" id="add-category"><i class="ti ti-plus"></i> new category</button>`;
+  document.getElementById('screen-content').innerHTML = html;
+
+  document.querySelectorAll('[data-note-title]').forEach(el => el.addEventListener('input', () => { const n = state.notes.find(x => x.id === el.getAttribute('data-note-title')); if (n) n.title = el.value; }));
+  document.querySelectorAll('[data-note-type]').forEach(b => b.addEventListener('click', () => { const n = state.notes.find(x => x.id === b.getAttribute('data-note-id')); const t = b.getAttribute('data-note-type'); if (n && n.type !== t) { n.type = t; renderNotes(); } }));
+  document.querySelectorAll('[data-note-delete]').forEach(b => b.addEventListener('click', () => { const id = b.getAttribute('data-note-delete'); const n = state.notes.find(x => x.id === id); if (!n) return; if (confirm(`Delete category "${n.title || 'Untitled'}"?`)) { state.notes = state.notes.filter(x => x.id !== id); renderNotes(); } }));
+  document.querySelectorAll('[data-note-text]').forEach(el => el.addEventListener('input', () => { const n = state.notes.find(x => x.id === el.getAttribute('data-note-text')); if (n) n.text = el.value; }));
+  document.querySelectorAll('[data-check-toggle]').forEach(b => b.addEventListener('click', () => { const [nid, iid] = b.getAttribute('data-check-toggle').split('__'); const n = state.notes.find(x => x.id === nid); const it = n && n.items.find(x => x.id === iid); if (it) { it.checked = !it.checked; renderNotes(); } }));
+  document.querySelectorAll('[data-check-text]').forEach(el => el.addEventListener('input', () => { const [nid, iid] = el.getAttribute('data-check-text').split('__'); const n = state.notes.find(x => x.id === nid); const it = n && n.items.find(x => x.id === iid); if (it) it.text = el.value; }));
+  document.querySelectorAll('[data-check-delete]').forEach(b => b.addEventListener('click', () => { const [nid, iid] = b.getAttribute('data-check-delete').split('__'); const n = state.notes.find(x => x.id === nid); if (!n) return; n.items = n.items.filter(x => x.id !== iid); renderNotes(); }));
+  document.querySelectorAll('[data-add-item]').forEach(b => b.addEventListener('click', () => { const id = b.getAttribute('data-add-item'); const n = state.notes.find(x => x.id === id); if (!n) return; n.items.push({ id: Math.random().toString(36).slice(2,10), text: '', checked: false }); renderNotes(); const inputs = document.querySelectorAll(`[data-note-id="${id}"] .check-text`); if (inputs.length) inputs[inputs.length-1].focus(); }));
+  document.getElementById('add-category').addEventListener('click', () => { state.notes.push({ id: Math.random().toString(36).slice(2,10), title: '', type: 'checklist', items: [], text: '' }); renderNotes(); const titles = document.querySelectorAll('.note-title-input'); if (titles.length) titles[titles.length-1].focus(); });
+}
+
+function renderSettings() {
+  const s = state.settings;
+  const pills = s.defaultReminders.map(r => `<span class="pill">${fmtReminder(r)}<span class="x" data-remove-reminder="${r}">×</span></span>`).join('');
+  const fh = h => { const x = h % 12 === 0 ? 12 : h % 12; return `${x}:00 ${h < 12 ? 'AM' : 'PM'}`; };
+
+  const html = `<div style="text-align: center; padding: 14px 0 4px;"><div style="font-size: 16px; font-weight: 600; color: var(--text);">Settings</div></div>
+
+  <div class="lbl section-label">ZONES</div>
+  <div class="card-block">
+    <div class="field-row" data-open="home-zone" style="cursor: pointer;"><div class="field-icon"><i class="ti ti-home"></i></div><div class="field-content"><div class="field-label">HOME</div><div class="field-value">${escapeHtml(s.homeZone)} · ${escapeHtml(s.homeLabel)}</div></div><div class="chevron"><i class="ti ti-chevron-right"></i></div></div>
+    <div class="field-row" data-open="travel-zone" style="cursor: pointer;"><div class="field-icon"><i class="ti ti-plane"></i></div><div class="field-content"><div class="field-label">TRAVEL</div><div class="field-value">${escapeHtml(s.travelZone)} · ${escapeHtml(s.travelLabel)}</div></div><div class="chevron"><i class="ti ti-chevron-right"></i></div></div>
+    <div class="field-row"><div class="field-icon"><i class="ti ti-current-location"></i></div><div class="field-content"><div class="field-label">AUTO-UPDATE ON ARRIVAL</div><div class="field-hint">Detect timezone changes via GPS</div></div><button class="toggle ${s.autoUpdateZone ? 'on' : ''}" data-toggle-setting="autoUpdateZone"><div class="thumb"></div></button></div>
+  </div>
+
+  <div class="lbl section-label">REMINDERS</div>
+  <div class="card-block">
+    <div style="padding: 12px 14px; border-bottom: 0.5px solid var(--border);">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;"><div class="field-icon"><i class="ti ti-bell"></i></div><div class="field-label" style="flex: 1;">DEFAULT REMINDERS</div></div>
+      <div style="padding-left: 30px;">${pills}<button class="pill-add" id="add-reminder-btn"><i class="ti ti-plus"></i> add</button><div class="field-hint" style="margin-top: 6px;">Auto-applied to new events</div></div>
+    </div>
+    <div class="field-row" data-open="quiet-hours" style="cursor: pointer;"><div class="field-icon"><i class="ti ti-moon"></i></div><div class="field-content"><div class="field-label">QUIET HOURS</div><div class="field-value pixel-font">${fh(s.quietStartHour)} – ${fh(s.quietEndHour)}</div><div class="field-hint">Local time · no pings during these hours</div></div><div class="chevron"><i class="ti ti-chevron-right"></i></div></div>
+    <div class="field-row"><div class="field-icon"><i class="ti ti-device-mobile"></i></div><div class="field-content"><div class="field-label">PUSH NOTIFICATIONS</div><div class="field-hint">Master switch · also requires OS permission</div></div><button class="toggle ${s.pushOn ? 'on' : ''}" data-toggle-setting="pushOn"><div class="thumb"></div></button></div>
+  </div>
+
+  <div class="lbl section-label">MONEY</div>
+  <div class="card-block">
+    <div class="field-row" data-open="home-currency" style="cursor: pointer;"><div class="field-icon"><i class="ti ti-coin"></i></div><div class="field-content"><div class="field-label">HOME CURRENCY</div><div class="field-value">${escapeHtml(s.homeCurrency)} <span style="color: var(--text-3); font-weight: 400;">· ${escapeHtml(s.homeCurrencySymbol)}</span></div></div><div class="chevron"><i class="ti ti-chevron-right"></i></div></div>
+    <div class="field-row" data-open="travel-currency" style="cursor: pointer;"><div class="field-icon"><i class="ti ti-cash"></i></div><div class="field-content"><div class="field-label">TRAVEL CURRENCY</div><div class="field-value">${escapeHtml(s.travelCurrency)} <span style="color: var(--text-3); font-weight: 400;">· ${escapeHtml(s.travelCurrencySymbol)}</span></div></div><div class="chevron"><i class="ti ti-chevron-right"></i></div></div>
+    <div class="field-row" data-open="fx-rate" style="cursor: pointer;"><div class="field-icon"><i class="ti ti-refresh"></i></div><div class="field-content"><div class="field-label">FX RATES</div><div class="field-value">1 ${escapeHtml(s.travelCurrency)} = $${s.fxRate.toFixed(4)}</div><div class="field-hint pixel-font">Last refresh: ${fmtRelativeTime(s.fxLastRefresh)}</div></div><div class="chevron"><i class="ti ti-chevron-right"></i></div></div>
+  </div>
+
+  <div class="lbl section-label">MASCOT</div>
+  <div class="card-block">
+    <div class="field-row"><div class="field-icon"><i class="ti ti-paw"></i></div><div class="field-content"><div class="field-label">SHOW CAT</div><div class="field-hint">The chubby pixel one</div></div><button class="toggle ${s.showCat ? 'on' : ''}" data-toggle-setting="showCat"><div class="thumb"></div></button></div>
+    <div class="field-row"><div class="field-icon"><i class="ti ti-moon-stars"></i></div><div class="field-content"><div class="field-label">CAT GOES QUIET AT NIGHT</div><div class="field-hint">Match quiet hours · no speech bubbles</div></div><button class="toggle ${s.catQuiet ? 'on' : ''}" data-toggle-setting="catQuiet"><div class="thumb"></div></button></div>
+  </div>
+
+  <div class="lbl section-label">ABOUT</div>
+  <div class="card-block">
+    <div class="field-row"><div class="field-icon"><i class="ti ti-paw"></i></div><div class="field-content"><div class="field-label">BISCUIT</div><div class="field-value pixel-font">v0.3.0 · prototype</div></div></div>
+    <div class="field-row"><div class="field-icon"><i class="ti ti-message"></i></div><div class="field-content"><div class="field-label">SEND FEEDBACK</div><div class="field-hint">Bug, idea, or "the cat is too cute"</div></div><div class="chevron"><i class="ti ti-chevron-right"></i></div></div>
+    <div class="field-row"><div class="field-icon"><i class="ti ti-file-text"></i></div><div class="field-content"><div class="field-label">TERMS &amp; PRIVACY</div></div><div class="chevron"><i class="ti ti-chevron-right"></i></div></div>
+  </div>
+
+  <div style="text-align: center; padding: 8px 16px 4px;"><button class="btn-ghost" id="reset-demo">Reset demo data</button></div>`;
+  document.getElementById('screen-content').innerHTML = html;
+
+  document.querySelectorAll('[data-toggle-setting]').forEach(b => b.addEventListener('click', () => { const k = b.getAttribute('data-toggle-setting'); state.settings[k] = !state.settings[k]; b.classList.toggle('on'); renderCat(); }));
+  document.querySelectorAll('[data-remove-reminder]').forEach(x => x.addEventListener('click', () => { const r = parseInt(x.getAttribute('data-remove-reminder'), 10); state.settings.defaultReminders = state.settings.defaultReminders.filter(v => v !== r); render(); }));
+  document.getElementById('add-reminder-btn').addEventListener('click', () => openReminderPicker(state.settings.defaultReminders, r => { state.settings.defaultReminders.push(r); state.settings.defaultReminders.sort((a, b) => a - b); render(); }));
+  document.querySelectorAll('[data-open]').forEach(row => row.addEventListener('click', () => {
+    const a = row.getAttribute('data-open');
+    if (a === 'home-zone') openTimezonePicker('home');
+    else if (a === 'travel-zone') openTimezonePicker('travel');
+    else if (a === 'quiet-hours') openQuietHoursPicker();
+    else if (a === 'home-currency') openCurrencyPicker('home');
+    else if (a === 'travel-currency') openCurrencyPicker('travel');
+    else if (a === 'fx-rate') openFxRatePicker();
+  }));
+  document.getElementById('reset-demo').addEventListener('click', () => { if (confirm('Wipe all events, expenses, and notes? This re-seeds demo data.')) { seedTripDates(); seedEvents(); seedExpenses(); seedNotes(); state.debugStateOverride = null; render(); } });
+}
+function fmtReminder(r) {
+  if (r >= 1440) { const d = r / 1440; return `${d} day${d === 1 ? '' : 's'}`; }
+  if (r >= 60) { const h = r / 60; return `${h} h`; }
+  return `${r} min`;
+}
+
+function openAddEventModal(existingEvent) {
+  const modal = document.getElementById('modal');
+  const body = document.getElementById('modal-body');
+  document.getElementById('modal-title').textContent = existingEvent ? 'Edit event' : 'New event';
+  const now = new Date();
+  const tz = state.settings.travelZone;
+  const ds = existingEvent ? new Date(existingEvent.start) : new Date(now.getTime() + 3600000);
+  const isoLocal = d => { const p = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12: false }).formatToParts(d); const o = {}; p.forEach(x => o[x.type] = x.value); return `${o.year}-${o.month}-${o.day}T${o.hour === '24' ? '00' : o.hour}:${o.minute}`; };
+  const e = existingEvent || { title: '', start: ds.toISOString(), durationMin: 60, location: '', reminders: [...state.settings.defaultReminders], bookingRef: '', notes: '', price: null, priceCurrency: state.settings.travelCurrency, category: 'activity' };
+
+  body.innerHTML = `<div class="input-card"><div class="field-label">TITLE</div><input type="text" id="ev-title" placeholder="Tsukiji food tour" value="${escapeAttr(e.title)}"></div>
+    <div class="input-card"><div class="field-label">WHEN</div>
+      <div class="row" style="margin-top: 6px;"><div class="col"><input type="datetime-local" id="ev-start" value="${isoLocal(new Date(e.start))}"><div class="input-hint" id="ev-start-hint"></div></div></div>
+      <div class="divider"></div>
+      <div class="row"><div class="col"><div class="field-label">DURATION (MIN)</div><input type="number" id="ev-duration" min="0" step="15" value="${e.durationMin}" style="margin-top: 4px;"></div></div>
+    </div>
+    <div class="input-card"><div class="field-label">WHERE</div><input type="text" id="ev-location" placeholder="Tsukiji Outer Market" value="${escapeAttr(e.location || '')}"></div>
+    <div class="input-card"><div class="field-label">PRICE <span style="font-weight: 400; color: var(--text-3); text-transform: none; letter-spacing: 0;">· syncs to Money</span></div>
+      <div class="row" style="margin-top: 4px;"><div class="col"><input type="number" id="ev-price" min="0" step="1" placeholder="0" value="${e.price || ''}"></div><div class="col" style="flex: 0 0 80px;"><select id="ev-price-currency"><option value="JPY" ${(e.priceCurrency || 'JPY') === 'JPY' ? 'selected' : ''}>JPY ¥</option><option value="USD" ${e.priceCurrency === 'USD' ? 'selected' : ''}>USD $</option></select></div></div>
+      <div class="divider"></div>
+      <div class="field-label">CATEGORY</div>
+      <select id="ev-category" style="margin-top: 4px;">${['food','transit','shopping','lodging','activity','other'].map(c => `<option value="${c}" ${(e.category || 'activity') === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
+    </div>
+    <div class="input-card"><div class="field-label" style="margin-bottom: 8px;">REMIND ME</div><div id="reminders-edit">${e.reminders.map(r => `<span class="pill">${fmtReminder(r)} before<span class="x" data-mod-remove="${r}">×</span></span>`).join('')}<button class="pill-add" id="mod-add-reminder"><i class="ti ti-plus"></i> add</button></div></div>
+    <div class="input-card"><div class="field-label">BOOKING REF</div><input type="text" id="ev-booking" placeholder="TYO-4827, confirmation #, guide name..." value="${escapeAttr(e.bookingRef || '')}"></div>
+    <div class="input-card"><div class="field-label">NOTES</div><textarea id="ev-notes" rows="3" placeholder="Anything else...">${escapeHtml(e.notes || '')}</textarea></div>
+    ${existingEvent ? `<div style="text-align: center; padding: 8px 16px;"><button class="btn-ghost" id="delete-event" style="color: var(--accent-text); border-color: var(--accent-bg);">Delete event</button></div>` : ''}`;
+
+  const updHint = () => { const v = document.getElementById('ev-start').value; if (!v) return; const d = new Date(v); const bo = -new Date().getTimezoneOffset()/60; const to = zoneOffsetHours(state.settings.travelZone, new Date()); const adj = new Date(d.getTime() - (bo - to)*3600000); document.getElementById('ev-start-hint').textContent = `${fmtDayShort(adj, state.settings.homeZone)} ${fmtTimeInZone(adj, state.settings.homeZone)} ${state.settings.homeLabel} = start · ${state.settings.travelLabel}`; };
+  document.getElementById('ev-start').addEventListener('input', updHint); updHint();
+
+  const rerender = ev => { document.getElementById('reminders-edit').innerHTML = ev.reminders.map(r => `<span class="pill">${fmtReminder(r)} before<span class="x" data-mod-remove="${r}">×</span></span>`).join('') + `<button class="pill-add" id="mod-add-reminder"><i class="ti ti-plus"></i> add</button>`; bind(ev); };
+  const bind = ev => {
+    document.querySelectorAll('[data-mod-remove]').forEach(x => x.addEventListener('click', () => { const r = parseInt(x.getAttribute('data-mod-remove'), 10); ev.reminders = ev.reminders.filter(v => v !== r); rerender(ev); }));
+    document.getElementById('mod-add-reminder').addEventListener('click', () => openReminderPicker(ev.reminders, r => { ev.reminders.push(r); ev.reminders.sort((a, b) => a - b); rerender(ev); }));
+  };
+  bind(e);
+
+  body.__editing = e;
+  body.__isNew = !existingEvent;
+  if (existingEvent) document.getElementById('delete-event').addEventListener('click', () => { if (confirm('Delete this event?')) { state.events = state.events.filter(x => x.id !== existingEvent.id); closeModal(); render(); } });
+  modal.classList.add('open');
+}
+function saveEventModal() {
+  const body = document.getElementById('modal-body');
+  const e = body.__editing;
+  const isNew = body.__isNew;
+  const title = document.getElementById('ev-title').value.trim();
+  if (!title) { alert('Title is required'); return; }
+  const startStr = document.getElementById('ev-start').value;
+  if (!startStr) { alert('Start time is required'); return; }
+  const d = new Date(startStr);
+  const bo = -new Date().getTimezoneOffset()/60;
+  const to = zoneOffsetHours(state.settings.travelZone, d);
+  const adj = new Date(d.getTime() - (bo - to)*3600000);
+  const pv = document.getElementById('ev-price').value;
+  const data = {
+    id: isNew ? Math.random().toString(36).slice(2,10) : e.id,
+    title,
+    location: document.getElementById('ev-location').value.trim(),
+    bookingRef: document.getElementById('ev-booking').value.trim(),
+    notes: document.getElementById('ev-notes').value.trim(),
+    start: adj.toISOString(),
+    durationMin: parseInt(document.getElementById('ev-duration').value, 10) || 60,
+    reminders: [...e.reminders],
+    checkedOff: isNew ? false : e.checkedOff,
+    price: pv ? parseFloat(pv) : null,
+    priceCurrency: document.getElementById('ev-price-currency').value,
+    category: document.getElementById('ev-category').value,
+  };
+  if (isNew) state.events.push(data);
+  else { const i = state.events.findIndex(x => x.id === e.id); if (i >= 0) state.events[i] = data; }
+  closeModal(); render();
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+let _bsOnSave = null;
+function openBottomSheet(title, bodyHtml, onSave, options = {}) {
+  document.getElementById('bs-title').textContent = title;
+  document.getElementById('bs-body').innerHTML = bodyHtml;
+  document.getElementById('bs-save').style.display = options.hideSave ? 'none' : '';
+  document.getElementById('bottom-sheet').classList.add('open');
+  document.getElementById('bs-backdrop').classList.add('open');
+  _bsOnSave = onSave;
+}
+function closeBottomSheet() {
+  document.getElementById('bottom-sheet').classList.remove('open');
+  document.getElementById('bs-backdrop').classList.remove('open');
+  _bsOnSave = null;
+}
+
+function openAddExpenseSheet() {
+  const html = `<div class="input-card"><div class="field-label">DESCRIPTION</div><input type="text" id="ex-title" placeholder="Ichiran ramen, taxi to Roppongi..."></div>
+    <div class="input-card"><div class="field-label">AMOUNT</div><div class="row" style="margin-top: 4px;"><div class="col"><input type="number" id="ex-amount" min="0" step="1" placeholder="0"></div><div class="col" style="flex: 0 0 80px;"><select id="ex-currency"><option value="JPY">JPY ¥</option><option value="USD">USD $</option></select></div></div></div>
+    <div class="input-card"><div class="field-label">CATEGORY</div><select id="ex-category" style="margin-top: 4px;">${['food','transit','shopping','lodging','activity','other'].map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>`;
+  openBottomSheet('New expense', html, () => {
+    const title = document.getElementById('ex-title').value.trim();
+    const amount = parseFloat(document.getElementById('ex-amount').value);
+    const currency = document.getElementById('ex-currency').value;
+    const category = document.getElementById('ex-category').value;
+    if (!title || !amount || amount <= 0) { alert('Description and amount required'); return false; }
+    state.expenses.push({ id: Math.random().toString(36).slice(2,10), date: new Date().toISOString(), category, amount, currency, title });
+    render();
+  });
+  setTimeout(() => { const el = document.getElementById('ex-currency'); if (el) el.value = state.settings.travelCurrency; }, 0);
+}
+
+function openBudgetSheet() {
+  const s = state.settings;
+  const html = `<div class="input-card"><div class="field-label">TRIP NAME</div><input type="text" id="trip-name" value="${escapeAttr(s.tripName || '')}" placeholder="Tokyo · May 2026"></div>
+    <div class="input-card"><div class="row" style="margin-top: 4px;"><div class="col"><div class="field-label">START DATE</div><input type="date" id="trip-start" value="${escapeAttr(s.tripStart || '')}" style="margin-top: 4px;"></div><div class="col"><div class="field-label">END DATE</div><input type="date" id="trip-end" value="${escapeAttr(s.tripEnd || '')}" style="margin-top: 4px;"></div></div></div>
+    <div class="input-card"><div class="field-label">BUDGET TOTAL (${escapeHtml(s.homeCurrencySymbol)})</div><input type="number" id="trip-budget" min="0" step="50" value="${s.budgetTotal}" style="margin-top: 4px;"><div class="input-hint">Daily pace = total ÷ trip length</div></div>`;
+  openBottomSheet('Trip details', html, () => {
+    const start = document.getElementById('trip-start').value;
+    const end = document.getElementById('trip-end').value;
+    const budget = parseFloat(document.getElementById('trip-budget').value);
+    if (start && end && new Date(end) < new Date(start)) { alert('End date must be after start'); return false; }
+    if (isNaN(budget) || budget < 0) { alert('Budget must be a positive number'); return false; }
+    state.settings.tripName = document.getElementById('trip-name').value.trim();
+    state.settings.tripStart = start || null;
+    state.settings.tripEnd = end || null;
+    state.settings.budgetTotal = budget;
+    render();
+  });
+}
+
+function openTimezonePicker(field) {
+  const current = field === 'home' ? state.settings.homeZone : state.settings.travelZone;
+  const now = new Date();
+  const rows = TIMEZONES.map(t => {
+    const time = fmtTimeInZone(now, t.tz);
+    const sel = t.tz === current;
+    return `<button class="picker-row ${sel ? 'selected' : ''}" data-tz="${escapeAttr(t.tz)}" data-label="${escapeAttr(t.label)}">
+      <div style="flex: 1; min-width: 0;">
+        <div style="font-size: 13px; font-weight: 500;">${escapeHtml(t.name)}</div>
+        <div style="font-size: 11px; color: var(--text-3);">${escapeHtml(t.tz)} · ${escapeHtml(t.label)}</div>
+      </div>
+      <div class="pixel-font" style="font-size: 12px; color: var(--text-2);">${escapeHtml(time)}</div>
+      ${sel ? '<i class="ti ti-check picker-check"></i>' : ''}
+    </button>`;
+  }).join('');
+  openBottomSheet(`${field === 'home' ? 'Home' : 'Travel'} timezone`, `<div style="max-height: 55vh; overflow-y: auto;">${rows}</div>`, null, { hideSave: true });
+  document.querySelectorAll('.picker-row[data-tz]').forEach(b => b.addEventListener('click', () => {
+    const tz = b.getAttribute('data-tz'), label = b.getAttribute('data-label');
+    if (field === 'home') { state.settings.homeZone = tz; state.settings.homeLabel = label; }
+    else { state.settings.travelZone = tz; state.settings.travelLabel = label; }
+    closeBottomSheet(); render();
+  }));
+}
+
+function openCurrencyPicker(field) {
+  const current = field === 'home' ? state.settings.homeCurrency : state.settings.travelCurrency;
+  const rows = CURRENCIES.map(c => {
+    const sel = c.code === current;
+    return `<button class="picker-row ${sel ? 'selected' : ''}" data-code="${escapeAttr(c.code)}" data-sym="${escapeAttr(c.symbol)}">
+      <div class="pixel-font" style="width: 36px; color: var(--text-2); font-size: 14px;">${escapeHtml(c.symbol)}</div>
+      <div style="flex: 1; min-width: 0;">
+        <div style="font-size: 13px; font-weight: 500;">${escapeHtml(c.code)}</div>
+        <div style="font-size: 11px; color: var(--text-3);">${escapeHtml(c.name)}</div>
+      </div>
+      ${sel ? '<i class="ti ti-check picker-check"></i>' : ''}
+    </button>`;
+  }).join('');
+  openBottomSheet(`${field === 'home' ? 'Home' : 'Travel'} currency`, `<div style="max-height: 55vh; overflow-y: auto;">${rows}</div>`, null, { hideSave: true });
+  document.querySelectorAll('.picker-row[data-code]').forEach(b => b.addEventListener('click', () => {
+    const code = b.getAttribute('data-code'), sym = b.getAttribute('data-sym');
+    if (field === 'home') { state.settings.homeCurrency = code; state.settings.homeCurrencySymbol = sym; }
+    else { state.settings.travelCurrency = code; state.settings.travelCurrencySymbol = sym; }
+    closeBottomSheet(); render();
+  }));
+}
+
+function openQuietHoursPicker() {
+  const s = state.settings;
+  const opts = Array.from({ length: 24 }, (_, i) => {
+    const hr12 = i % 12 === 0 ? 12 : i % 12;
+    return `<option value="${i}">${hr12}:00 ${i < 12 ? 'AM' : 'PM'}</option>`;
+  }).join('');
+  const html = `<div class="input-card"><div class="field-label">FROM</div><select id="quiet-start" style="margin-top: 4px;">${opts}</select></div>
+    <div class="input-card"><div class="field-label">TO</div><select id="quiet-end" style="margin-top: 4px;">${opts}</select></div>
+    <div class="input-hint" style="text-align: center; margin: 0 14px;">No notifications between these hours in travel timezone</div>`;
+  openBottomSheet('Quiet hours', html, () => {
+    state.settings.quietStartHour = parseInt(document.getElementById('quiet-start').value, 10);
+    state.settings.quietEndHour = parseInt(document.getElementById('quiet-end').value, 10);
+    render();
+  });
+  setTimeout(() => { document.getElementById('quiet-start').value = s.quietStartHour; document.getElementById('quiet-end').value = s.quietEndHour; }, 0);
+}
+
+function openFxRatePicker() {
+  const s = state.settings;
+  const html = `<div class="input-card">
+    <div class="field-label">EXCHANGE RATE</div>
+    <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 6px;">
+      <span class="pixel-font" style="font-size: 12px; color: var(--text-2);">1 ${escapeHtml(s.travelCurrency)} =</span>
+      <input type="number" id="fx-rate" step="0.0001" min="0" value="${s.fxRate}" style="flex: 1; font-size: 18px; font-weight: 500;">
+      <span class="pixel-font" style="font-size: 12px; color: var(--text-2);">${escapeHtml(s.homeCurrency)}</span>
+    </div>
+    <div class="input-hint">Manual for now · auto-refresh from API not yet wired</div>
+  </div>`;
+  openBottomSheet('FX rate', html, () => {
+    const r = parseFloat(document.getElementById('fx-rate').value);
+    if (isNaN(r) || r <= 0) { alert('Rate must be positive'); return false; }
+    state.settings.fxRate = r;
+    state.settings.fxLastRefresh = Date.now();
+    render();
+  });
+}
+
+function openReminderPicker(currentList, onSelect) {
+  const available = REMINDER_OPTIONS.filter(r => !currentList.includes(r));
+  if (available.length === 0) { alert('All available reminders are already added.'); return; }
+  const rows = available.map(r => `<button class="picker-row" data-reminder="${r}">
+    <div style="flex: 1; font-size: 13px; font-weight: 500;">${escapeHtml(fmtReminder(r))} before</div>
+  </button>`).join('');
+  openBottomSheet('Add reminder', `<div style="max-height: 55vh; overflow-y: auto;">${rows}</div>`, null, { hideSave: true });
+  document.querySelectorAll('.picker-row[data-reminder]').forEach(b => b.addEventListener('click', () => {
+    onSelect(parseInt(b.getAttribute('data-reminder'), 10));
+    closeBottomSheet();
+  }));
+}
+
+function render() {
+  document.getElementById('dual-clock-wrap').style.display = state.activeTab === 'settings' ? 'none' : '';
+  renderClocks();
+  renderCat();
+  if (state.activeTab === 'trip') renderTrip();
+  else if (state.activeTab === 'budget') renderBudget();
+  else if (state.activeTab === 'notes') renderNotes();
+  else if (state.activeTab === 'settings') renderSettings();
+}
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { state.activeTab = t.dataset.tab; document.querySelectorAll('.tab').forEach(x => x.removeAttribute('aria-current')); t.setAttribute('aria-current', 'page'); render(); document.getElementById('scroll-area').scrollTop = 0; }));
+document.getElementById('cat-fab').addEventListener('click', () => openAddEventModal());
+document.getElementById('add-fab-mini').addEventListener('click', () => openAddEventModal());
+document.getElementById('modal-cancel').addEventListener('click', closeModal);
+document.getElementById('modal-save').addEventListener('click', saveEventModal);
+document.getElementById('bs-cancel').addEventListener('click', closeBottomSheet);
+document.getElementById('bs-save').addEventListener('click', () => { if (_bsOnSave) { const r = _bsOnSave(); if (r !== false) closeBottomSheet(); } });
+document.getElementById('bs-backdrop').addEventListener('click', closeBottomSheet);
+document.getElementById('debug-badge').addEventListener('click', () => { const c = [null, 'idle', 'headsup', 'go', 'oops']; const i = c.indexOf(state.debugStateOverride); state.debugStateOverride = c[(i + 1) % c.length]; renderCat(); if (state.activeTab === 'trip') renderTrip(); });
+
+function init() { seedTripDates(); seedEvents(); seedExpenses(); seedNotes(); render(); setInterval(() => { renderClocks(); renderCat(); if (state.activeTab === 'trip') renderTrip(); }, 30000); }
+init();
+</script>
+</body>
+</html>
