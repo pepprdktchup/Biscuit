@@ -43,7 +43,7 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .scroll-area::-webkit-scrollbar { width: 4px; }
 .scroll-area::-webkit-scrollbar-track { background: transparent; }
 .scroll-area::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
-.dual-clock-wrap { position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 4px 0 8px; }
+.dual-clock-wrap { flex-shrink: 0; background: var(--bg); padding: 4px 0 8px; }
 .dual-clock { margin: 0 12px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; display: flex; align-items: center; }
 .dual-clock .zone { flex: 1; }
 .dual-clock .zone.right { text-align: right; }
@@ -220,14 +220,14 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 <body>
 <div class="phone">
   <div class="debug-badge" id="debug-badge" title="Click to cycle cat state (debug)">DEBUG: <span id="debug-state">--</span></div>
-  <div class="scroll-area" id="scroll-area">
-    <div class="dual-clock-wrap" id="dual-clock-wrap">
-      <div class="dual-clock">
-        <div class="zone"><div class="lbl" id="home-label">ATL</div><div class="pixel-font time" id="clock-home">--:--</div><div class="date" id="date-home">--</div></div>
-        <div class="offset" id="offset-display">+--</div>
-        <div class="zone right"><div class="lbl" id="travel-label">TYO</div><div class="pixel-font time" id="clock-travel">--:--</div><div class="date" id="date-travel">--</div></div>
-      </div>
+  <div class="dual-clock-wrap" id="dual-clock-wrap">
+    <div class="dual-clock">
+      <div class="zone"><div class="lbl" id="home-label">ATL</div><div class="pixel-font time" id="clock-home">--:--</div><div class="date" id="date-home">--</div></div>
+      <div class="offset" id="offset-display">+--</div>
+      <div class="zone right"><div class="lbl" id="travel-label">TYO</div><div class="pixel-font time" id="clock-travel">--:--</div><div class="date" id="date-travel">--</div></div>
     </div>
+  </div>
+  <div class="scroll-area" id="scroll-area">
     <div id="screen-content"></div>
   </div>
 
