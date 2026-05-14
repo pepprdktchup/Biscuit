@@ -635,7 +635,7 @@ function renderTrip() {
   // Trip switcher chip — only show if more than one trip
   if (state.trips.length > 1) {
     html += `<div class="trip-chip" id="trip-chip-trip" role="button" tabindex="0">
-      <i class="ti ti-plane"></i><span>${escapeHtml(trip.name)}</span><i class="ti ti-chevron-right" style="transform: rotate(90deg); opacity: 0.5;"></i>
+      <span>${escapeHtml(trip.name)}</span>
     </div>`;
   }
 
@@ -773,7 +773,7 @@ function renderNotes() {
   let html = '';
   if (state.trips.length > 1) {
     html += `<div class="trip-chip" id="trip-chip-notes" role="button" tabindex="0">
-      <i class="ti ti-plane"></i><span>${escapeHtml(trip.name)}</span><i class="ti ti-chevron-right" style="transform: rotate(90deg); opacity: 0.5;"></i>
+      <span>${escapeHtml(trip.name)}</span>
     </div>`;
   }
   html += `<div class="day-header" style="margin-top: 6px;"><div class="lbl">NOTES &amp; LISTS</div><div style="font-size: 11px; color: var(--text-3);">${trip.notes.length} categor${trip.notes.length === 1 ? 'y' : 'ies'}</div></div>
