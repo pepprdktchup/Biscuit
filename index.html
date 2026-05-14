@@ -37,7 +37,6 @@
 html, body { margin: 0; padding: 0; }
 body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; -webkit-font-smoothing: antialiased; padding: 20px; }
 .phone { width: 402px; height: 874px; background: var(--bg); border-radius: var(--radius-lg); border: 1px solid var(--border-strong); overflow: hidden; position: relative; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.08); }
-@media (max-width: 480px) { html, body { height: 100dvh; overflow: hidden; overscroll-behavior: none; } body { background: var(--bg); padding: 0; } .phone { width: 100vw; height: 100vh; height: 100dvh; border-radius: 0; border: 0; box-shadow: none; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); box-sizing: border-box; } .status-bar { display: none; } .cat-fab, .add-fab-mini { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); } }
 .pixel-font { font-family: "Courier New", "Lucida Console", monospace; font-weight: 700; letter-spacing: 0.5px; }
 .lbl { font-size: 10px; letter-spacing: 1.5px; font-weight: 700; color: var(--text-2); text-transform: uppercase; }
 .status-bar { flex-shrink: 0; height: 30px; display: flex; align-items: center; justify-content: space-between; padding: 6px 18px 0; font-size: 12px; }
@@ -188,6 +187,27 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .empty { text-align: center; padding: 40px 20px; color: var(--text-3); font-size: 13px; }
 .debug-badge { position: absolute; top: 6px; left: 12px; background: var(--text); color: var(--accent); font-size: 9px; padding: 2px 8px; border-radius: 999px; font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: 1px; z-index: 100; cursor: pointer; opacity: 0.8; }
 .add-fab-mini { position: absolute; right: 16px; bottom: 76px; z-index: 4; background: var(--accent); color: white; border: 2px solid var(--cat-dark); width: 48px; height: 48px; border-radius: 50%; font-size: 22px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; padding-bottom: 3px; font-family: inherit; }
+
+/* MOBILE OVERRIDES — keep this block at the end so it wins the cascade against the base rules above */
+@media (max-width: 480px) {
+  html, body { height: 100dvh; overflow: hidden; overscroll-behavior: none; }
+  body { background: var(--bg); padding: 0; }
+  .phone {
+    width: 100vw;
+    height: 100vh; /* fallback */
+    height: 100dvh;
+    border-radius: 0;
+    border: 0;
+    box-shadow: none;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    box-sizing: border-box;
+  }
+  .status-bar { display: none; }
+  .cat-fab, .add-fab-mini { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+}
 </style>
 </head>
 <body>
