@@ -818,7 +818,23 @@ function renderNotes() {
   document.querySelectorAll('[data-note-delete]').forEach(b => b.addEventListener('click', () => { const id = b.getAttribute('data-note-delete'); const n = trip.notes.find(x => x.id === id); if (!n) return; if (confirm(`Delete category "${n.title || 'Untitled'}"?`)) { trip.notes = trip.notes.filter(x => x.id !== id); renderNotes(); } }));
   document.querySelectorAll('[data-note-text]').forEach(el => el.addEventListener('input', () => { const n = trip.notes.find(x => x.id === el.getAttribute('data-note-text')); if (n) n.text = el.value; }));
   document.querySelectorAll('[data-check-toggle]').forEach(b => b.addEventListener('click', () => { const [nid, iid] = b.getAttribute('data-check-toggle').split('__'); const n = trip.notes.find(x => x.id === nid); const it = n && n.items.find(x => x.id === iid); if (it) { it.checked = !it.checked; renderNotes(); } }));
-  document.querySelectorAll('[data-check-text]').forEach(el => el.addEventListener('input', () => { const [nid, iid] = el.getAttribute('data-check-text').split('__'); const n = trip.notes.find(x => x.id === nid); const it = n && n.items.find(x => x.id === iid); if (it) it.text = el.value; }));
+  document.querySelectorAll('[data-check-text]').forEach(el => {
+    el.addEventListener('input', () => { const [nid, iid] = el.getAttribute('data-check-text').split('__'); const n = trip.notes.find(x => x.id === nid); const it = n && n.items.find(x => x.id === iid); if (it) it.text = el.value; });
+    el.addEventListener('keydown', ev => {
+      if (ev.key !== 'Enter') return;
+      ev.preventDefault();
+      const [nid, iid] = el.getAttribute('data-check-text').split('__');
+      const n = trip.notes.find(x => x.id === nid);
+      if (!n) return;
+      const idx = n.items.findIndex(x => x.id === iid);
+      const newItem = { id: newId(), text: '', checked: false };
+      n.items.splice(idx + 1, 0, newItem);
+      saveState();
+      renderNotes();
+      const newInput = document.querySelector(`[data-check-text="${nid}__${newItem.id}"]`);
+      if (newInput) newInput.focus();
+    });
+  });
   document.querySelectorAll('[data-check-delete]').forEach(b => b.addEventListener('click', () => { const [nid, iid] = b.getAttribute('data-check-delete').split('__'); const n = trip.notes.find(x => x.id === nid); if (!n) return; n.items = n.items.filter(x => x.id !== iid); renderNotes(); }));
   document.querySelectorAll('[data-add-item]').forEach(b => b.addEventListener('click', () => { const id = b.getAttribute('data-add-item'); const n = trip.notes.find(x => x.id === id); if (!n) return; n.items.push({ id: newId(), text: '', checked: false }); renderNotes(); const inputs = document.querySelectorAll(`[data-note-id="${id}"] .check-text`); if (inputs.length) inputs[inputs.length-1].focus(); }));
   document.getElementById('add-category').addEventListener('click', () => { trip.notes.push({ id: newId(), title: '', type: 'checklist', items: [], text: '' }); renderNotes(); const titles = document.querySelectorAll('.note-title-input'); if (titles.length) titles[titles.length-1].focus(); });
@@ -904,7 +920,7 @@ function openAddEventModal(existingEvent) {
     <div class="input-card"><div class="field-label">WHEN <span style="font-weight: 400; color: var(--text-3); text-transform: none; letter-spacing: 0;">· ${escapeHtml(trip.travelLabel)} time</span></div>
       <div class="row" style="margin-top: 6px;"><div class="col"><input type="datetime-local" id="ev-start" value="${isoLocal(new Date(e.start))}"><div class="input-hint" id="ev-start-hint"></div></div></div>
       <div class="divider"></div>
-      <div class="row"><div class="col"><div class="field-label">DURATION (MIN)</div><input type="number" id="ev-duration" min="0" step="15" value="${e.durationMin}" style="margin-top: 4px;"></div></div>
+      <div class="row"><div class="col"><div class="field-label">DURATION</div><div class="row" style="gap: 8px; margin-top: 4px;"><div class="col"><input type="number" id="ev-dur-h" min="0" max="23" step="1" placeholder="0" value="${Math.floor(e.durationMin / 60)}" style="text-align:center;"><div style="text-align:center;font-size:10px;color:var(--text-2);margin-top:2px;letter-spacing:1px;">HR</div></div><div style="display:flex;align-items:center;padding:0 2px;font-size:18px;color:var(--text-2);">:</div><div class="col"><input type="number" id="ev-dur-m" min="0" max="59" step="5" placeholder="0" value="${e.durationMin % 60}" style="text-align:center;"><div style="text-align:center;font-size:10px;color:var(--text-2);margin-top:2px;letter-spacing:1px;">MIN</div></div></div></div></div>
     </div>
     <div class="input-card"><div class="field-label">WHERE</div><input type="text" id="ev-location" placeholder="Tsukiji Outer Market" value="${escapeAttr(e.location || '')}"></div>
     <div class="input-card"><div class="field-label">PRICE <span style="font-weight: 400; color: var(--text-3); text-transform: none; letter-spacing: 0;">· syncs to Money</span></div>
@@ -956,7 +972,7 @@ function saveEventModal() {
     bookingRef: document.getElementById('ev-booking').value.trim(),
     notes: document.getElementById('ev-notes').value.trim(),
     start: adj.toISOString(),
-    durationMin: parseInt(document.getElementById('ev-duration').value, 10) || 60,
+    durationMin: (parseInt(document.getElementById('ev-dur-h').value, 10) || 0) * 60 + (parseInt(document.getElementById('ev-dur-m').value, 10) || 0) || 60,
     reminders: [...e.reminders],
     checkedOff: isNew ? false : e.checkedOff,
     price: pv ? parseFloat(pv) : null,
@@ -1250,6 +1266,24 @@ init();
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => { /* SW unavailable — app still works, just no offline */ });
+  });
+}
+
+// Keep focused inputs visible above the iOS keyboard
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    const keyboardH = window.innerHeight - window.visualViewport.height;
+    const sa = document.getElementById('scroll-area');
+    const bsBody = document.getElementById('bs-body');
+    const pad = keyboardH > 80 ? keyboardH + 16 : 0;
+    if (sa) sa.style.paddingBottom = pad ? pad + 'px' : '';
+    if (bsBody) bsBody.style.paddingBottom = pad ? pad + 'px' : '';
+    if (pad) {
+      setTimeout(() => {
+        const f = document.activeElement;
+        if (f && f.tagName !== 'BODY') f.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 50);
+    }
   });
 }
 </script>
