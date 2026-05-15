@@ -1,6 +1,6 @@
 // Biscuit service worker
 // Bump CACHE_VERSION whenever you ship a meaningful update so old caches get cleared.
-const CACHE_VERSION = 'biscuit-v3';
+const CACHE_VERSION = 'biscuit-v4';
 const STATIC_FILES = [
   './',
   './index.html',
@@ -30,7 +30,7 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
 
-  // Network-first for navigation requests (the HTML itself) so deployed updates show up immediately when online.
+  // Network-first for navigation requests so deployed updates show up immediately when online.
   if (event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
     event.respondWith(
       fetch(event.request)
@@ -44,7 +44,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for everything else (icons, manifest). Falls through to network for cache misses.
+  // Cache-first for everything else (icons, manifest).
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
@@ -55,6 +55,40 @@ self.addEventListener('fetch', (event) => {
         }
         return res;
       });
+    })
+  );
+});
+
+// ─── Push notifications ───────────────────────────────────────────────────────
+
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  let data;
+  try { data = event.data.json(); } catch { data = { title: 'Biscuit', body: event.data.text() }; }
+
+  const title   = data.title || 'Biscuit';
+  const options = {
+    body:            data.body || '',
+    icon:            './icon-192.png',
+    badge:           './icon-192.png',
+    tag:             data.eventId || 'biscuit-reminder',
+    renotify:        true,
+    requireInteraction: false,
+    data:            { eventId: data.eventId },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Tap notification → bring app to foreground (or open it)
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => {
+      for (const w of wins) {
+        if ('focus' in w) return w.focus();
+      }
+      return clients.openWindow('./');
     })
   );
 });
