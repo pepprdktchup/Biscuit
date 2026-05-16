@@ -571,13 +571,37 @@ function computeCatState() {
   if (state.debugStateOverride) { const n = events.find(e => !e.checkedOff); return { state: state.debugStateOverride, event: n || null }; }
   const now = new Date();
   if (state.settings.catQuiet && isQuietHoursNow()) return { state: 'idle', event: null };
-  const active = events.filter(e => !e.checkedOff).map(e => ({ ...e, sd: new Date(e.start) })).sort((a, b) => a.sd - b.sd);
-  const go = active.find(e => { const m = (e.sd - now)/60000; return m <= 0 && m > -5; });
+
+  const sorted = events
+    .filter(e => !e.checkedOff)
+    .map(e => ({ ...e, sd: new Date(e.start) }))
+    .sort((a, b) => a.sd - b.sd);
+
+  // Priority 1 — GO: any event that started within the last 5 min and isn't over yet
+  // (use durationMin as the window; fall back to 5 min for all-day events)
+  const go = sorted.find(e => {
+    const m = (e.sd - now) / 60000; // negative = started
+    const dur = e.allDay ? 1440 : (e.durationMin || 60);
+    return m <= 0 && m > -dur; // started but not finished
+  });
   if (go) return { state: 'go', event: go };
-  const oops = active.find(e => { const m = (e.sd - now)/60000; return m <= -5 && m > -30; });
+
+  // Priority 2 — OOPS: most recent event that ended within the last 30 min
+  // (only shows briefly to say "you missed it", then clears)
+  const oops = sorted.find(e => {
+    const dur = e.allDay ? 1440 : (e.durationMin || 60);
+    const endMinsAgo = -(e.sd - now) / 60000 - dur; // minutes since event ended
+    return endMinsAgo >= 0 && endMinsAgo < 30;
+  });
   if (oops) return { state: 'oops', event: oops };
-  const next = active.find(e => e.sd > now);
-  if (next) { const m = (next.sd - now) / 60000; if (m <= 30) return { state: 'headsup', event: next }; return { state: 'idle', event: next }; }
+
+  // Priority 3 — HEADSUP or IDLE: next future event
+  const next = sorted.find(e => e.sd > now);
+  if (next) {
+    const m = (next.sd - now) / 60000;
+    return { state: m <= 30 ? 'headsup' : 'idle', event: next };
+  }
+
   return { state: 'idle', event: null };
 }
 function isQuietHoursNow() {
@@ -1523,14 +1547,65 @@ document.getElementById('bs-save').addEventListener('click', () => { if (_bsOnSa
 document.getElementById('bs-backdrop').addEventListener('click', closeBottomSheet);
 document.getElementById('debug-badge').addEventListener('click', () => { const c = [null, 'idle', 'headsup', 'go', 'oops']; const i = c.indexOf(state.debugStateOverride); state.debugStateOverride = c[(i + 1) % c.length]; renderCat(); if (state.activeTab === 'trip') renderTrip(); });
 
+// Foreground reminder check — fires when app is open.
+// Background reminders are handled by the Cloudflare Worker cron.
+function checkAndFireReminders() {
+  if (!state.settings.pushOn) return;
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if (isQuietHoursNow()) return;
+  const now = Date.now();
+
+  // Prune stale fired keys
+  const validKeys = new Set();
+  state.trips.forEach(trip => {
+    trip.events.forEach(e => {
+      if (!e.checkedOff) (e.reminders || []).forEach(r => validKeys.add(`${e.id}:${r}`));
+    });
+  });
+  state.firedReminders = state.firedReminders.filter(k => validKeys.has(k));
+
+  // Check every trip's events — fire within a 65-second window (covers the 60s tick)
+  state.trips.forEach(trip => {
+    trip.events.forEach(e => {
+      if (e.checkedOff) return;
+      const startMs = new Date(e.start).getTime();
+      (e.reminders || []).forEach(rMin => {
+        const fireAt = startMs - rMin * 60000;
+        const key = `${e.id}:${rMin}`;
+        if (state.firedReminders.includes(key)) return;
+        if (now >= fireAt && now < fireAt + 65000) {
+          const body = rMin === 0
+            ? `Starting now!${e.location ? ' · ' + e.location : ''}`
+            : `In ${fmtReminderShort(rMin)}${e.location ? ' · ' + e.location : ''}`;
+          try {
+            new Notification(e.title, {
+              body,
+              icon: catIconForReminder(rMin),
+              tag: key,
+              silent: false,
+            });
+          } catch (_) {}
+          state.firedReminders.push(key);
+          saveState();
+        }
+      });
+    });
+  });
+}
+
 function init() {
   if (!loadState()) seedTrips();
   render();
   if (state.settings.pushOn && WORKER_URL) syncSchedule(false);
+  // 30s tick — clocks, cat state, trip view
   setInterval(() => {
     renderClocks(); renderCat();
     if (state.activeTab === 'trip') renderTrip();
   }, 30000);
+  // 60s tick — foreground reminder check (fires when app is open)
+  setInterval(checkAndFireReminders, 60000);
+  // Also run immediately on load in case we just opened the app near a reminder time
+  setTimeout(checkAndFireReminders, 2000);
 }
 init();
 
