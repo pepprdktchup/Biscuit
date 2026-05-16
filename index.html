@@ -939,7 +939,7 @@ function renderNotes() {
 
 function renderSettings() {
   const s = state.settings;
-  const pills = s.defaultReminders.map(r => `<span class="pill">${fmtReminder(r)}<span class="x" data-remove-reminder="${r}">×</span></span>`).join('');
+  const pills = s.defaultReminders.map(r => `<span class="pill">${fmtReminderShort(r)}<span class="x" data-remove-reminder="${r}">×</span></span>`).join('');
   const fh = h => { const x = h % 12 === 0 ? 12 : h % 12; return `${x}:00 ${h < 12 ? 'AM' : 'PM'}`; };
 
   const html = `<div style="text-align: center; padding: 14px 0 4px;"><div style="font-size: 16px; font-weight: 600; color: var(--text);">Settings</div></div>
@@ -1020,10 +1020,16 @@ function renderSettings() {
   document.getElementById('reset-demo').addEventListener('click', () => { if (confirm('Wipe all trips, events, expenses, and notes? This re-seeds demo data.')) { try { localStorage.removeItem(STORAGE_KEY); } catch (e) {} seedTrips(); state.debugStateOverride = null; render(); } });
 }
 function fmtReminder(r) {
-  if (r === 0) return 'on time';
-  if (r >= 1440) { const d = r / 1440; return `${d} day${d === 1 ? '' : 's'}`; }
-  if (r >= 60) { const h = r / 60; return `${h} h`; }
-  return `${r} min`;
+  if (r === 0) return 'At time of event';
+  if (r >= 1440) { const d = r / 1440; return `${d} day${d === 1 ? '' : 's'} before`; }
+  if (r >= 60) { const h = r / 60; return `${h}h before`; }
+  return `${r} min before`;
+}
+function fmtReminderShort(r) {
+  if (r === 0) return 'at time';
+  if (r >= 1440) { const d = r / 1440; return `${d}d`; }
+  if (r >= 60) { return `${r/60}h`; }
+  return `${r}m`;
 }
 
 function openAddEventModal(existingEvent) {
@@ -1066,7 +1072,7 @@ function openAddEventModal(existingEvent) {
       <div class="field-label">CATEGORY</div>
       <select id="ev-category" style="margin-top: 4px;">${['food','transit','shopping','lodging','activity','other'].map(c => `<option value="${c}" ${(e.category || 'activity') === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
     </div>
-    <div class="input-card"><div class="field-label" style="margin-bottom: 8px;">REMIND ME</div><div id="reminders-edit">${e.reminders.map(r => `<span class="pill">${fmtReminder(r)} before<span class="x" data-mod-remove="${r}">×</span></span>`).join('')}<button class="pill-add" id="mod-add-reminder"><i class="ti ti-plus"></i> add</button></div></div>
+    <div class="input-card"><div class="field-label" style="margin-bottom: 8px;">REMIND ME</div><div id="reminders-edit">${e.reminders.map(r => `<span class="pill">${fmtReminder(r)}<span class="x" data-mod-remove="${r}">×</span></span>`).join('')}<button class="pill-add" id="mod-add-reminder"><i class="ti ti-plus"></i> add</button></div></div>
     <div class="input-card"><div class="field-label">BOOKING REF</div><input type="text" id="ev-booking" placeholder="TYO-4827, confirmation #, guide name..." value="${escapeAttr(e.bookingRef || '')}"></div>
     <div class="input-card"><div class="field-label">NOTES</div><textarea id="ev-notes" rows="3" placeholder="Anything else...">${escapeHtml(e.notes || '')}</textarea></div>
     ${existingEvent ? `<div style="text-align: center; padding: 8px 16px;"><button class="btn-ghost" id="delete-event" style="color: var(--accent-text); border-color: var(--accent-bg);">Delete event</button></div>` : ''}`;
@@ -1102,7 +1108,7 @@ function openAddEventModal(existingEvent) {
     }
   });
 
-  const rerender = ev => { document.getElementById('reminders-edit').innerHTML = ev.reminders.map(r => `<span class="pill">${fmtReminder(r)} before<span class="x" data-mod-remove="${r}">×</span></span>`).join('') + `<button class="pill-add" id="mod-add-reminder"><i class="ti ti-plus"></i> add</button>`; bind(ev); applyIcons(document.getElementById('modal-body')); };
+  const rerender = ev => { document.getElementById('reminders-edit').innerHTML = ev.reminders.map(r => `<span class="pill">${fmtReminder(r)}<span class="x" data-mod-remove="${r}">×</span></span>`).join('') + `<button class="pill-add" id="mod-add-reminder"><i class="ti ti-plus"></i> add</button>`; bind(ev); applyIcons(document.getElementById('modal-body')); };
   const bind = ev => {
     document.querySelectorAll('[data-mod-remove]').forEach(x => x.addEventListener('click', () => { const r = parseInt(x.getAttribute('data-mod-remove'), 10); ev.reminders = ev.reminders.filter(v => v !== r); rerender(ev); }));
     document.getElementById('mod-add-reminder').addEventListener('click', () => openReminderPicker(ev.reminders, r => { ev.reminders.push(r); ev.reminders.sort((a, b) => a - b); rerender(ev); }));
@@ -1395,7 +1401,7 @@ function openReminderPicker(currentList, onSelect) {
   const available = REMINDER_OPTIONS.filter(r => !currentList.includes(r));
   if (available.length === 0) { alert('All available reminders are already added.'); return; }
   const rows = available.map(r => `<button class="picker-row" data-reminder="${r}">
-    <div style="flex: 1; font-size: 13px; font-weight: 500;">${escapeHtml(fmtReminder(r))} before</div>
+    <div style="flex: 1; font-size: 13px; font-weight: 500;">${escapeHtml(fmtReminder(r))}</div>
   </button>`).join('');
   openBottomSheet('Add reminder', `<div style="max-height: 55vh; overflow-y: auto;">${rows}</div>`, null, { hideSave: true });
   document.querySelectorAll('.picker-row[data-reminder]').forEach(b => b.addEventListener('click', () => {
@@ -1421,6 +1427,13 @@ async function subscribePush() {
   if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(VAPID_PUBLIC_KEY) });
   return sub;
 }
+function catIconForReminder(r) {
+  const base = 'https://pepprdktchup.github.io/Biscuit/';
+  if (r === 0) return base + 'cat-go.svg';
+  if (r <= 30) return base + 'cat-headsup.svg';
+  return base + 'cat-idle.svg';
+}
+
 function computeReminderSchedule() {
   const now = Date.now();
   const schedule = [];
@@ -1431,8 +1444,8 @@ function computeReminderSchedule() {
       (e.reminders || []).forEach(r => {
         const fireAt = startMs - r * 60000;
         if (fireAt <= now) return;
-        const body = r === 0 ? `Starting now!${e.location ? ' · ' + e.location : ''}` : `In ${fmtReminder(r)}${e.location ? ' · ' + e.location : ''}`;
-        schedule.push({ eventId: e.id, title: e.title, body, fireAt });
+        const body = r === 0 ? `Starting now!${e.location ? ' · ' + e.location : ''}` : `In ${fmtReminderShort(r)}${e.location ? ' · ' + e.location : ''}`;
+        schedule.push({ eventId: e.id, title: e.title, body, fireAt, icon: catIconForReminder(r) });
       });
     });
   });

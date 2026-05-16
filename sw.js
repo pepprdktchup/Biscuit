@@ -68,13 +68,13 @@ self.addEventListener('push', (event) => {
 
   const title   = data.title || 'Biscuit';
   const options = {
-    body:            data.body || '',
-    icon:            './icon-192.png',
-    badge:           './icon-192.png',
-    tag:             data.eventId || 'biscuit-reminder',
-    renotify:        true,
+    body:               data.body || '',
+    icon:               data.icon || './icon-192.png',
+    badge:              './icon-192.png',
+    tag:                data.eventId || 'biscuit-reminder',
+    renotify:           true,
     requireInteraction: false,
-    data:            { eventId: data.eventId },
+    data:               { eventId: data.eventId },
   };
 
   event.waitUntil(self.registration.showNotification(title, options));
