@@ -138,7 +138,10 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .expense-amount { text-align: right; flex-shrink: 0; }
 .expense-amount .native { font-size: 13px; font-weight: 500; }
 .expense-amount .home { font-size: 11px; color: var(--text-3); margin-top: 2px; }
-.note-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin: 0 12px 12px; overflow: hidden; }
+.note-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin: 0 12px 12px; overflow: hidden; transition: opacity 0.15s; }
+.note-card.dragging { opacity: 0.4; }
+.note-card.drag-over { outline: 2px solid var(--accent); outline-offset: 1px; }
+.note-card-drag { color: var(--text-3); font-size: 16px; cursor: grab; padding: 2px 2px 2px 0; touch-action: none; flex-shrink: 0; }
 .note-card-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 0.5px solid var(--border); }
 .note-title-input { flex: 1; border: none; background: transparent; font-family: inherit; font-size: 14px; font-weight: 600; color: var(--text); padding: 4px 0; outline: none; min-width: 0; }
 .note-title-input::placeholder { color: var(--text-3); font-weight: 500; }
@@ -793,6 +796,7 @@ function renderNotes() {
   trip.notes.forEach(note => {
     html += `<div class="note-card" data-note-id="${escapeAttr(note.id)}">
       <div class="note-card-header">
+        <span class="note-card-drag" aria-hidden="true">⠿</span>
         <input class="note-title-input" data-note-title="${escapeAttr(note.id)}" value="${escapeAttr(note.title)}" placeholder="Untitled list">
         <div class="note-type-seg">
           <button class="${note.type === 'text' ? 'active' : ''}" data-note-type="text" data-note-id="${escapeAttr(note.id)}">TEXT</button>
@@ -887,6 +891,40 @@ function renderNotes() {
     window.addEventListener('touchmove', e => moveDrag(e.touches[0].clientY), { passive: true });
     window.addEventListener('mouseup', e => endDrag(e.clientY), { once: false });
     window.addEventListener('touchend', e => endDrag(e.changedTouches[0].clientY), { once: false });
+  });
+
+  // Drag-to-reorder whole note cards
+  let cardDragSrc = null;
+  document.querySelectorAll('.note-card-drag').forEach(handle => {
+    const card = handle.closest('.note-card');
+    const startCardDrag = (e) => { cardDragSrc = card; card.classList.add('dragging'); e.stopPropagation(); };
+    const moveCardDrag = (clientY) => {
+      if (!cardDragSrc) return;
+      document.querySelectorAll('.note-card').forEach(c => c.classList.remove('drag-over'));
+      const cards = [...document.querySelectorAll('.note-card')];
+      const target = cards.find(c => { const r = c.getBoundingClientRect(); return clientY < r.top + r.height / 2 && c !== cardDragSrc; });
+      if (target) target.classList.add('drag-over');
+    };
+    const endCardDrag = (clientY) => {
+      if (!cardDragSrc) return;
+      const cards = [...document.querySelectorAll('.note-card')];
+      const target = cards.find(c => c.classList.contains('drag-over'));
+      if (target && target !== cardDragSrc) {
+        const srcId = cardDragSrc.dataset.noteId;
+        const tgtId = target.dataset.noteId;
+        const si = trip.notes.findIndex(x => x.id === srcId);
+        const ti = trip.notes.findIndex(x => x.id === tgtId);
+        if (si >= 0 && ti >= 0) { const [note] = trip.notes.splice(si, 1); trip.notes.splice(ti, 0, note); saveState(); renderNotes(); return; }
+      }
+      document.querySelectorAll('.note-card').forEach(c => { c.classList.remove('dragging'); c.classList.remove('drag-over'); });
+      cardDragSrc = null;
+    };
+    handle.addEventListener('mousedown', startCardDrag);
+    handle.addEventListener('touchstart', e => startCardDrag(e), { passive: true });
+    window.addEventListener('mousemove', e => moveCardDrag(e.clientY), { passive: true });
+    window.addEventListener('touchmove', e => moveCardDrag(e.touches[0].clientY), { passive: true });
+    window.addEventListener('mouseup', e => endCardDrag(e.clientY), { once: false });
+    window.addEventListener('touchend', e => endCardDrag(e.changedTouches[0].clientY), { once: false });
   });
 }
 
