@@ -654,11 +654,12 @@ function renderTrip() {
 
   if (upcoming) {
     const m = Math.max(0, Math.round(minutesUntil(upcoming.start)));
+    const upNextLabel = upcoming.allDay ? 'TODAY' : (m < 1 ? 'NOW' : 'IN ' + fmtDuration(m).toUpperCase());
     html += `<div class="up-next">
-      <div class="up-next-header"><div class="up-next-dot"></div><div class="lbl" style="color: var(--accent-text);">UP NEXT · ${m < 1 ? 'NOW' : 'IN ' + fmtDuration(m).toUpperCase()}</div></div>
+      <div class="up-next-header"><div class="up-next-dot"></div><div class="lbl" style="color: var(--accent-text);">UP NEXT · ${upNextLabel}</div></div>
       <div class="up-next-title">${escapeHtml(upcoming.title)}</div>
       <div class="up-next-meta">
-        <div>${escapeHtml(fmtTimeInZone(new Date(upcoming.start), tz))}${upcoming.location ? ' · ' + escapeHtml(upcoming.location) : ''}</div>
+        <div>${upcoming.allDay ? 'All day' : escapeHtml(fmtTimeInZone(new Date(upcoming.start), tz))}${upcoming.location ? ' · ' + escapeHtml(upcoming.location) : ''}</div>
         ${upcoming.bookingRef ? `<div>Booking <span class="pixel-font" style="color: var(--text);">${escapeHtml(upcoming.bookingRef)}</span></div>` : ''}
         ${upcoming.price ? `<div>Cost <span class="pixel-font" style="color: var(--text);">${escapeHtml(fmtMoneyNative(upcoming.price, upcoming.priceCurrency))}</span></div>` : ''}
       </div>
@@ -692,8 +693,8 @@ function renderTrip() {
       const ck = e.checkedOff ? 'checked' : '';
       html += `<div class="evt-row ${ck}" data-event-id="${escapeAttr(e.id)}">
         <button class="evt-check" data-toggle="${escapeAttr(e.id)}" aria-label="Toggle done"><i class="ti ti-check"></i></button>
-        <div class="evt-time pixel-font">${escapeHtml(fmtTimeInZone(new Date(e.start), tz))}</div>
-        <div style="flex: 1; min-width: 0;"><div class="evt-title">${escapeHtml(e.title)}</div><div class="evt-meta">${fmtDuration(e.durationMin)}${e.location ? ' · ' + escapeHtml(e.location) : ''}</div></div>
+        <div class="evt-time pixel-font">${e.allDay ? 'All day' : escapeHtml(fmtTimeInZone(new Date(e.start), tz))}</div>
+        <div style="flex: 1; min-width: 0;"><div class="evt-title">${escapeHtml(e.title)}</div><div class="evt-meta">${e.allDay ? '' : fmtDuration(e.durationMin) + ' '}${e.location ? (e.allDay ? '' : '· ') + escapeHtml(e.location) : ''}</div></div>
         ${e.price ? `<div class="evt-price">${escapeHtml(fmtMoneyNative(e.price, e.priceCurrency))}</div>` : ''}
       </div>`;
     });
@@ -1002,14 +1003,28 @@ function openAddEventModal(existingEvent) {
   const tz = trip.travelZone;
   const ds = existingEvent ? new Date(existingEvent.start) : new Date(now.getTime() + 3600000);
   const isoLocal = d => { const p = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12: false }).formatToParts(d); const o = {}; p.forEach(x => o[x.type] = x.value); return `${o.year}-${o.month}-${o.day}T${o.hour === '24' ? '00' : o.hour}:${o.minute}`; };
-  const e = existingEvent || { title: '', start: ds.toISOString(), durationMin: 60, location: '', reminders: [...state.settings.defaultReminders], bookingRef: '', notes: '', price: null, priceCurrency: trip.travelCurrency, category: 'activity' };
+  const e = existingEvent || { title: '', start: ds.toISOString(), durationMin: 60, allDay: false, location: '', reminders: [...state.settings.defaultReminders], bookingRef: '', notes: '', price: null, priceCurrency: trip.travelCurrency, category: 'activity' };
+  const isoDateOnly = d => { const p = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(d); const o = {}; p.forEach(x => o[x.type] = x.value); return `${o.year}-${o.month}-${o.day}`; };
+  const isAllDay = !!e.allDay;
   const currencyOpts = `<option value="${trip.travelCurrency}" ${(e.priceCurrency || trip.travelCurrency) === trip.travelCurrency ? 'selected' : ''}>${trip.travelCurrency} ${trip.travelCurrencySymbol}</option><option value="USD" ${e.priceCurrency === 'USD' ? 'selected' : ''}>USD $</option>`;
 
   body.innerHTML = `<div class="input-card"><div class="field-label">TITLE</div><input type="text" id="ev-title" placeholder="Tsukiji food tour" value="${escapeAttr(e.title)}"></div>
-    <div class="input-card"><div class="field-label">WHEN <span style="font-weight: 400; color: var(--text-3); text-transform: none; letter-spacing: 0;">· ${escapeHtml(trip.travelLabel)} time</span></div>
-      <div class="row" style="margin-top: 6px;"><div class="col"><input type="datetime-local" id="ev-start" value="${isoLocal(new Date(e.start))}"><div class="input-hint" id="ev-start-hint"></div></div></div>
+    <div class="input-card"><div class="field-label" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>WHEN <span style="font-weight: 400; color: var(--text-3); text-transform: none; letter-spacing: 0;">· ${escapeHtml(trip.travelLabel)} time</span></span>
+      <label style="display:flex;align-items:center;gap:6px;font-size:10px;letter-spacing:1px;font-weight:700;color:var(--text-2);cursor:pointer;">
+        <input type="checkbox" id="ev-allday" ${isAllDay ? 'checked' : ''} style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;"> ALL DAY
+      </label>
+    </div>
+      <div class="row" style="margin-top: 6px;" id="ev-start-row">
+        <div class="col" id="ev-start-col">
+          <input type="${isAllDay ? 'date' : 'datetime-local'}" id="ev-start" value="${isAllDay ? isoDateOnly(new Date(e.start)) : isoLocal(new Date(e.start))}">
+          <div class="input-hint" id="ev-start-hint"></div>
+        </div>
+      </div>
+      <div id="ev-dur-row" style="${isAllDay ? 'display:none;' : ''}">
       <div class="divider"></div>
-      <div class="row"><div class="col"><div class="field-label">DURATION</div><div class="row" style="gap: 8px; margin-top: 4px;"><div class="col"><input type="number" id="ev-dur-h" min="0" max="23" step="1" placeholder="0" value="${Math.floor(e.durationMin / 60)}" style="text-align:center;"><div style="text-align:center;font-size:10px;color:var(--text-2);margin-top:2px;letter-spacing:1px;">HR</div></div><div style="display:flex;align-items:center;padding:0 2px;font-size:18px;color:var(--text-2);">:</div><div class="col"><input type="number" id="ev-dur-m" min="0" max="59" step="5" placeholder="0" value="${e.durationMin % 60}" style="text-align:center;"><div style="text-align:center;font-size:10px;color:var(--text-2);margin-top:2px;letter-spacing:1px;">MIN</div></div></div></div></div>
+      <div class="row"><div class="col"><div class="field-label">DURATION</div><div class="row" style="gap: 8px; margin-top: 4px;"><div class="col"><input type="number" inputmode="numeric" id="ev-dur-h" min="0" max="23" step="1" placeholder="0" value="${Math.floor(e.durationMin / 60)}" style="text-align:center;"><div style="text-align:center;font-size:10px;color:var(--text-2);margin-top:2px;letter-spacing:1px;">HR</div></div><div style="display:flex;align-items:center;padding:0 2px;font-size:18px;color:var(--text-2);">:</div><div class="col"><input type="number" inputmode="numeric" id="ev-dur-m" min="0" max="59" step="5" placeholder="0" value="${e.durationMin % 60}" style="text-align:center;"><div style="text-align:center;font-size:10px;color:var(--text-2);margin-top:2px;letter-spacing:1px;">MIN</div></div></div></div></div>
+      </div>
     </div>
     <div class="input-card"><div class="field-label">WHERE</div><input type="text" id="ev-location" placeholder="Tsukiji Outer Market" value="${escapeAttr(e.location || '')}"></div>
     <div class="input-card"><div class="field-label">PRICE <span style="font-weight: 400; color: var(--text-3); text-transform: none; letter-spacing: 0;">· syncs to Money</span></div>
@@ -1023,8 +1038,36 @@ function openAddEventModal(existingEvent) {
     <div class="input-card"><div class="field-label">NOTES</div><textarea id="ev-notes" rows="3" placeholder="Anything else...">${escapeHtml(e.notes || '')}</textarea></div>
     ${existingEvent ? `<div style="text-align: center; padding: 8px 16px;"><button class="btn-ghost" id="delete-event" style="color: var(--accent-text); border-color: var(--accent-bg);">Delete event</button></div>` : ''}`;
 
-  const updHint = () => { const v = document.getElementById('ev-start').value; if (!v) return; const d = new Date(v); const bo = -new Date().getTimezoneOffset()/60; const to = zoneOffsetHours(trip.travelZone, new Date()); const adj = new Date(d.getTime() + (bo - to)*3600000); document.getElementById('ev-start-hint').textContent = `${fmtDayShort(adj, state.settings.homeZone)} ${fmtTimeInZone(adj, state.settings.homeZone)} ${state.settings.homeLabel}`; };
+  const updHint = () => {
+    if (document.getElementById('ev-allday').checked) { document.getElementById('ev-start-hint').textContent = ''; return; }
+    const v = document.getElementById('ev-start').value; if (!v) return;
+    const d = new Date(v); const bo = -new Date().getTimezoneOffset()/60; const to = zoneOffsetHours(trip.travelZone, new Date());
+    const adj = new Date(d.getTime() + (bo - to)*3600000);
+    document.getElementById('ev-start-hint').textContent = `${fmtDayShort(adj, state.settings.homeZone)} ${fmtTimeInZone(adj, state.settings.homeZone)} ${state.settings.homeLabel}`;
+  };
   document.getElementById('ev-start').addEventListener('input', updHint); updHint();
+
+  // All-day toggle — swap input type and show/hide duration
+  document.getElementById('ev-allday').addEventListener('change', () => {
+    const allDay = document.getElementById('ev-allday').checked;
+    const startInput = document.getElementById('ev-start');
+    const durRow = document.getElementById('ev-dur-row');
+    const curVal = startInput.value;
+    if (allDay) {
+      // Strip time — keep date portion
+      const datePart = curVal.split('T')[0] || isoDateOnly(new Date());
+      startInput.type = 'date';
+      startInput.value = datePart;
+      durRow.style.display = 'none';
+      document.getElementById('ev-start-hint').textContent = '';
+    } else {
+      const datePart = curVal || isoDateOnly(new Date());
+      startInput.type = 'datetime-local';
+      startInput.value = datePart + 'T09:00';
+      durRow.style.display = '';
+      updHint();
+    }
+  });
 
   const rerender = ev => { document.getElementById('reminders-edit').innerHTML = ev.reminders.map(r => `<span class="pill">${fmtReminder(r)} before<span class="x" data-mod-remove="${r}">×</span></span>`).join('') + `<button class="pill-add" id="mod-add-reminder"><i class="ti ti-plus"></i> add</button>`; bind(ev); applyIcons(document.getElementById('modal-body')); };
   const bind = ev => {
@@ -1049,19 +1092,27 @@ function saveEventModal() {
   if (!title) { alert('Title is required'); return; }
   const startStr = document.getElementById('ev-start').value;
   if (!startStr) { alert('Start time is required'); return; }
-  const d = new Date(startStr);
-  const bo = -new Date().getTimezoneOffset()/60;
-  const to = zoneOffsetHours(trip.travelZone, d);
-  const adj = new Date(d.getTime() + (bo - to)*3600000);
+  const allDay = document.getElementById('ev-allday').checked;
+  let startISO;
+  if (allDay) {
+    // Store as midnight travel-zone time on that date
+    startISO = new Date(startStr + 'T00:00:00').toISOString();
+  } else {
+    const d = new Date(startStr);
+    const bo = -new Date().getTimezoneOffset()/60;
+    const to = zoneOffsetHours(trip.travelZone, d);
+    startISO = new Date(d.getTime() + (bo - to)*3600000).toISOString();
+  }
   const pv = document.getElementById('ev-price').value;
   const data = {
     id: isNew ? newId() : e.id,
     title,
+    allDay,
     location: document.getElementById('ev-location').value.trim(),
     bookingRef: document.getElementById('ev-booking').value.trim(),
     notes: document.getElementById('ev-notes').value.trim(),
-    start: adj.toISOString(),
-    durationMin: (parseInt(document.getElementById('ev-dur-h').value, 10) || 0) * 60 + (parseInt(document.getElementById('ev-dur-m').value, 10) || 0) || 60,
+    start: startISO,
+    durationMin: allDay ? 1440 : ((parseInt(document.getElementById('ev-dur-h').value, 10) || 0) * 60 + (parseInt(document.getElementById('ev-dur-m').value, 10) || 0) || 60),
     reminders: [...e.reminders],
     checkedOff: isNew ? false : e.checkedOff,
     price: pv ? parseFloat(pv) : null,
