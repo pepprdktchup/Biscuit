@@ -370,6 +370,10 @@ const CURRENCIES = [
 
 const REMINDER_OPTIONS = [0, 5, 10, 15, 30, 60, 120, 240, 480, 1440, 2880];
 
+// ─── Push config ─────────────────────────────────────────────────────────────
+const VAPID_PUBLIC_KEY = 'BLpLqz1wBuBDjvUasJWNijffahqH3VZ-pCivZ4duQbyI9VC5t76GdxY0ih8xrhDHW4YQdqNz5iAUbbpIH5oET5g';
+const WORKER_URL = 'https://biscuit-push.hanbit-designs.workers.dev';
+
 const state = {
   activeTab: 'trip',
   activeTripId: null,
@@ -381,10 +385,11 @@ const state = {
     fxRates: { 'JPY': 0.0067, 'KRW': 0.00073 },
     showCat: true, catQuiet: true,
     quietStartHour: 23, quietEndHour: 7,
-    pushOn: true, autoUpdateZone: true,
+    pushOn: false, autoUpdateZone: true,
     defaultReminders: [30, 60], fxLastRefresh: Date.now(),
   },
   debugStateOverride: null,
+  firedReminders: [], // "eventId:reminderMin" keys — prevents double-firing in foreground
 };
 
 function getActiveTrip() {
@@ -399,8 +404,10 @@ function saveState() {
       trips: state.trips,
       activeTripId: state.activeTripId,
       settings: state.settings,
+      firedReminders: state.firedReminders,
     }));
   } catch (e) { /* quota exceeded, private mode, etc. — fail silently */ }
+  debouncedSyncSchedule();
 }
 function loadState() {
   try {
@@ -416,6 +423,7 @@ function loadState() {
     });
     state.activeTripId = d.activeTripId || d.trips[0].id;
     if (d.settings) state.settings = { ...state.settings, ...d.settings };
+    if (Array.isArray(d.firedReminders)) state.firedReminders = d.firedReminders;
     return true;
   } catch (e) { return false; }
 }
@@ -949,7 +957,7 @@ function renderSettings() {
       <div style="padding-left: 30px;">${pills}<button class="pill-add" id="add-reminder-btn"><i class="ti ti-plus"></i> add</button><div class="field-hint" style="margin-top: 6px;">Auto-applied to new events</div></div>
     </div>
     <div class="field-row" data-open="quiet-hours" style="cursor: pointer;"><div class="field-icon"><i class="ti ti-moon"></i></div><div class="field-content"><div class="field-label">QUIET HOURS</div><div class="field-value pixel-font">${fh(s.quietStartHour)} – ${fh(s.quietEndHour)}</div><div class="field-hint">Local time · no pings during these hours</div></div><div class="chevron"><i class="ti ti-chevron-right"></i></div></div>
-    <div class="field-row"><div class="field-icon"><i class="ti ti-device-mobile"></i></div><div class="field-content"><div class="field-label">PUSH NOTIFICATIONS</div><div class="field-hint">Master switch · also requires OS permission</div></div><button class="toggle ${s.pushOn ? 'on' : ''}" data-toggle-setting="pushOn"><div class="thumb"></div></button></div>
+    <div class="field-row"><div class="field-icon"><i class="ti ti-device-mobile"></i></div><div class="field-content"><div class="field-label">PUSH NOTIFICATIONS</div><div class="field-hint">${'Notification' in window && Notification.permission === 'denied' ? '⚠ Blocked in browser/OS settings' : 'Background reminders via Cloudflare · requires permission'}</div></div><button class="toggle ${s.pushOn ? 'on' : ''}" data-toggle-setting="pushOn"><div class="thumb"></div></button></div>
   </div>
 
   <div class="lbl section-label">MONEY</div>
@@ -974,7 +982,32 @@ function renderSettings() {
   <div style="text-align: center; padding: 8px 16px 24px;"><button class="btn-ghost" id="reset-demo">Reset demo data</button></div>`;
   document.getElementById('screen-content').innerHTML = html;
 
-  document.querySelectorAll('[data-toggle-setting]').forEach(b => b.addEventListener('click', () => { const k = b.getAttribute('data-toggle-setting'); state.settings[k] = !state.settings[k]; b.classList.toggle('on'); renderCat(); }));
+  document.querySelectorAll('[data-toggle-setting]').forEach(b => b.addEventListener('click', () => {
+    const k = b.getAttribute('data-toggle-setting');
+    if (k === 'pushOn' && !state.settings.pushOn) {
+      if (!('Notification' in window)) { alert('Notifications are not supported in this browser.'); return; }
+      if (Notification.permission === 'denied') { alert('Notifications are blocked. Enable them in your browser/OS settings, then try again.'); return; }
+      Notification.requestPermission().then(async perm => {
+        if (perm !== 'granted') { alert('Permission not granted — notifications stay off.'); return; }
+        try {
+          state.settings.pushOn = true;
+          b.classList.add('on');
+          saveState();
+          await syncSchedule(true);
+          new Notification('Biscuit', { body: 'Background reminders are on. The cat will find you.', icon: './icon-192.png', silent: true });
+        } catch (err) {
+          state.settings.pushOn = false;
+          b.classList.remove('on');
+          alert('Push subscription failed: ' + err.message);
+        }
+      });
+      return;
+    }
+    state.settings[k] = !state.settings[k];
+    b.classList.toggle('on');
+    renderCat();
+    saveState();
+  }));
   document.querySelectorAll('[data-remove-reminder]').forEach(x => x.addEventListener('click', () => { const r = parseInt(x.getAttribute('data-remove-reminder'), 10); state.settings.defaultReminders = state.settings.defaultReminders.filter(v => v !== r); render(); }));
   document.getElementById('add-reminder-btn').addEventListener('click', () => openReminderPicker(state.settings.defaultReminders, r => { state.settings.defaultReminders.push(r); state.settings.defaultReminders.sort((a, b) => a - b); render(); }));
   document.querySelectorAll('[data-open]').forEach(row => row.addEventListener('click', () => {
@@ -1371,8 +1404,62 @@ function openReminderPicker(currentList, onSelect) {
   }));
 }
 
+// ─── Push subscription & schedule sync ───────────────────────────────────────
+
+function urlB64ToUint8Array(b64) {
+  return Uint8Array.from(atob(b64.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+}
+async function getPushSubscription() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+  const reg = await navigator.serviceWorker.ready;
+  return reg.pushManager.getSubscription();
+}
+async function subscribePush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(VAPID_PUBLIC_KEY) });
+  return sub;
+}
+function computeReminderSchedule() {
+  const now = Date.now();
+  const schedule = [];
+  state.trips.forEach(trip => {
+    trip.events.forEach(e => {
+      if (e.checkedOff) return;
+      const startMs = new Date(e.start).getTime();
+      (e.reminders || []).forEach(r => {
+        const fireAt = startMs - r * 60000;
+        if (fireAt <= now) return;
+        const body = r === 0 ? `Starting now!${e.location ? ' · ' + e.location : ''}` : `In ${fmtReminder(r)}${e.location ? ' · ' + e.location : ''}`;
+        schedule.push({ eventId: e.id, title: e.title, body, fireAt });
+      });
+    });
+  });
+  return schedule;
+}
+let _syncTimer = null;
+async function syncSchedule(includeSubscription = false) {
+  if (!WORKER_URL || !state.settings.pushOn) return;
+  const schedule = computeReminderSchedule();
+  try {
+    if (includeSubscription) {
+      const sub = await subscribePush();
+      if (!sub) return;
+      await fetch(WORKER_URL + '/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: sub.toJSON(), schedule }) });
+    } else {
+      const sub = await getPushSubscription();
+      if (!sub) return;
+      await fetch(WORKER_URL + '/schedule', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ schedule }) });
+    }
+  } catch (_) { /* network unavailable — fail silently */ }
+}
+function debouncedSyncSchedule() {
+  clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(() => syncSchedule(false), 2000);
+}
+
 function render() {
-  document.getElementById('dual-clock-wrap').style.display = state.activeTab === 'settings' ? 'none' : '';
   renderClocks();
   renderCat();
   if (state.activeTab === 'trip') renderTrip();
@@ -1396,6 +1483,7 @@ document.getElementById('debug-badge').addEventListener('click', () => { const c
 function init() {
   if (!loadState()) seedTrips();
   render();
+  if (state.settings.pushOn && WORKER_URL) syncSchedule(false);
   setInterval(() => {
     renderClocks(); renderCat();
     if (state.activeTab === 'trip') renderTrip();
