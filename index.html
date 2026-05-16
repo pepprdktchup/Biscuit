@@ -861,79 +861,92 @@ function renderNotes() {
   document.getElementById('add-category').addEventListener('click', () => { trip.notes.push({ id: newId(), title: '', type: 'checklist', items: [], text: '' }); renderNotes(); const titles = document.querySelectorAll('.note-title-input'); if (titles.length) titles[titles.length-1].focus(); });
 
   // Drag-to-reorder checklist items (touch + mouse)
+  // Handlers are attached to window once and cleaned up on next renderNotes
   let dragSrc = null;
+  const _onDragMove = e => {
+    if (!dragSrc) return;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const noteId = dragSrc.dataset.noteId;
+    document.querySelectorAll(`.check-row[data-note-id="${noteId}"]`).forEach(r => r.classList.remove('drag-over'));
+    const els = [...document.querySelectorAll(`.check-row[data-note-id="${noteId}"]`)];
+    const target = els.find(r => { const rect = r.getBoundingClientRect(); return clientY < rect.bottom && r !== dragSrc; });
+    if (target) target.classList.add('drag-over');
+  };
+  const _onDragEnd = e => {
+    if (!dragSrc) return;
+    const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+    const noteId = dragSrc.dataset.noteId;
+    const n = trip.notes.find(x => x.id === noteId);
+    if (n) {
+      const els = [...document.querySelectorAll(`.check-row[data-note-id="${noteId}"]`)];
+      const target = els.find(r => r.classList.contains('drag-over'));
+      if (target && target !== dragSrc) {
+        const si = n.items.findIndex(x => x.id === dragSrc.dataset.itemId);
+        const ti = n.items.findIndex(x => x.id === target.dataset.itemId);
+        if (si >= 0 && ti >= 0) { const [item] = n.items.splice(si, 1); n.items.splice(ti, 0, item); saveState(); }
+      }
+    }
+    document.querySelectorAll('.check-row').forEach(r => { r.classList.remove('dragging'); r.classList.remove('drag-over'); });
+    dragSrc = null;
+    window.removeEventListener('mousemove', _onDragMove);
+    window.removeEventListener('touchmove', _onDragMove);
+    window.removeEventListener('mouseup', _onDragEnd);
+    window.removeEventListener('touchend', _onDragEnd);
+    renderNotes();
+  };
   document.querySelectorAll('.drag-handle').forEach(handle => {
     const row = handle.closest('.check-row');
-    const noteId = row.dataset.noteId;
-    const startDrag = (e) => {
-      dragSrc = row;
-      row.classList.add('dragging');
-      e.stopPropagation();
-    };
-    const moveDrag = (clientY) => {
-      if (!dragSrc) return;
-      document.querySelectorAll(`.check-row[data-note-id="${noteId}"]`).forEach(r => r.classList.remove('drag-over'));
-      const els = [...document.querySelectorAll(`.check-row[data-note-id="${noteId}"]`)];
-      const target = els.find(r => { const rect = r.getBoundingClientRect(); return clientY < rect.bottom && r !== dragSrc; });
-      if (target) target.classList.add('drag-over');
-    };
-    const endDrag = (clientY) => {
-      if (!dragSrc) return;
-      const n = trip.notes.find(x => x.id === noteId);
-      if (n) {
-        const els = [...document.querySelectorAll(`.check-row[data-note-id="${noteId}"]`)];
-        const target = els.find(r => r.classList.contains('drag-over'));
-        if (target && target !== dragSrc) {
-          const srcId = dragSrc.dataset.itemId;
-          const tgtId = target.dataset.itemId;
-          const si = n.items.findIndex(x => x.id === srcId);
-          const ti = n.items.findIndex(x => x.id === tgtId);
-          if (si >= 0 && ti >= 0) { const [item] = n.items.splice(si, 1); n.items.splice(ti, 0, item); saveState(); renderNotes(); return; }
-        }
-      }
-      document.querySelectorAll('.check-row').forEach(r => { r.classList.remove('dragging'); r.classList.remove('drag-over'); });
-      dragSrc = null;
-    };
-    handle.addEventListener('mousedown', startDrag);
-    handle.addEventListener('touchstart', e => startDrag(e), { passive: true });
-    window.addEventListener('mousemove', e => moveDrag(e.clientY), { passive: true });
-    window.addEventListener('touchmove', e => moveDrag(e.touches[0].clientY), { passive: true });
-    window.addEventListener('mouseup', e => endDrag(e.clientY), { once: false });
-    window.addEventListener('touchend', e => endDrag(e.changedTouches[0].clientY), { once: false });
+    handle.addEventListener('mousedown', e => {
+      dragSrc = row; row.classList.add('dragging'); e.stopPropagation();
+      window.addEventListener('mousemove', _onDragMove, { passive: true });
+      window.addEventListener('mouseup', _onDragEnd);
+    });
+    handle.addEventListener('touchstart', e => {
+      dragSrc = row; row.classList.add('dragging'); e.stopPropagation();
+      window.addEventListener('touchmove', _onDragMove, { passive: true });
+      window.addEventListener('touchend', _onDragEnd);
+    }, { passive: true });
   });
 
   // Drag-to-reorder whole note cards
   let cardDragSrc = null;
+  const _onCardMove = e => {
+    if (!cardDragSrc) return;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    document.querySelectorAll('.note-card').forEach(c => c.classList.remove('drag-over'));
+    const cards = [...document.querySelectorAll('.note-card')];
+    const target = cards.find(c => { const r = c.getBoundingClientRect(); return clientY < r.top + r.height / 2 && c !== cardDragSrc; });
+    if (target) target.classList.add('drag-over');
+  };
+  const _onCardEnd = e => {
+    if (!cardDragSrc) return;
+    const cards = [...document.querySelectorAll('.note-card')];
+    const target = cards.find(c => c.classList.contains('drag-over'));
+    if (target && target !== cardDragSrc) {
+      const si = trip.notes.findIndex(x => x.id === cardDragSrc.dataset.noteId);
+      const ti = trip.notes.findIndex(x => x.id === target.dataset.noteId);
+      if (si >= 0 && ti >= 0) { const [note] = trip.notes.splice(si, 1); trip.notes.splice(ti, 0, note); saveState(); }
+    }
+    document.querySelectorAll('.note-card').forEach(c => { c.classList.remove('dragging'); c.classList.remove('drag-over'); });
+    cardDragSrc = null;
+    window.removeEventListener('mousemove', _onCardMove);
+    window.removeEventListener('touchmove', _onCardMove);
+    window.removeEventListener('mouseup', _onCardEnd);
+    window.removeEventListener('touchend', _onCardEnd);
+    renderNotes();
+  };
   document.querySelectorAll('.note-card-drag').forEach(handle => {
     const card = handle.closest('.note-card');
-    const startCardDrag = (e) => { cardDragSrc = card; card.classList.add('dragging'); e.stopPropagation(); };
-    const moveCardDrag = (clientY) => {
-      if (!cardDragSrc) return;
-      document.querySelectorAll('.note-card').forEach(c => c.classList.remove('drag-over'));
-      const cards = [...document.querySelectorAll('.note-card')];
-      const target = cards.find(c => { const r = c.getBoundingClientRect(); return clientY < r.top + r.height / 2 && c !== cardDragSrc; });
-      if (target) target.classList.add('drag-over');
-    };
-    const endCardDrag = (clientY) => {
-      if (!cardDragSrc) return;
-      const cards = [...document.querySelectorAll('.note-card')];
-      const target = cards.find(c => c.classList.contains('drag-over'));
-      if (target && target !== cardDragSrc) {
-        const srcId = cardDragSrc.dataset.noteId;
-        const tgtId = target.dataset.noteId;
-        const si = trip.notes.findIndex(x => x.id === srcId);
-        const ti = trip.notes.findIndex(x => x.id === tgtId);
-        if (si >= 0 && ti >= 0) { const [note] = trip.notes.splice(si, 1); trip.notes.splice(ti, 0, note); saveState(); renderNotes(); return; }
-      }
-      document.querySelectorAll('.note-card').forEach(c => { c.classList.remove('dragging'); c.classList.remove('drag-over'); });
-      cardDragSrc = null;
-    };
-    handle.addEventListener('mousedown', startCardDrag);
-    handle.addEventListener('touchstart', e => startCardDrag(e), { passive: true });
-    window.addEventListener('mousemove', e => moveCardDrag(e.clientY), { passive: true });
-    window.addEventListener('touchmove', e => moveCardDrag(e.touches[0].clientY), { passive: true });
-    window.addEventListener('mouseup', e => endCardDrag(e.clientY), { once: false });
-    window.addEventListener('touchend', e => endCardDrag(e.changedTouches[0].clientY), { once: false });
+    handle.addEventListener('mousedown', e => {
+      cardDragSrc = card; card.classList.add('dragging'); e.stopPropagation();
+      window.addEventListener('mousemove', _onCardMove, { passive: true });
+      window.addEventListener('mouseup', _onCardEnd);
+    });
+    handle.addEventListener('touchstart', e => {
+      cardDragSrc = card; card.classList.add('dragging'); e.stopPropagation();
+      window.addEventListener('touchmove', _onCardMove, { passive: true });
+      window.addEventListener('touchend', _onCardEnd);
+    }, { passive: true });
   });
 }
 
