@@ -408,6 +408,7 @@ function saveState() {
     }));
   } catch (e) { /* quota exceeded, private mode, etc. — fail silently */ }
   debouncedSyncSchedule();
+  scheduleNextReminder(); // re-arm precision timer whenever events/reminders change
 }
 function loadState() {
   try {
@@ -1549,7 +1550,38 @@ document.getElementById('bs-save').addEventListener('click', () => { if (_bsOnSa
 document.getElementById('bs-backdrop').addEventListener('click', closeBottomSheet);
 document.getElementById('debug-badge').addEventListener('click', () => { const c = [null, 'idle', 'headsup', 'go', 'oops']; const i = c.indexOf(state.debugStateOverride); state.debugStateOverride = c[(i + 1) % c.length]; renderCat(); if (state.activeTab === 'trip') renderTrip(); });
 
-// Foreground reminder check — fires when app is open.
+// Precision reminder scheduler — fires a setTimeout aimed at the exact ms
+// of each upcoming reminder rather than relying on a fixed interval.
+let _reminderTimer = null;
+function scheduleNextReminder() {
+  clearTimeout(_reminderTimer);
+  if (!state.settings.pushOn) return;
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+  const now = Date.now();
+  let nextFireAt = Infinity;
+
+  state.trips.forEach(trip => {
+    trip.events.forEach(e => {
+      if (e.checkedOff) return;
+      const startMs = new Date(e.start).getTime();
+      (e.reminders || []).forEach(rMin => {
+        const fireAt = startMs - rMin * 60000;
+        const key = `${e.id}:${rMin}`;
+        if (state.firedReminders.includes(key)) return;
+        if (fireAt > now && fireAt < nextFireAt) nextFireAt = fireAt;
+      });
+    });
+  });
+
+  if (nextFireAt !== Infinity) {
+    const delay = Math.max(0, nextFireAt - Date.now());
+    _reminderTimer = setTimeout(() => {
+      checkAndFireReminders();
+      scheduleNextReminder(); // arm for the one after
+    }, delay);
+  }
+}
 // Background reminders are handled by the Cloudflare Worker cron.
 function checkAndFireReminders() {
   if (!state.settings.pushOn) return;
@@ -1604,10 +1636,12 @@ function init() {
     renderClocks(); renderCat();
     if (state.activeTab === 'trip') renderTrip();
   }, 30000);
-  // 60s tick — foreground reminder check (fires when app is open)
+  // 60s safety net — catches any precision timer drift or missed fires
   setInterval(checkAndFireReminders, 60000);
-  // Also run immediately on load in case we just opened the app near a reminder time
-  setTimeout(checkAndFireReminders, 2000);
+  // Precision scheduler — fires setTimeout aimed at exact reminder ms
+  scheduleNextReminder();
+  // Run immediately in case app opened near a reminder time
+  setTimeout(checkAndFireReminders, 500);
 }
 init();
 
