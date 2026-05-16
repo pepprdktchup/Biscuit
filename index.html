@@ -586,21 +586,23 @@ function computeCatState() {
   });
   if (go) return { state: 'go', event: go };
 
-  // Priority 2 — OOPS: most recent event that ended within the last 30 min
-  // (only shows briefly to say "you missed it", then clears)
-  const oops = sorted.find(e => {
-    const dur = e.allDay ? 1440 : (e.durationMin || 60);
-    const endMinsAgo = -(e.sd - now) / 60000 - dur; // minutes since event ended
-    return endMinsAgo >= 0 && endMinsAgo < 30;
-  });
-  if (oops) return { state: 'oops', event: oops };
-
-  // Priority 3 — HEADSUP or IDLE: next future event
+  // Priority 2 — HEADSUP: next event starts within 30 min (beats oops — upcoming > missed)
   const next = sorted.find(e => e.sd > now);
   if (next) {
     const m = (next.sd - now) / 60000;
-    return { state: m <= 30 ? 'headsup' : 'idle', event: next };
+    if (m <= 30) return { state: 'headsup', event: next };
   }
+
+  // Priority 3 — OOPS: most recent event that ended within the last 10 min
+  const oops = sorted.find(e => {
+    const dur = e.allDay ? 1440 : (e.durationMin || 60);
+    const endMinsAgo = -(e.sd - now) / 60000 - dur;
+    return endMinsAgo >= 0 && endMinsAgo < 10;
+  });
+  if (oops) return { state: 'oops', event: oops };
+
+  // Priority 4 — IDLE: next future event (far away)
+  if (next) return { state: 'idle', event: next };
 
   return { state: 'idle', event: null };
 }
