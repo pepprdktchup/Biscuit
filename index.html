@@ -50,7 +50,9 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .dual-clock .time { font-size: 19px; margin-top: 3px; color: var(--text); }
 .dual-clock .date { font-size: 10px; color: var(--text-3); margin-top: 1px; }
 .offset { background: var(--accent-bg); color: var(--accent-text); font-size: 10px; font-weight: 700; padding: 4px 9px; border-radius: 999px; letter-spacing: 0.5px; margin: 0 10px; }
-.nav { flex-shrink: 0; border-top: 0.5px solid var(--border); display: flex; padding: 10px 0 16px; background: var(--bg); }
+.nav { flex-shrink: 0; border-top: 0.5px solid var(--border); display: flex; padding: 10px 0 16px; background: var(--bg); transition: none; }
+.phone.keyboard-open .nav { display: none; }
+.phone.keyboard-open .cat-fab, .phone.keyboard-open .add-fab-mini { display: none !important; }
 .tab { flex: 1; text-align: center; cursor: pointer; background: none; border: none; padding: 0; font-family: inherit; }
 .tab-icon { font-size: 20px; line-height: 1; color: var(--text-3); }
 .tab-label { font-size: 9px; color: var(--text-2); letter-spacing: 1px; font-weight: 700; margin-top: 4px; text-transform: uppercase; }
@@ -1324,7 +1326,13 @@ if (window.visualViewport) {
     const keyboardH = window.innerHeight - window.visualViewport.height;
     const sa = document.getElementById('scroll-area');
     const bsBody = document.getElementById('bs-body');
+    const phone = document.querySelector('.phone');
     const pad = keyboardH > 80 ? keyboardH + 16 : 0;
+    if (pad) {
+      phone.classList.add('keyboard-open');
+    } else {
+      phone.classList.remove('keyboard-open');
+    }
     if (sa) sa.style.paddingBottom = pad ? pad + 'px' : '';
     if (bsBody) bsBody.style.paddingBottom = pad ? pad + 'px' : '';
     if (pad) {
