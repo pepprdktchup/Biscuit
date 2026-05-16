@@ -957,7 +957,7 @@ function renderSettings() {
       <div style="padding-left: 30px;">${pills}<button class="pill-add" id="add-reminder-btn"><i class="ti ti-plus"></i> add</button><div class="field-hint" style="margin-top: 6px;">Auto-applied to new events</div></div>
     </div>
     <div class="field-row" data-open="quiet-hours" style="cursor: pointer;"><div class="field-icon"><i class="ti ti-moon"></i></div><div class="field-content"><div class="field-label">QUIET HOURS</div><div class="field-value pixel-font">${fh(s.quietStartHour)} – ${fh(s.quietEndHour)}</div><div class="field-hint">Local time · no pings during these hours</div></div><div class="chevron"><i class="ti ti-chevron-right"></i></div></div>
-    <div class="field-row"><div class="field-icon"><i class="ti ti-device-mobile"></i></div><div class="field-content"><div class="field-label">PUSH NOTIFICATIONS</div><div class="field-hint">${'Notification' in window && Notification.permission === 'denied' ? '⚠ Blocked in browser/OS settings' : 'Background reminders via Cloudflare · requires permission'}</div></div><button class="toggle ${s.pushOn ? 'on' : ''}" data-toggle-setting="pushOn"><div class="thumb"></div></button></div>
+    <div class="field-row"><div class="field-icon"><i class="ti ti-device-mobile"></i></div><div class="field-content"><div class="field-label">PUSH NOTIFICATIONS</div><div class="field-hint" id="push-hint">${'Notification' in window && Notification.permission === 'denied' ? '⚠ Blocked in browser/OS settings' : 'Background reminders via Cloudflare · requires permission'}</div></div><button class="toggle ${s.pushOn ? 'on' : ''}" data-toggle-setting="pushOn"><div class="thumb"></div></button></div>
   </div>
 
   <div class="lbl section-label">MONEY</div>
@@ -1018,6 +1018,23 @@ function renderSettings() {
     else if (a === 'fx-rates') openFxRatesSheet();
   }));
   document.getElementById('reset-demo').addEventListener('click', () => { if (confirm('Wipe all trips, events, expenses, and notes? This re-seeds demo data.')) { try { localStorage.removeItem(STORAGE_KEY); } catch (e) {} seedTrips(); state.debugStateOverride = null; render(); } });
+
+  // Async: check real subscription status and update hint
+  if ('serviceWorker' in navigator && 'PushManager' in window) {
+    getPushSubscription().then(sub => {
+      const hint = document.getElementById('push-hint');
+      if (!hint) return;
+      if (Notification.permission === 'denied') {
+        hint.textContent = '⚠ Blocked in browser/OS settings';
+      } else if (state.settings.pushOn && sub) {
+        hint.textContent = '✓ Subscribed · cron fires every minute';
+      } else if (state.settings.pushOn && !sub) {
+        hint.textContent = '⚠ Toggle is on but not subscribed — toggle off and on again';
+      } else {
+        hint.textContent = 'Background reminders via Cloudflare · requires permission';
+      }
+    }).catch(() => {});
+  }
 }
 function fmtReminder(r) {
   if (r === 0) return 'At time of event';
@@ -1511,8 +1528,31 @@ if ('serviceWorker' in navigator) {
 }
 
 // Keep focused inputs visible above the iOS keyboard
+// Track whether a text input is actually focused — visualViewport fires for
+// many non-keyboard reasons (address bar, bounce scroll, zoom) so we gate on this.
+let _inputFocused = false;
+const INPUT_SEL = 'input:not([type=checkbox]):not([type=radio]):not([type=date]):not([type=datetime-local]):not([type=button]):not([type=submit]), textarea';
+document.addEventListener('focusin', e => {
+  if (e.target.matches(INPUT_SEL)) _inputFocused = true;
+});
+document.addEventListener('focusout', () => {
+  // Small delay so focus moving between inputs doesn't flash
+  setTimeout(() => {
+    _inputFocused = !!(document.activeElement && document.activeElement.matches(INPUT_SEL));
+    if (!_inputFocused) {
+      const phone = document.querySelector('.phone');
+      if (phone) phone.classList.remove('keyboard-open');
+      const sa = document.getElementById('scroll-area');
+      const bsBody = document.getElementById('bs-body');
+      if (sa) sa.style.paddingBottom = '';
+      if (bsBody) bsBody.style.paddingBottom = '';
+    }
+  }, 150);
+});
+
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', () => {
+    if (!_inputFocused) return; // address bar / scroll / zoom — ignore
     const keyboardH = window.innerHeight - window.visualViewport.height;
     const sa = document.getElementById('scroll-area');
     const bsBody = document.getElementById('bs-body');
@@ -1529,15 +1569,11 @@ if (window.visualViewport) {
       setTimeout(() => {
         const f = document.activeElement;
         if (f && f.tagName !== 'BODY') {
-          // On notes tab, make sure the focused element scrolls into view inside scroll-area
           const scrollEl = (sa && sa.contains(f)) ? sa : (bsBody && bsBody.contains(f)) ? bsBody : null;
           if (scrollEl) {
             const rect = f.getBoundingClientRect();
-            const containerRect = scrollEl.getBoundingClientRect();
             const visibleBottom = window.visualViewport.height + window.visualViewport.offsetTop;
-            if (rect.bottom > visibleBottom - 16) {
-              scrollEl.scrollTop += rect.bottom - (visibleBottom - 16);
-            }
+            if (rect.bottom > visibleBottom - 16) scrollEl.scrollTop += rect.bottom - (visibleBottom - 16);
           } else {
             f.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }
