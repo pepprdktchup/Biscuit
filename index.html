@@ -146,9 +146,12 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .note-delete-btn { background: none; border: none; cursor: pointer; padding: 4px; color: var(--text-3); font-size: 16px; }
 .note-delete-btn:hover { color: var(--accent-text); }
 .note-body { padding: 8px 12px 12px; }
-.note-textarea { width: 100%; border: none; background: transparent; font-family: inherit; font-size: 13px; color: var(--text); padding: 4px 0; outline: none; resize: none; min-height: 80px; line-height: 1.5; }
+.note-textarea { width: 100%; border: none; background: transparent; font-family: inherit; font-size: 13px; color: var(--text); padding: 4px 0; outline: none; resize: none; min-height: 120px; line-height: 1.5; }
 .note-textarea::placeholder { color: var(--text-3); }
-.check-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
+.check-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; cursor: default; }
+.drag-handle { color: var(--text-3); font-size: 14px; cursor: grab; padding: 0 2px; touch-action: none; flex-shrink: 0; }
+.check-row.dragging { opacity: 0.4; }
+.check-row.drag-over { border-top: 2px solid var(--accent); }
 .check-box { width: 18px; height: 18px; flex-shrink: 0; border-radius: 4px; border: 1.5px solid var(--border-strong); display: flex; align-items: center; justify-content: center; font-size: 10px; color: white; background: transparent; cursor: pointer; padding: 0; }
 .check-row.checked .check-box { background: var(--success); border-color: var(--success); }
 .check-row.checked .check-box i { display: block; }
@@ -360,7 +363,7 @@ const CURRENCIES = [
   { code: 'BRL', symbol: 'R$', name: 'Brazilian Real' },
 ];
 
-const REMINDER_OPTIONS = [5, 10, 15, 30, 60, 120, 240, 480, 1440, 2880];
+const REMINDER_OPTIONS = [0, 5, 10, 15, 30, 60, 120, 240, 480, 1440, 2880];
 
 const state = {
   activeTab: 'trip',
@@ -671,6 +674,8 @@ function renderTrip() {
   dayKeys.forEach(k => {
     const evs = byDay.get(k);
     const isToday = k === todayKey;
+    // Skip today if it has no events — only show it when there's something to display
+    if (isToday && evs.length === 0) return;
     const sampleDate = isToday ? now : new Date(evs[0].start);
     const dateLabel = fmtFullDate(sampleDate, tz).toUpperCase();
     const headerLabel = isToday ? `TODAY · ${dateLabel}` : dateLabel;
@@ -799,7 +804,8 @@ function renderNotes() {
     } else {
       note.items.forEach(it => {
         const ck = it.checked ? 'checked' : '';
-        html += `<div class="check-row ${ck}">
+        html += `<div class="check-row ${ck}" data-item-id="${escapeAttr(it.id)}" data-note-id="${escapeAttr(note.id)}">
+          <span class="drag-handle" aria-hidden="true">⠿</span>
           <button class="check-box" data-check-toggle="${escapeAttr(note.id)}__${escapeAttr(it.id)}" aria-label="Toggle done"><i class="ti ti-check"></i></button>
           <input class="check-text" data-check-text="${escapeAttr(note.id)}__${escapeAttr(it.id)}" value="${escapeAttr(it.text)}" placeholder="New item">
           <button class="check-del" data-check-delete="${escapeAttr(note.id)}__${escapeAttr(it.id)}" aria-label="Delete item"><i class="ti ti-x"></i></button>
@@ -838,6 +844,48 @@ function renderNotes() {
   document.querySelectorAll('[data-check-delete]').forEach(b => b.addEventListener('click', () => { const [nid, iid] = b.getAttribute('data-check-delete').split('__'); const n = trip.notes.find(x => x.id === nid); if (!n) return; n.items = n.items.filter(x => x.id !== iid); renderNotes(); }));
   document.querySelectorAll('[data-add-item]').forEach(b => b.addEventListener('click', () => { const id = b.getAttribute('data-add-item'); const n = trip.notes.find(x => x.id === id); if (!n) return; n.items.push({ id: newId(), text: '', checked: false }); renderNotes(); const inputs = document.querySelectorAll(`[data-note-id="${id}"] .check-text`); if (inputs.length) inputs[inputs.length-1].focus(); }));
   document.getElementById('add-category').addEventListener('click', () => { trip.notes.push({ id: newId(), title: '', type: 'checklist', items: [], text: '' }); renderNotes(); const titles = document.querySelectorAll('.note-title-input'); if (titles.length) titles[titles.length-1].focus(); });
+
+  // Drag-to-reorder checklist items (touch + mouse)
+  let dragSrc = null;
+  document.querySelectorAll('.drag-handle').forEach(handle => {
+    const row = handle.closest('.check-row');
+    const noteId = row.dataset.noteId;
+    const startDrag = (e) => {
+      dragSrc = row;
+      row.classList.add('dragging');
+      e.stopPropagation();
+    };
+    const moveDrag = (clientY) => {
+      if (!dragSrc) return;
+      document.querySelectorAll(`.check-row[data-note-id="${noteId}"]`).forEach(r => r.classList.remove('drag-over'));
+      const els = [...document.querySelectorAll(`.check-row[data-note-id="${noteId}"]`)];
+      const target = els.find(r => { const rect = r.getBoundingClientRect(); return clientY < rect.bottom && r !== dragSrc; });
+      if (target) target.classList.add('drag-over');
+    };
+    const endDrag = (clientY) => {
+      if (!dragSrc) return;
+      const n = trip.notes.find(x => x.id === noteId);
+      if (n) {
+        const els = [...document.querySelectorAll(`.check-row[data-note-id="${noteId}"]`)];
+        const target = els.find(r => r.classList.contains('drag-over'));
+        if (target && target !== dragSrc) {
+          const srcId = dragSrc.dataset.itemId;
+          const tgtId = target.dataset.itemId;
+          const si = n.items.findIndex(x => x.id === srcId);
+          const ti = n.items.findIndex(x => x.id === tgtId);
+          if (si >= 0 && ti >= 0) { const [item] = n.items.splice(si, 1); n.items.splice(ti, 0, item); saveState(); renderNotes(); return; }
+        }
+      }
+      document.querySelectorAll('.check-row').forEach(r => { r.classList.remove('dragging'); r.classList.remove('drag-over'); });
+      dragSrc = null;
+    };
+    handle.addEventListener('mousedown', startDrag);
+    handle.addEventListener('touchstart', e => startDrag(e), { passive: true });
+    window.addEventListener('mousemove', e => moveDrag(e.clientY), { passive: true });
+    window.addEventListener('touchmove', e => moveDrag(e.touches[0].clientY), { passive: true });
+    window.addEventListener('mouseup', e => endDrag(e.clientY), { once: false });
+    window.addEventListener('touchend', e => endDrag(e.changedTouches[0].clientY), { once: false });
+  });
 }
 
 function renderSettings() {
@@ -898,6 +946,7 @@ function renderSettings() {
   document.getElementById('reset-demo').addEventListener('click', () => { if (confirm('Wipe all trips, events, expenses, and notes? This re-seeds demo data.')) { try { localStorage.removeItem(STORAGE_KEY); } catch (e) {} seedTrips(); state.debugStateOverride = null; render(); } });
 }
 function fmtReminder(r) {
+  if (r === 0) return 'on time';
   if (r >= 1440) { const d = r / 1440; return `${d} day${d === 1 ? '' : 's'}`; }
   if (r >= 60) { const h = r / 60; return `${h} h`; }
   return `${r} min`;
@@ -924,7 +973,7 @@ function openAddEventModal(existingEvent) {
     </div>
     <div class="input-card"><div class="field-label">WHERE</div><input type="text" id="ev-location" placeholder="Tsukiji Outer Market" value="${escapeAttr(e.location || '')}"></div>
     <div class="input-card"><div class="field-label">PRICE <span style="font-weight: 400; color: var(--text-3); text-transform: none; letter-spacing: 0;">· syncs to Money</span></div>
-      <div class="row" style="margin-top: 4px;"><div class="col"><input type="number" id="ev-price" min="0" step="1" placeholder="0" value="${e.price || ''}"></div><div class="col" style="flex: 0 0 90px;"><select id="ev-price-currency">${currencyOpts}</select></div></div>
+      <div class="row" style="margin-top: 4px;"><div class="col"><input type="number" inputmode="decimal" id="ev-price" min="0" step="1" placeholder="0" value="${e.price || ''}"></div><div class="col" style="flex: 0 0 90px;"><select id="ev-price-currency">${currencyOpts}</select></div></div>
       <div class="divider"></div>
       <div class="field-label">CATEGORY</div>
       <select id="ev-category" style="margin-top: 4px;">${['food','transit','shopping','lodging','activity','other'].map(c => `<option value="${c}" ${(e.category || 'activity') === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
@@ -1009,7 +1058,7 @@ function openAddExpenseSheet(existing) {
   const currencyOpts = `<option value="${trip.travelCurrency}" ${e.currency === trip.travelCurrency ? 'selected' : ''}>${trip.travelCurrency} ${trip.travelCurrencySymbol}</option><option value="USD" ${e.currency === 'USD' ? 'selected' : ''}>USD $</option>`;
   const categories = ['food','transit','shopping','lodging','activity','other'];
   const html = `<div class="input-card"><div class="field-label">DESCRIPTION</div><input type="text" id="ex-title" placeholder="Ichiran ramen, taxi to Roppongi..." value="${escapeAttr(e.title)}"></div>
-    <div class="input-card"><div class="field-label">AMOUNT</div><div class="row" style="margin-top: 4px;"><div class="col"><input type="number" id="ex-amount" min="0" step="1" placeholder="0" value="${e.amount || ''}"></div><div class="col" style="flex: 0 0 90px;"><select id="ex-currency">${currencyOpts}</select></div></div></div>
+    <div class="input-card"><div class="field-label">AMOUNT</div><div class="row" style="margin-top: 4px;"><div class="col"><input type="number" inputmode="decimal" id="ex-amount" min="0" step="1" placeholder="0" value="${e.amount || ''}"></div><div class="col" style="flex: 0 0 90px;"><select id="ex-currency">${currencyOpts}</select></div></div></div>
     <div class="input-card"><div class="field-label">CATEGORY</div><select id="ex-category" style="margin-top: 4px;">${categories.map(c => `<option value="${c}" ${e.category === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
     ${isEdit ? `<div style="text-align: center; padding: 8px 16px 24px;"><button class="btn-ghost" id="delete-expense" style="color: var(--accent-text); border-color: var(--accent-bg);">Delete expense</button></div>` : ''}`;
   openBottomSheet(isEdit ? 'Edit expense' : 'New expense', html, () => {
@@ -1096,7 +1145,7 @@ function openTripDetailsSheet(existingTrip) {
     <div class="input-card"><div class="row" style="margin-top: 4px;"><div class="col"><div class="field-label">START DATE</div><input type="date" id="trip-start" value="${escapeAttr(t.tripStart || '')}" style="margin-top: 4px;"></div><div class="col"><div class="field-label">END DATE</div><input type="date" id="trip-end" value="${escapeAttr(t.tripEnd || '')}" style="margin-top: 4px;"></div></div></div>
     <div class="input-card"><div class="field-label">TRAVEL TIMEZONE</div><select id="trip-zone" style="margin-top: 4px;">${tzRows}</select></div>
     <div class="input-card"><div class="field-label">TRAVEL CURRENCY</div><select id="trip-currency" style="margin-top: 4px;">${curRows}</select></div>
-    <div class="input-card"><div class="field-label">BUDGET TOTAL ($)</div><input type="number" id="trip-budget" min="0" step="50" value="${t.budgetTotal}" style="margin-top: 4px;"><div class="input-hint">Daily pace = total ÷ trip length</div></div>`;
+    <div class="input-card"><div class="field-label">BUDGET TOTAL ($)</div><input type="number" inputmode="decimal" id="trip-budget" min="0" step="50" value="${t.budgetTotal}" style="margin-top: 4px;"><div class="input-hint">Daily pace = total ÷ trip length</div></div>`;
   openBottomSheet(isNew ? 'New trip' : 'Trip details', html, () => {
     const name = document.getElementById('trip-name').value.trim();
     const start = document.getElementById('trip-start').value;
@@ -1204,7 +1253,7 @@ function openFxRatesSheet() {
   if (list.length === 0) { alert('No travel currencies in use yet.'); return; }
   const rows = list.map(c => `<div class="input-card">
     <div class="field-label">1 ${escapeHtml(c)} = ${escapeHtml(s.homeCurrency)}</div>
-    <input type="number" data-fx="${escapeAttr(c)}" step="0.0001" min="0" value="${s.fxRates[c] || 1}" style="margin-top: 4px; font-size: 16px; font-weight: 500;">
+    <input type="number" inputmode="decimal" data-fx="${escapeAttr(c)}" step="0.0001" min="0" value="${s.fxRates[c] || 1}" style="margin-top: 4px; font-size: 16px; font-weight: 500;">
   </div>`).join('');
   const html = `${rows}<div class="input-hint" style="text-align: center; margin: 4px 14px;">Manual for now · auto-refresh from API not yet wired</div>`;
   openBottomSheet('FX rates', html, () => {
@@ -1281,8 +1330,21 @@ if (window.visualViewport) {
     if (pad) {
       setTimeout(() => {
         const f = document.activeElement;
-        if (f && f.tagName !== 'BODY') f.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }, 50);
+        if (f && f.tagName !== 'BODY') {
+          // On notes tab, make sure the focused element scrolls into view inside scroll-area
+          const scrollEl = (sa && sa.contains(f)) ? sa : (bsBody && bsBody.contains(f)) ? bsBody : null;
+          if (scrollEl) {
+            const rect = f.getBoundingClientRect();
+            const containerRect = scrollEl.getBoundingClientRect();
+            const visibleBottom = window.visualViewport.height + window.visualViewport.offsetTop;
+            if (rect.bottom > visibleBottom - 16) {
+              scrollEl.scrollTop += rect.bottom - (visibleBottom - 16);
+            }
+          } else {
+            f.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }
+      }, 100);
     }
   });
 }
