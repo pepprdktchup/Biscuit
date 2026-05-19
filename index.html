@@ -820,65 +820,85 @@ async function fetchLiveRate(from, to) {
 function renderCurrencyCalc(trip) {
   const fromCur = calcState.fromCur || trip.travelCurrency;
   const toCur   = calcState.toCur   || state.settings.homeCurrency;
-  const fromSym = calcState.fromCur ? '' : trip.travelCurrencySymbol;
-  const toSym   = calcState.toCur   ? '' : state.settings.homeCurrencySymbol;
   const rate    = calcState.liveRate && calcState.rateKey === `${fromCur}_${toCur}` ? calcState.liveRate
-                : (state.settings.fxRates[fromCur] ? state.settings.fxRates[fromCur] / (state.settings.fxRates[toCur] || 1) : null);
-  const amt     = parseFloat(calcState.fromAmt) || 0;
-  const result  = rate ? (amt * rate) : null;
+                : state.settings.fxRates[fromCur] ? state.settings.fxRates[fromCur] / (state.settings.fxRates[toCur] || 1) : null;
   const fmtNum  = n => n >= 1000 ? n.toLocaleString(undefined, { maximumFractionDigits: 0 }) : n.toLocaleString(undefined, { maximumFractionDigits: 2 });
   const rateAge = calcState.rateTs ? Math.round((Date.now() - calcState.rateTs) / 60000) : null;
   const hint    = calcState.fetching ? 'Fetching live rate…'
                 : calcState.liveRate && calcState.rateKey === `${fromCur}_${toCur}`
-                  ? `Live rate · updated ${rateAge === 0 ? 'just now' : rateAge + 'm ago'} · frankfurter.app`
-                  : 'Showing stored rate · tap to refresh';
+                  ? `Live · ${rateAge === 0 ? 'just now' : rateAge + 'm ago'} · frankfurter.app`
+                  : 'Stored rate · tap ↻ to refresh';
 
+  // If already rendered, only update the dynamic parts — never destroy the input
+  const existing = document.getElementById('currency-calc');
+  if (existing && existing.dataset.rendered === 'true') {
+    const amt = parseFloat(document.getElementById('calc-input')?.value) || 0;
+    const result = rate ? (amt * rate) : null;
+    const resEl = document.getElementById('calc-result');
+    const hintEl = document.getElementById('calc-hint');
+    const fromEl = document.getElementById('calc-from-btn');
+    const toEl   = document.getElementById('calc-to-btn');
+    if (resEl)  resEl.textContent  = result !== null ? fmtNum(result) : '—';
+    if (hintEl) hintEl.textContent = hint;
+    if (fromEl) fromEl.textContent = fromCur;
+    if (toEl)   toEl.textContent   = toCur;
+    return;
+  }
+
+  // Full render (first time or after currency switch)
+  const amt    = parseFloat(calcState.fromAmt) || 0;
+  const result = rate ? (amt * rate) : null;
   const el = document.getElementById('currency-calc');
   if (!el) return;
+  el.dataset.rendered = 'true';
   el.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <div class="lbl">CURRENCY CALCULATOR</div>
-      <button class="pill-add" id="calc-refresh" style="font-size:10px;">↻ refresh</button>
+      <button class="pill-add" id="calc-refresh">↻ refresh</button>
     </div>
     <div class="calc-row">
-      <div class="calc-input-wrap">
-        <input class="calc-input" id="calc-input" type="number" inputmode="decimal" value="${escapeAttr(calcState.fromAmt)}" placeholder="0">
-      </div>
+      <input class="calc-input" id="calc-input" type="number" inputmode="decimal" placeholder="0" value="${escapeAttr(String(calcState.fromAmt))}">
       <button class="calc-currency-btn" id="calc-from-btn">${escapeHtml(fromCur)}</button>
-      <button class="calc-swap" id="calc-swap-btn" title="Swap">⇄</button>
-      <div class="calc-result">${result !== null ? fmtNum(result) : '—'}</div>
+      <button class="calc-swap" id="calc-swap-btn">⇄</button>
+      <div class="calc-result" id="calc-result">${result !== null ? fmtNum(result) : '—'}</div>
       <button class="calc-currency-btn" id="calc-to-btn">${escapeHtml(toCur)}</button>
     </div>
-    <div class="calc-rate-hint">${escapeHtml(hint)}</div>`;
+    <div class="calc-rate-hint" id="calc-hint">${escapeHtml(hint)}</div>`;
 
+  // Input — only update result, never re-render
   document.getElementById('calc-input').addEventListener('input', e => {
     calcState.fromAmt = e.target.value;
-    renderCurrencyCalc(trip);
+    const a = parseFloat(e.target.value) || 0;
+    const r = rate ? (a * rate) : null;
+    document.getElementById('calc-result').textContent = r !== null ? fmtNum(r) : '—';
   });
   document.getElementById('calc-input').addEventListener('focus', e => e.target.select());
+
   document.getElementById('calc-refresh').addEventListener('click', () => {
-    calcState.rateTs = null;
+    calcState.rateTs = null; calcState.liveRate = null;
+    el.dataset.rendered = '';
     fetchLiveRate(fromCur, toCur).then(() => renderCurrencyCalc(trip));
-    renderCurrencyCalc(trip);
   });
+
   document.getElementById('calc-swap-btn').addEventListener('click', () => {
     [calcState.fromCur, calcState.toCur] = [toCur, fromCur];
     calcState.liveRate = null; calcState.rateTs = null;
-    fetchLiveRate(calcState.fromCur, calcState.toCur).then(() => renderCurrencyCalc(trip));
+    el.dataset.rendered = '';
+    fetchLiveRate(calcState.fromCur || trip.travelCurrency, calcState.toCur || state.settings.homeCurrency).then(() => renderCurrencyCalc(trip));
     renderCurrencyCalc(trip);
   });
 
-  // Currency pickers
   const ALL_CURRENCIES = ['USD','EUR','GBP','JPY','KRW','CNY','AUD','CAD','CHF','HKD','SGD','TWD','THB','INR','MXN','BRL','NZD','SEK','NOK','DKK','PLN','VND','PHP','IDR','MYR','AED','SAR','TRY'];
   const openPicker = (which) => {
     const cur = which === 'from' ? fromCur : toCur;
-    const opts = ALL_CURRENCIES.map(c => `<button class="picker-row${c === cur ? ' selected' : ''}" data-cur="${c}" style="font-size:13px;font-weight:${c===cur?'700':'400'}">${c}</button>`).join('');
-    openBottomSheet(`Select currency`, `<div style="padding:0 4px">${opts}</div>`, () => {});
+    const opts = ALL_CURRENCIES.map(c => `<button class="picker-row${c===cur?' selected':''}" data-cur="${c}">${c}</button>`).join('');
+    openBottomSheet('Select currency', `<div style="padding:0 4px">${opts}</div>`, () => {});
     setTimeout(() => {
       document.querySelectorAll('[data-cur]').forEach(b => b.addEventListener('click', () => {
         if (which === 'from') calcState.fromCur = b.dataset.cur;
         else calcState.toCur = b.dataset.cur;
         calcState.liveRate = null; calcState.rateTs = null;
+        el.dataset.rendered = '';
         closeSheet();
         fetchLiveRate(calcState.fromCur || trip.travelCurrency, calcState.toCur || state.settings.homeCurrency).then(() => renderCurrencyCalc(trip));
         renderCurrencyCalc(trip);
