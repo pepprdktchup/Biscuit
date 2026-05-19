@@ -30,6 +30,9 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
 
+  // Only handle same-origin requests — let external fetches (e.g. frankfurter.app) go straight to network
+  if (url.origin !== self.location.origin) return;
+
   // Network-first for navigation requests so deployed updates show up immediately when online.
   if (event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
     event.respondWith(
