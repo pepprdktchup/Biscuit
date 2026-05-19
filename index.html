@@ -139,13 +139,14 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .expense-amount .native { font-size: 13px; font-weight: 500; }
 .expense-amount .home { font-size: 11px; color: var(--text-3); margin-top: 2px; }
 .calc-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin: 12px 12px 0; padding: 14px 16px; }
-.calc-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-.calc-input-wrap { flex: 1; position: relative; }
-.calc-input { width: 100%; font-size: 22px; font-weight: 600; font-family: var(--pixel); background: transparent; border: none; outline: none; color: var(--text); padding: 0; }
-.calc-currency-btn { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-2); background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; cursor: pointer; white-space: nowrap; }
-.calc-result { font-size: 22px; font-weight: 600; font-family: var(--pixel); color: var(--accent-text); flex: 1; text-align: right; }
-.calc-rate-hint { font-size: 10px; color: var(--text-3); margin-top: 6px; letter-spacing: 0.5px; }
-.calc-swap { background: none; border: none; cursor: pointer; font-size: 18px; color: var(--text-2); padding: 0 2px; flex-shrink: 0; }
+.calc-row { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+.calc-side { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.calc-side.right { align-items: flex-end; }
+.calc-input { width: 100%; font-size: 22px; font-weight: 600; font-family: var(--pixel); background: transparent; border: none; outline: none; color: var(--text); padding: 0; min-width: 0; }
+.calc-currency-btn { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-2); background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; cursor: pointer; white-space: nowrap; align-self: flex-start; }
+.calc-side.right .calc-currency-btn { align-self: flex-end; }
+.calc-result { font-size: 22px; font-weight: 600; font-family: var(--pixel); color: var(--accent-text); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.calc-swap { background: none; border: none; cursor: pointer; font-size: 18px; color: var(--text-2); padding: 0 4px; flex-shrink: 0; align-self: center; }
 .note-card.dragging { opacity: 0.4; }
 .note-card.drag-over { outline: 2px solid var(--accent); outline-offset: 1px; }
 .note-card-drag { color: var(--text-3); font-size: 16px; cursor: grab; padding: 2px 2px 2px 0; touch-action: none; flex-shrink: 0; }
@@ -857,11 +858,15 @@ function renderCurrencyCalc(trip) {
       <button class="pill-add" id="calc-refresh">↻ refresh</button>
     </div>
     <div class="calc-row">
-      <input class="calc-input" id="calc-input" type="number" inputmode="decimal" placeholder="0" value="${escapeAttr(String(calcState.fromAmt))}">
-      <button class="calc-currency-btn" id="calc-from-btn">${escapeHtml(fromCur)}</button>
+      <div class="calc-side">
+        <input class="calc-input" id="calc-input" type="number" inputmode="decimal" placeholder="0" value="${escapeAttr(String(calcState.fromAmt))}">
+        <button class="calc-currency-btn" id="calc-from-btn">${escapeHtml(fromCur)}</button>
+      </div>
       <button class="calc-swap" id="calc-swap-btn">⇄</button>
-      <div class="calc-result" id="calc-result">${result !== null ? fmtNum(result) : '—'}</div>
-      <button class="calc-currency-btn" id="calc-to-btn">${escapeHtml(toCur)}</button>
+      <div class="calc-side right">
+        <div class="calc-result" id="calc-result">${result !== null ? fmtNum(result) : '—'}</div>
+        <button class="calc-currency-btn" id="calc-to-btn">${escapeHtml(toCur)}</button>
+      </div>
     </div>
     <div class="calc-rate-hint" id="calc-hint">${escapeHtml(hint)}</div>`;
 
