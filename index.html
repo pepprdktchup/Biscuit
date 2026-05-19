@@ -146,7 +146,8 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .calc-currency-btn { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-2); background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; cursor: pointer; white-space: nowrap; align-self: flex-start; }
 .calc-side.right .calc-currency-btn { align-self: flex-end; }
 .calc-result { font-size: 22px; font-weight: 600; font-family: var(--pixel); color: var(--accent-text); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.calc-swap { background: none; border: none; cursor: pointer; font-size: 18px; color: var(--text-2); padding: 0 4px; flex-shrink: 0; align-self: center; }
+.calc-swap { background: none; border: none; cursor: pointer; font-size: 18px; color: var(--text-3); padding: 0 4px; flex-shrink: 0; align-self: center; }
+.calc-rate-hint { font-size: 11px; color: var(--text-3); margin-top: 8px; }
 .note-card.dragging { opacity: 0.4; }
 .note-card.drag-over { outline: 2px solid var(--accent); outline-offset: 1px; }
 .note-card-drag { color: var(--text-3); font-size: 16px; cursor: grab; padding: 2px 2px 2px 0; touch-action: none; flex-shrink: 0; }
@@ -865,8 +866,8 @@ function renderCurrencyCalc(trip) {
   el.dataset.rendered = 'true';
   el.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;">
-      <div class="lbl">CURRENCY CALCULATOR</div>
-      <button class="pill-add" id="calc-refresh">↻ refresh</button>
+      <div class="lbl">CURRENCY</div>
+      <button class="pill-add" id="calc-refresh" style="color:var(--text-3);border-color:var(--border);">↻</button>
     </div>
     <div class="calc-row">
       <div class="calc-side">
