@@ -837,9 +837,9 @@ function renderCurrencyCalc(trip) {
   const rateAge = calcState.rateTs ? Math.round((Date.now() - calcState.rateTs) / 60000) : null;
   const rateStr = rate ? `1 ${fromCur} = ${rate >= 1000 ? rate.toLocaleString(undefined,{maximumFractionDigits:0}) : rate.toLocaleString(undefined,{maximumFractionDigits:4})} ${toCur}` : '';
   const hint    = calcState.fetching ? 'Fetching live rate…'
-                : isLive ? `${rateStr} · live, ${rateAge === 0 ? 'just now' : rateAge + 'm ago'}`
-                : calcState.fetchErr ? `⚠ ${calcState.fetchErr} · ${rateStr || 'no stored rate'}`
-                : rateStr ? `${rateStr} · stored rate` : 'No rate available';
+                : isLive ? `${rateStr} · live`
+                : calcState.fetchErr ? `${rateStr || 'No rate available'}`
+                : rateStr ? `${rateStr}` : 'No rate available';
 
   // If already rendered, only update the dynamic parts — never destroy the input
   const existing = document.getElementById('currency-calc');
