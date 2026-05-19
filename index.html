@@ -138,7 +138,14 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .expense-amount { text-align: right; flex-shrink: 0; }
 .expense-amount .native { font-size: 13px; font-weight: 500; }
 .expense-amount .home { font-size: 11px; color: var(--text-3); margin-top: 2px; }
-.note-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin: 0 12px 12px; overflow: hidden; transition: opacity 0.15s; }
+.calc-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin: 12px 12px 0; padding: 14px 16px; }
+.calc-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.calc-input-wrap { flex: 1; position: relative; }
+.calc-input { width: 100%; font-size: 22px; font-weight: 600; font-family: var(--pixel); background: transparent; border: none; outline: none; color: var(--text); padding: 0; }
+.calc-currency-btn { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-2); background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; cursor: pointer; white-space: nowrap; }
+.calc-result { font-size: 22px; font-weight: 600; font-family: var(--pixel); color: var(--accent-text); flex: 1; text-align: right; }
+.calc-rate-hint { font-size: 10px; color: var(--text-3); margin-top: 6px; letter-spacing: 0.5px; }
+.calc-swap { background: none; border: none; cursor: pointer; font-size: 18px; color: var(--text-2); padding: 0 2px; flex-shrink: 0; }
 .note-card.dragging { opacity: 0.4; }
 .note-card.drag-over { outline: 2px solid var(--accent); outline-offset: 1px; }
 .note-card-drag { color: var(--text-3); font-size: 16px; cursor: grab; padding: 2px 2px 2px 0; touch-action: none; flex-shrink: 0; }
@@ -784,6 +791,104 @@ function renderTrip() {
   document.querySelectorAll('.evt-row').forEach(r => r.addEventListener('click', () => { const e = trip.events.find(x => x.id === r.getAttribute('data-event-id')); if (e) openAddEventModal(e); }));
 }
 
+// ─── Currency calculator ──────────────────────────────────────────────────────
+const calcState = { fromAmt: '1', liveRate: null, rateTs: null, fetching: false };
+
+async function fetchLiveRate(from, to) {
+  if (from === to) return 1;
+  const key = `${from}_${to}`;
+  const now = Date.now();
+  // Cache for 1 hour
+  if (calcState.rateKey === key && calcState.liveRate && calcState.rateTs && now - calcState.rateTs < 3600000) {
+    return calcState.liveRate;
+  }
+  try {
+    calcState.fetching = true;
+    const res = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
+    const data = await res.json();
+    const rate = data.rates[to];
+    if (rate) {
+      calcState.liveRate = rate;
+      calcState.rateKey = key;
+      calcState.rateTs = now;
+    }
+    return rate || null;
+  } catch (_) { return null; }
+  finally { calcState.fetching = false; }
+}
+
+function renderCurrencyCalc(trip) {
+  const fromCur = calcState.fromCur || trip.travelCurrency;
+  const toCur   = calcState.toCur   || state.settings.homeCurrency;
+  const fromSym = calcState.fromCur ? '' : trip.travelCurrencySymbol;
+  const toSym   = calcState.toCur   ? '' : state.settings.homeCurrencySymbol;
+  const rate    = calcState.liveRate && calcState.rateKey === `${fromCur}_${toCur}` ? calcState.liveRate
+                : (state.settings.fxRates[fromCur] ? state.settings.fxRates[fromCur] / (state.settings.fxRates[toCur] || 1) : null);
+  const amt     = parseFloat(calcState.fromAmt) || 0;
+  const result  = rate ? (amt * rate) : null;
+  const fmtNum  = n => n >= 1000 ? n.toLocaleString(undefined, { maximumFractionDigits: 0 }) : n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  const rateAge = calcState.rateTs ? Math.round((Date.now() - calcState.rateTs) / 60000) : null;
+  const hint    = calcState.fetching ? 'Fetching live rate…'
+                : calcState.liveRate && calcState.rateKey === `${fromCur}_${toCur}`
+                  ? `Live rate · updated ${rateAge === 0 ? 'just now' : rateAge + 'm ago'} · frankfurter.app`
+                  : 'Showing stored rate · tap to refresh';
+
+  const el = document.getElementById('currency-calc');
+  if (!el) return;
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div class="lbl">CURRENCY CALCULATOR</div>
+      <button class="pill-add" id="calc-refresh" style="font-size:10px;">↻ refresh</button>
+    </div>
+    <div class="calc-row">
+      <div class="calc-input-wrap">
+        <input class="calc-input" id="calc-input" type="number" inputmode="decimal" value="${escapeAttr(calcState.fromAmt)}" placeholder="0">
+      </div>
+      <button class="calc-currency-btn" id="calc-from-btn">${escapeHtml(fromCur)}</button>
+      <button class="calc-swap" id="calc-swap-btn" title="Swap">⇄</button>
+      <div class="calc-result">${result !== null ? fmtNum(result) : '—'}</div>
+      <button class="calc-currency-btn" id="calc-to-btn">${escapeHtml(toCur)}</button>
+    </div>
+    <div class="calc-rate-hint">${escapeHtml(hint)}</div>`;
+
+  document.getElementById('calc-input').addEventListener('input', e => {
+    calcState.fromAmt = e.target.value;
+    renderCurrencyCalc(trip);
+  });
+  document.getElementById('calc-input').addEventListener('focus', e => e.target.select());
+  document.getElementById('calc-refresh').addEventListener('click', () => {
+    calcState.rateTs = null;
+    fetchLiveRate(fromCur, toCur).then(() => renderCurrencyCalc(trip));
+    renderCurrencyCalc(trip);
+  });
+  document.getElementById('calc-swap-btn').addEventListener('click', () => {
+    [calcState.fromCur, calcState.toCur] = [toCur, fromCur];
+    calcState.liveRate = null; calcState.rateTs = null;
+    fetchLiveRate(calcState.fromCur, calcState.toCur).then(() => renderCurrencyCalc(trip));
+    renderCurrencyCalc(trip);
+  });
+
+  // Currency pickers
+  const ALL_CURRENCIES = ['USD','EUR','GBP','JPY','KRW','CNY','AUD','CAD','CHF','HKD','SGD','TWD','THB','INR','MXN','BRL','NZD','SEK','NOK','DKK','PLN','VND','PHP','IDR','MYR','AED','SAR','TRY'];
+  const openPicker = (which) => {
+    const cur = which === 'from' ? fromCur : toCur;
+    const opts = ALL_CURRENCIES.map(c => `<button class="picker-row${c === cur ? ' selected' : ''}" data-cur="${c}" style="font-size:13px;font-weight:${c===cur?'700':'400'}">${c}</button>`).join('');
+    openBottomSheet(`Select currency`, `<div style="padding:0 4px">${opts}</div>`, () => {});
+    setTimeout(() => {
+      document.querySelectorAll('[data-cur]').forEach(b => b.addEventListener('click', () => {
+        if (which === 'from') calcState.fromCur = b.dataset.cur;
+        else calcState.toCur = b.dataset.cur;
+        calcState.liveRate = null; calcState.rateTs = null;
+        closeSheet();
+        fetchLiveRate(calcState.fromCur || trip.travelCurrency, calcState.toCur || state.settings.homeCurrency).then(() => renderCurrencyCalc(trip));
+        renderCurrencyCalc(trip);
+      }));
+    }, 50);
+  };
+  document.getElementById('calc-from-btn').addEventListener('click', () => openPicker('from'));
+  document.getElementById('calc-to-btn').addEventListener('click', () => openPicker('to'));
+}
+
 function renderBudget() {
   const trip = getActiveTrip();
   if (!trip) { document.getElementById('screen-content').innerHTML = `<div class="empty" style="padding: 60px 24px;">No trips yet.</div>`; return; }
@@ -796,7 +901,8 @@ function renderBudget() {
   const pace = trip.budgetTotal * (dayOf / dayTotal);
   const onTrack = total <= pace;
 
-  let html = `<div class="trip-header-card" id="trip-header-card" role="button" tabindex="0">
+  let html = `<div class="calc-card" id="currency-calc"></div>
+  <div class="trip-header-card" id="trip-header-card" role="button" tabindex="0">
     <i class="ti ti-pencil trip-edit-pencil"></i>
     <div class="lbl">${escapeHtml((trip.name || 'Untitled trip').toUpperCase())}</div>
     <div style="font-size: 11px; color: var(--text-2); margin-top: 4px;">Day ${dayOf} of ${dayTotal} · ${escapeHtml(s_fmtDate(trip.tripStart))} → ${escapeHtml(s_fmtDate(trip.tripEnd))}</div>
@@ -827,6 +933,11 @@ function renderBudget() {
   });
   html += `</div>`;
   document.getElementById('screen-content').innerHTML = html;
+  // Render calculator immediately with stored rate, then fetch live rate
+  const fromCur = calcState.fromCur || trip.travelCurrency;
+  const toCur   = calcState.toCur   || state.settings.homeCurrency;
+  renderCurrencyCalc(trip);
+  fetchLiveRate(fromCur, toCur).then(() => renderCurrencyCalc(trip));
   document.getElementById('trip-header-card').addEventListener('click', openTripSwitcher);
   document.getElementById('add-expense-btn').addEventListener('click', openAddExpenseSheet);
   document.querySelectorAll('.expense-row').forEach(r => r.addEventListener('click', () => {
