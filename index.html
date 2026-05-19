@@ -804,10 +804,9 @@ async function fetchLiveRate(from, to) {
   const ctrl = new AbortController();
   const timeout = setTimeout(() => ctrl.abort(), 8000);
   try {
-    const res = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`, {
+    const res = await fetch(`${WORKER_URL}/fx?from=${from}&to=${to}`, {
       signal: ctrl.signal,
       cache: 'no-store',
-      mode: 'cors',
     });
     clearTimeout(timeout);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
