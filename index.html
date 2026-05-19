@@ -796,26 +796,28 @@ function renderTrip() {
 const calcState = { fromAmt: '1', liveRate: null, rateTs: null, fetching: false };
 
 async function fetchLiveRate(from, to) {
-  if (from === to) return 1;
+  if (from === to) { calcState.liveRate = 1; calcState.rateKey = `${from}_${to}`; calcState.rateTs = Date.now(); return 1; }
   const key = `${from}_${to}`;
   const now = Date.now();
-  // Cache for 1 hour
-  if (calcState.rateKey === key && calcState.liveRate && calcState.rateTs && now - calcState.rateTs < 3600000) {
-    return calcState.liveRate;
-  }
+  if (calcState.rateKey === key && calcState.liveRate && calcState.rateTs && now - calcState.rateTs < 3600000) return calcState.liveRate;
   try {
     calcState.fetching = true;
-    const res = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
+    const res = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    const rate = data.rates[to];
-    if (rate) {
-      calcState.liveRate = rate;
-      calcState.rateKey = key;
-      calcState.rateTs = now;
-    }
-    return rate || null;
-  } catch (_) { return null; }
-  finally { calcState.fetching = false; }
+    const rate = data.rates?.[to];
+    if (!rate) throw new Error('No rate in response');
+    calcState.liveRate = rate;
+    calcState.rateKey  = key;
+    calcState.rateTs   = now;
+    calcState.fetchErr = null;
+    return rate;
+  } catch (e) {
+    calcState.fetchErr = e.message;
+    return null;
+  } finally {
+    calcState.fetching = false;
+  }
 }
 
 function renderCurrencyCalc(trip) {
@@ -824,11 +826,13 @@ function renderCurrencyCalc(trip) {
   const rate    = calcState.liveRate && calcState.rateKey === `${fromCur}_${toCur}` ? calcState.liveRate
                 : state.settings.fxRates[fromCur] ? state.settings.fxRates[fromCur] / (state.settings.fxRates[toCur] || 1) : null;
   const fmtNum  = n => n >= 1000 ? n.toLocaleString(undefined, { maximumFractionDigits: 0 }) : n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  const isLive  = calcState.liveRate && calcState.rateKey === `${fromCur}_${toCur}`;
   const rateAge = calcState.rateTs ? Math.round((Date.now() - calcState.rateTs) / 60000) : null;
+  const rateStr = rate ? `1 ${fromCur} = ${rate >= 1000 ? rate.toLocaleString(undefined,{maximumFractionDigits:0}) : rate.toLocaleString(undefined,{maximumFractionDigits:4})} ${toCur}` : '';
   const hint    = calcState.fetching ? 'Fetching live rate…'
-                : calcState.liveRate && calcState.rateKey === `${fromCur}_${toCur}`
-                  ? `Live · ${rateAge === 0 ? 'just now' : rateAge + 'm ago'} · frankfurter.app`
-                  : 'Stored rate · tap ↻ to refresh';
+                : isLive ? `${rateStr} · live, ${rateAge === 0 ? 'just now' : rateAge + 'm ago'}`
+                : calcState.fetchErr ? `⚠ ${calcState.fetchErr} · ${rateStr || 'no stored rate'}`
+                : rateStr ? `${rateStr} · stored rate` : 'No rate available';
 
   // If already rendered, only update the dynamic parts — never destroy the input
   const existing = document.getElementById('currency-calc');
