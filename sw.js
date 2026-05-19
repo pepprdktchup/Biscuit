@@ -1,6 +1,6 @@
 // Biscuit service worker
 // Bump CACHE_VERSION whenever you ship a meaningful update so old caches get cleared.
-const CACHE_VERSION = 'biscuit-v6';
+const CACHE_VERSION = 'biscuit-v7';
 const STATIC_FILES = [
   './',
   './index.html',
@@ -27,11 +27,10 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
-
-  // Only handle same-origin requests — let external fetches (e.g. frankfurter.app) go straight to network
+  // Bail immediately for cross-origin requests — never call respondWith on these
   if (url.origin !== self.location.origin) return;
+  if (event.request.method !== 'GET') return;
 
   // Network-first for navigation requests so deployed updates show up immediately when online.
   if (event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
