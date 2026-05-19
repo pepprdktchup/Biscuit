@@ -1,6 +1,6 @@
 // Biscuit service worker
 // Bump CACHE_VERSION whenever you ship a meaningful update so old caches get cleared.
-const CACHE_VERSION = 'biscuit-v5';
+const CACHE_VERSION = 'biscuit-v6';
 const STATIC_FILES = [
   './',
   './index.html',
