@@ -71,10 +71,14 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .up-next-meta { font-size: 12px; color: var(--text-2); line-height: 1.6; }
 .day-header { margin: 16px 16px 4px; display: flex; align-items: center; justify-content: space-between; }
 .evt-list { margin: 0 16px; }
-.evt-row { display: flex; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid var(--border); align-items: center; cursor: pointer; }
+.evt-row { display: flex; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid var(--border); align-items: center; cursor: pointer; position: relative; overflow: hidden; user-select: none; }
 .evt-row:last-child { border-bottom: 0; }
 .evt-row.checked { opacity: 0.45; }
 .evt-row.checked .evt-title { text-decoration: line-through; }
+.swipe-wrap { position: relative; overflow: hidden; }
+.swipe-inner { transition: transform 0.2s ease; will-change: transform; }
+.swipe-delete-bg { position: absolute; right: 0; top: 0; bottom: 0; width: 80px; background: #FF3B30; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 700; letter-spacing: 1px; pointer-events: none; }
+.swipe-inner.swiping { transition: none; }
 .evt-time { width: 72px; flex-shrink: 0; font-size: 12px; color: var(--text); white-space: nowrap; }
 .evt-title { font-size: 13px; font-weight: 500; color: var(--text); }
 .evt-meta { font-size: 11px; color: var(--text-3); margin-top: 1px; }
@@ -252,8 +256,12 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
   </nav>
 
   <div class="modal-overlay" id="modal">
-    <div class="modal-header"><button class="modal-btn cancel" id="modal-cancel">Cancel</button><div class="modal-title" id="modal-title">New event</div><button class="modal-btn save" id="modal-save">Save</button></div>
+    <div class="modal-header"><div class="modal-title" id="modal-title">New event</div></div>
     <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" style="display:flex;gap:8px;padding:12px 16px 24px;background:var(--bg);border-top:0.5px solid var(--border);flex-shrink:0;">
+      <button class="modal-btn cancel" id="modal-cancel" style="flex:1;padding:14px;border-radius:12px;background:var(--card);border:1px solid var(--border);font-size:14px;">Cancel</button>
+      <button class="modal-btn save" id="modal-save" style="flex:2;padding:14px;border-radius:12px;background:var(--accent-text);color:white;border:none;font-size:14px;font-weight:600;">Save</button>
+    </div>
   </div>
 
   <div class="bs-backdrop" id="bs-backdrop"></div>
@@ -754,7 +762,14 @@ function renderTrip() {
     document.getElementById('trip-chip-trip').addEventListener('click', openTripSwitcher);
   }
   document.querySelectorAll('[data-toggle]').forEach(b => b.addEventListener('click', ev => { ev.stopPropagation(); const e = trip.events.find(x => x.id === b.getAttribute('data-toggle')); if (e) { e.checkedOff = !e.checkedOff; render(); } }));
-  document.querySelectorAll('.evt-row').forEach(r => r.addEventListener('click', () => { const e = trip.events.find(x => x.id === r.getAttribute('data-event-id')); if (e) openAddEventModal(e); }));
+  document.querySelectorAll('.evt-row').forEach(r => {
+    r.addEventListener('click', () => { const e = trip.events.find(x => x.id === r.getAttribute('data-event-id')); if (e) openAddEventModal(e); });
+    addSwipeToDelete(r, () => {
+      const eid = r.getAttribute('data-event-id');
+      trip.events = trip.events.filter(x => x.id !== eid);
+      saveState(); renderTrip();
+    });
+  });
 }
 
 function renderBudget() {
@@ -837,7 +852,6 @@ function renderNotes() {
           <button class="${note.type === 'checklist' ? 'active' : ''}" data-note-type="checklist" data-note-id="${escapeAttr(note.id)}">LIST</button>
         </div>
         <button class="note-collapse-btn${collapsed ? ' collapsed' : ''}" data-note-collapse="${escapeAttr(note.id)}">▼</button>
-        <button class="note-delete-btn" data-note-delete="${escapeAttr(note.id)}" title="Delete category"><i class="ti ti-x"></i></button>
       </div>
       <div class="note-body${collapsed ? ' collapsed' : ''}">`;
     if (note.type === 'text') {
@@ -845,10 +859,9 @@ function renderNotes() {
     } else {
       note.items.forEach(it => {
         const ck = it.checked ? 'checked' : '';
-        html += `<div class="check-row ${ck}">
+        html += `<div class="check-row ${ck}" data-item-id="${escapeAttr(it.id)}" data-note-id="${escapeAttr(note.id)}">
           <button class="check-box" data-check-toggle="${escapeAttr(note.id)}__${escapeAttr(it.id)}" aria-label="Toggle done"><i class="ti ti-check"></i></button>
           <input class="check-text" data-check-text="${escapeAttr(note.id)}__${escapeAttr(it.id)}" value="${escapeAttr(it.text)}" placeholder="New item">
-          <button class="check-del" data-check-delete="${escapeAttr(note.id)}__${escapeAttr(it.id)}" aria-label="Delete item"><i class="ti ti-x"></i></button>
         </div>`;
       });
       html += `<button class="add-item-btn" data-add-item="${escapeAttr(note.id)}"><i class="ti ti-plus"></i> add item</button>`;
@@ -883,6 +896,26 @@ function renderNotes() {
   });
   document.querySelectorAll('[data-check-delete]').forEach(b => b.addEventListener('click', () => { const [nid, iid] = b.getAttribute('data-check-delete').split('__'); const n = trip.notes.find(x => x.id === nid); if (!n) return; n.items = n.items.filter(x => x.id !== iid); renderNotes(); }));
   document.querySelectorAll('[data-add-item]').forEach(b => b.addEventListener('click', () => { const id = b.getAttribute('data-add-item'); const n = trip.notes.find(x => x.id === id); if (!n) return; n.items.push({ id: newId(), text: '', checked: false }); renderNotes(); const inputs = document.querySelectorAll(`[data-note-id="${id}"] .check-text`); if (inputs.length) inputs[inputs.length-1].focus(); }));
+  // Swipe-to-delete for note cards
+  document.querySelectorAll('.note-card').forEach(card => {
+    addSwipeToDelete(card, () => {
+      const id = card.getAttribute('data-note-id');
+      trip.notes = trip.notes.filter(x => x.id !== id);
+      saveState(); renderNotes();
+    });
+  });
+  // Swipe-to-delete for checklist items
+  document.querySelectorAll('.check-row').forEach(row => {
+    const nid = row.getAttribute('data-note-id');
+    const iid = row.getAttribute('data-item-id');
+    if (!nid || !iid) return;
+    addSwipeToDelete(row, () => {
+      const n = trip.notes.find(x => x.id === nid);
+      if (!n) return;
+      n.items = n.items.filter(x => x.id !== iid);
+      saveState(); renderNotes();
+    });
+  });
   document.querySelectorAll('[data-note-collapse]').forEach(btn => btn.addEventListener('click', () => {
     const n = trip.notes.find(x => x.id === btn.getAttribute('data-note-collapse'));
     if (!n) return;
@@ -1312,7 +1345,51 @@ function openReminderPicker(currentList, onSelect) {
   }));
 }
 
-// ─── Push subscription & schedule sync ───────────────────────────────────────
+// ─── Swipe-to-delete ─────────────────────────────────────────────────────────
+function addSwipeToDelete(el, onDelete) {
+  let startX = 0, startY = 0, dx = 0, locked = false, deleted = false;
+  const THRESHOLD = 72;
+
+  el.addEventListener('touchstart', e => {
+    if (deleted) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    dx = 0; locked = false;
+    el.classList.add('swiping');
+  }, { passive: true });
+
+  el.addEventListener('touchmove', e => {
+    if (deleted) return;
+    const cx = e.touches[0].clientX;
+    const cy = e.touches[0].clientY;
+    if (!locked) {
+      const adx = Math.abs(cx - startX), ady = Math.abs(cy - startY);
+      if (adx < 5 && ady < 5) return;
+      if (ady > adx) { el.classList.remove('swiping'); return; } // vertical scroll
+      locked = true;
+    }
+    dx = Math.min(0, cx - startX);
+    el.style.transform = `translateX(${dx}px)`;
+    e.preventDefault();
+  }, { passive: false });
+
+  el.addEventListener('touchend', () => {
+    if (deleted) return;
+    el.classList.remove('swiping');
+    if (dx < -THRESHOLD) {
+      deleted = true;
+      el.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+      el.style.transform = 'translateX(-100%)';
+      el.style.opacity = '0';
+      setTimeout(onDelete, 200);
+    } else {
+      el.style.transition = 'transform 0.2s ease';
+      el.style.transform = '';
+      setTimeout(() => el.style.transition = '', 200);
+    }
+    dx = 0;
+  });
+}
 
 function urlB64ToUint8Array(b64) {
   const raw = atob(b64.replace(/-/g, '+').replace(/_/g, '/'));
