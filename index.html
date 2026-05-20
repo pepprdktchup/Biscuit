@@ -1351,6 +1351,10 @@ function addSwipeToDelete(el, onDelete) {
   if (m && m !== '0px') { wrap.style.margin = m; el.style.margin = '0'; }
   el.parentNode.insertBefore(wrap, el);
   wrap.appendChild(el);
+  // Inner element must sit above the delete button so it covers it by default
+  el.style.position = 'relative';
+  el.style.zIndex = '2';
+  el.style.background = el.classList.contains('note-card') ? 'var(--card)' : 'var(--bg)';
 
   const bg = document.createElement('button');
   bg.style.cssText = `position:absolute;right:0;top:0;bottom:0;width:${SNAP}px;background:#FF3B30;color:#fff;border:none;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;z-index:1;`;
