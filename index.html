@@ -138,6 +138,10 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .expense-amount .home { font-size: 11px; color: var(--text-3); margin-top: 2px; }
 .note-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin: 0 12px 12px; overflow: hidden; }
 .note-card-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 0.5px solid var(--border); }
+.note-card-header.collapsed { border-bottom: none; }
+.note-collapse-btn { background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 11px; margin-left: auto; padding: 2px 6px; transition: transform 0.2s; flex-shrink: 0; }
+.note-collapse-btn.collapsed { transform: rotate(-90deg); }
+.note-body.collapsed { display: none; }
 .note-title-input { flex: 1; border: none; background: transparent; font-family: inherit; font-size: 14px; font-weight: 600; color: var(--text); padding: 4px 0; outline: none; min-width: 0; }
 .note-title-input::placeholder { color: var(--text-3); font-weight: 500; }
 .note-type-seg { display: flex; background: var(--bg); border-radius: 999px; padding: 2px; flex-shrink: 0; }
@@ -823,16 +827,18 @@ function renderNotes() {
   html += `<div class="day-header" style="margin-top: 6px;"><div class="lbl">NOTES &amp; LISTS</div><div style="font-size: 11px; color: var(--text-3);">${trip.notes.length} categor${trip.notes.length === 1 ? 'y' : 'ies'}</div></div>
     <div class="dotted-rule" style="margin: 4px 16px;"></div>`;
   trip.notes.forEach(note => {
+    const collapsed = !!note.collapsed;
     html += `<div class="note-card" data-note-id="${escapeAttr(note.id)}">
-      <div class="note-card-header">
+      <div class="note-card-header${collapsed ? ' collapsed' : ''}">
         <input class="note-title-input" data-note-title="${escapeAttr(note.id)}" value="${escapeAttr(note.title)}" placeholder="Untitled list">
         <div class="note-type-seg">
           <button class="${note.type === 'text' ? 'active' : ''}" data-note-type="text" data-note-id="${escapeAttr(note.id)}">TEXT</button>
           <button class="${note.type === 'checklist' ? 'active' : ''}" data-note-type="checklist" data-note-id="${escapeAttr(note.id)}">LIST</button>
         </div>
+        <button class="note-collapse-btn${collapsed ? ' collapsed' : ''}" data-note-collapse="${escapeAttr(note.id)}">▼</button>
         <button class="note-delete-btn" data-note-delete="${escapeAttr(note.id)}" title="Delete category"><i class="ti ti-x"></i></button>
       </div>
-      <div class="note-body">`;
+      <div class="note-body${collapsed ? ' collapsed' : ''}">`;
     if (note.type === 'text') {
       html += `<textarea class="note-textarea" data-note-text="${escapeAttr(note.id)}" placeholder="Free-form notes...">${escapeHtml(note.text)}</textarea>`;
     } else {
@@ -876,6 +882,13 @@ function renderNotes() {
   });
   document.querySelectorAll('[data-check-delete]').forEach(b => b.addEventListener('click', () => { const [nid, iid] = b.getAttribute('data-check-delete').split('__'); const n = trip.notes.find(x => x.id === nid); if (!n) return; n.items = n.items.filter(x => x.id !== iid); renderNotes(); }));
   document.querySelectorAll('[data-add-item]').forEach(b => b.addEventListener('click', () => { const id = b.getAttribute('data-add-item'); const n = trip.notes.find(x => x.id === id); if (!n) return; n.items.push({ id: newId(), text: '', checked: false }); renderNotes(); const inputs = document.querySelectorAll(`[data-note-id="${id}"] .check-text`); if (inputs.length) inputs[inputs.length-1].focus(); }));
+  document.querySelectorAll('[data-note-collapse]').forEach(btn => btn.addEventListener('click', () => {
+    const n = trip.notes.find(x => x.id === btn.getAttribute('data-note-collapse'));
+    if (!n) return;
+    n.collapsed = !n.collapsed;
+    saveState();
+    renderNotes();
+  }));
   document.getElementById('add-category').addEventListener('click', () => { trip.notes.push({ id: newId(), title: '', type: 'checklist', items: [], text: '' }); renderNotes(); const titles = document.querySelectorAll('.note-title-input'); if (titles.length) titles[titles.length-1].focus(); });
 }
 
