@@ -50,9 +50,7 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .dual-clock .time { font-size: 19px; margin-top: 3px; color: var(--text); }
 .dual-clock .date { font-size: 10px; color: var(--text-3); margin-top: 1px; }
 .offset { background: var(--accent-bg); color: var(--accent-text); font-size: 10px; font-weight: 700; padding: 4px 9px; border-radius: 999px; letter-spacing: 0.5px; margin: 0 10px; }
-.nav { flex-shrink: 0; border-top: 0.5px solid var(--border); display: flex; padding: 10px 0 16px; background: var(--bg); transition: none; }
-.phone.keyboard-open .nav { display: none; }
-.phone.keyboard-open .cat-fab, .phone.keyboard-open .add-fab-mini { display: none !important; }
+.nav { flex-shrink: 0; border-top: 0.5px solid var(--border); display: flex; padding: 10px 0 16px; background: var(--bg); }
 .tab { flex: 1; text-align: center; cursor: pointer; background: none; border: none; padding: 0; font-family: inherit; }
 .tab-icon { font-size: 20px; line-height: 1; color: var(--text-3); }
 .tab-label { font-size: 9px; color: var(--text-2); letter-spacing: 1px; font-weight: 700; margin-top: 4px; text-transform: uppercase; }
@@ -138,19 +136,7 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .expense-amount { text-align: right; flex-shrink: 0; }
 .expense-amount .native { font-size: 13px; font-weight: 500; }
 .expense-amount .home { font-size: 11px; color: var(--text-3); margin-top: 2px; }
-.calc-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin: 12px 12px 0; padding: 14px 16px; }
-.calc-row { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
-.calc-side { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-.calc-side.right { align-items: flex-end; }
-.calc-input { width: 100%; font-size: 22px; font-weight: 600; font-family: var(--pixel); background: transparent; border: none; outline: none; color: var(--text); padding: 0; min-width: 0; }
-.calc-currency-btn { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-2); background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; cursor: pointer; white-space: nowrap; align-self: flex-start; }
-.calc-side.right .calc-currency-btn { align-self: flex-end; }
-.calc-result { font-size: 22px; font-weight: 600; font-family: var(--pixel); color: var(--accent-text); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.calc-swap { background: none; border: none; cursor: pointer; font-size: 18px; color: var(--text-3); padding: 0 4px; flex-shrink: 0; align-self: center; }
-.calc-rate-hint { font-size: 11px; color: var(--text-3); margin-top: 8px; }
-.note-card.dragging { opacity: 0.4; }
-.note-card.drag-over { outline: 2px solid var(--accent); outline-offset: 1px; }
-.note-card-drag { color: var(--text-3); font-size: 16px; cursor: grab; padding: 2px 2px 2px 0; touch-action: none; flex-shrink: 0; }
+.note-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin: 0 12px 12px; overflow: hidden; }
 .note-card-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 0.5px solid var(--border); }
 .note-title-input { flex: 1; border: none; background: transparent; font-family: inherit; font-size: 14px; font-weight: 600; color: var(--text); padding: 4px 0; outline: none; min-width: 0; }
 .note-title-input::placeholder { color: var(--text-3); font-weight: 500; }
@@ -160,12 +146,9 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .note-delete-btn { background: none; border: none; cursor: pointer; padding: 4px; color: var(--text-3); font-size: 16px; }
 .note-delete-btn:hover { color: var(--accent-text); }
 .note-body { padding: 8px 12px 12px; }
-.note-textarea { width: 100%; border: none; background: transparent; font-family: inherit; font-size: 13px; color: var(--text); padding: 4px 0; outline: none; resize: none; min-height: 120px; line-height: 1.5; }
+.note-textarea { width: 100%; border: none; background: transparent; font-family: inherit; font-size: 13px; color: var(--text); padding: 4px 0; outline: none; resize: none; min-height: 80px; line-height: 1.5; }
 .note-textarea::placeholder { color: var(--text-3); }
-.check-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; cursor: default; }
-.drag-handle { color: var(--text-3); font-size: 14px; cursor: grab; padding: 0 2px; touch-action: none; flex-shrink: 0; }
-.check-row.dragging { opacity: 0.4; }
-.check-row.drag-over { border-top: 2px solid var(--accent); }
+.check-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
 .check-box { width: 18px; height: 18px; flex-shrink: 0; border-radius: 4px; border: 1.5px solid var(--border-strong); display: flex; align-items: center; justify-content: center; font-size: 10px; color: white; background: transparent; cursor: pointer; padding: 0; }
 .check-row.checked .check-box { background: var(--success); border-color: var(--success); }
 .check-row.checked .check-box i { display: block; }
@@ -278,12 +261,15 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 </div>
 
 <script>
+// ─── Push config — fill in WORKER_URL after deploying the Cloudflare Worker ──
+const VAPID_PUBLIC_KEY = 'BLpLqz1wBuBDjvUasJWNijffahqH3VZ-pCivZ4duQbyI9VC5t76GdxY0ih8xrhDHW4YQdqNz5iAUbbpIH5oET5g';
+const WORKER_URL = 'https://biscuit-push.hanbit-designs.workers.dev';
+
 const CAT_SVGS = {
 idle: `<svg width="48" height="44" viewBox="0 0 48 44" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><g fill="#9A9590"><rect x="8" y="2" width="4" height="2"/><rect x="36" y="2" width="4" height="2"/><rect x="10" y="4" width="4" height="2"/><rect x="34" y="4" width="4" height="2"/><rect x="6" y="6" width="2" height="2"/><rect x="12" y="6" width="4" height="2"/><rect x="32" y="6" width="4" height="2"/><rect x="40" y="6" width="2" height="2"/><rect x="6" y="8" width="2" height="2"/><rect x="12" y="8" width="6" height="2"/><rect x="30" y="8" width="6" height="2"/><rect x="40" y="8" width="2" height="2"/><rect x="6" y="10" width="36" height="2"/><rect x="6" y="12" width="36" height="2"/><rect x="6" y="14" width="36" height="2"/><rect x="6" y="16" width="36" height="2"/><rect x="6" y="18" width="36" height="2"/><rect x="6" y="20" width="36" height="2"/><rect x="6" y="22" width="6" height="2"/><rect x="18" y="22" width="12" height="2"/><rect x="36" y="22" width="6" height="2"/><rect x="6" y="24" width="36" height="2"/><rect x="8" y="26" width="14" height="2"/><rect x="26" y="26" width="14" height="2"/><rect x="6" y="28" width="4" height="2"/><rect x="16" y="28" width="6" height="2"/><rect x="26" y="28" width="6" height="2"/><rect x="38" y="28" width="4" height="2"/><rect x="8" y="30" width="2" height="2"/><rect x="16" y="30" width="6" height="2"/><rect x="26" y="30" width="6" height="2"/><rect x="38" y="30" width="2" height="2"/><rect x="6" y="32" width="4" height="2"/><rect x="16" y="32" width="4" height="2"/><rect x="22" y="32" width="4" height="2"/><rect x="28" y="32" width="4" height="2"/><rect x="38" y="32" width="4" height="2"/><rect x="8" y="34" width="32" height="2"/><rect x="6" y="36" width="36" height="2"/><rect x="6" y="38" width="36" height="2"/><rect x="6" y="40" width="36" height="2"/></g><g fill="#4A4540"><rect x="8" y="0" width="4" height="2"/><rect x="36" y="0" width="4" height="2"/><rect x="6" y="2" width="2" height="2"/><rect x="12" y="2" width="2" height="2"/><rect x="34" y="2" width="2" height="2"/><rect x="40" y="2" width="2" height="2"/><rect x="6" y="4" width="2" height="2"/><rect x="14" y="4" width="2" height="2"/><rect x="32" y="4" width="2" height="2"/><rect x="40" y="4" width="2" height="2"/><rect x="4" y="6" width="2" height="2"/><rect x="16" y="6" width="2" height="2"/><rect x="30" y="6" width="2" height="2"/><rect x="42" y="6" width="2" height="2"/><rect x="4" y="8" width="2" height="2"/><rect x="18" y="8" width="12" height="2"/><rect x="42" y="8" width="2" height="2"/><rect x="4" y="10" width="2" height="2"/><rect x="42" y="10" width="2" height="2"/><rect x="4" y="12" width="2" height="2"/><rect x="42" y="12" width="2" height="2"/><rect x="4" y="14" width="2" height="2"/><rect x="42" y="14" width="2" height="2"/><rect x="4" y="16" width="2" height="2"/><rect x="42" y="16" width="2" height="2"/><rect x="4" y="18" width="2" height="2"/><rect x="42" y="18" width="2" height="2"/><rect x="4" y="20" width="2" height="2"/><rect x="42" y="20" width="2" height="2"/><rect x="4" y="22" width="2" height="2"/><rect x="12" y="22" width="6" height="2"/><rect x="30" y="22" width="6" height="2"/><rect x="42" y="22" width="2" height="2"/><rect x="4" y="24" width="2" height="2"/><rect x="42" y="24" width="2" height="2"/><rect x="0" y="26" width="8" height="2"/><rect x="40" y="26" width="8" height="2"/><rect x="4" y="28" width="2" height="2"/><rect x="22" y="28" width="4" height="2"/><rect x="42" y="28" width="2" height="2"/><rect x="0" y="30" width="8" height="2"/><rect x="22" y="30" width="4" height="2"/><rect x="40" y="30" width="8" height="2"/><rect x="4" y="32" width="2" height="2"/><rect x="20" y="32" width="2" height="2"/><rect x="26" y="32" width="2" height="2"/><rect x="42" y="32" width="2" height="2"/><rect x="0" y="34" width="8" height="2"/><rect x="40" y="34" width="8" height="2"/><rect x="4" y="36" width="2" height="2"/><rect x="42" y="36" width="2" height="2"/><rect x="4" y="38" width="2" height="2"/><rect x="42" y="38" width="2" height="2"/><rect x="6" y="42" width="36" height="2"/></g><g fill="#FFB0A0"><rect x="8" y="4" width="2" height="2"/><rect x="38" y="4" width="2" height="2"/><rect x="8" y="6" width="4" height="2"/><rect x="36" y="6" width="4" height="2"/><rect x="8" y="8" width="4" height="2"/><rect x="36" y="8" width="4" height="2"/><rect x="22" y="26" width="4" height="2"/><rect x="10" y="28" width="6" height="2"/><rect x="32" y="28" width="6" height="2"/><rect x="10" y="30" width="6" height="2"/><rect x="32" y="30" width="6" height="2"/><rect x="10" y="32" width="6" height="2"/><rect x="32" y="32" width="6" height="2"/></g></svg>`,
 headsup: `<svg width="48" height="44" viewBox="0 0 48 44" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><g fill="#9A9590"><rect x="8" y="2" width="4" height="2"/><rect x="36" y="2" width="4" height="2"/><rect x="10" y="4" width="4" height="2"/><rect x="34" y="4" width="4" height="2"/><rect x="6" y="6" width="2" height="2"/><rect x="12" y="6" width="4" height="2"/><rect x="32" y="6" width="4" height="2"/><rect x="40" y="6" width="2" height="2"/><rect x="6" y="8" width="2" height="2"/><rect x="12" y="8" width="6" height="2"/><rect x="30" y="8" width="6" height="2"/><rect x="40" y="8" width="2" height="2"/><rect x="6" y="10" width="36" height="2"/><rect x="6" y="12" width="36" height="2"/><rect x="6" y="14" width="36" height="2"/><rect x="6" y="16" width="36" height="2"/><rect x="6" y="18" width="36" height="2"/><rect x="6" y="20" width="6" height="2"/><rect x="18" y="20" width="12" height="2"/><rect x="36" y="20" width="6" height="2"/><rect x="6" y="22" width="6" height="2"/><rect x="18" y="22" width="12" height="2"/><rect x="36" y="22" width="6" height="2"/><rect x="6" y="24" width="6" height="2"/><rect x="18" y="24" width="12" height="2"/><rect x="36" y="24" width="6" height="2"/><rect x="8" y="26" width="14" height="2"/><rect x="26" y="26" width="14" height="2"/><rect x="6" y="28" width="4" height="2"/><rect x="16" y="28" width="6" height="2"/><rect x="26" y="28" width="6" height="2"/><rect x="38" y="28" width="4" height="2"/><rect x="8" y="30" width="2" height="2"/><rect x="16" y="30" width="6" height="2"/><rect x="26" y="30" width="6" height="2"/><rect x="38" y="30" width="2" height="2"/><rect x="6" y="32" width="4" height="2"/><rect x="16" y="32" width="4" height="2"/><rect x="22" y="32" width="4" height="2"/><rect x="28" y="32" width="4" height="2"/><rect x="38" y="32" width="4" height="2"/><rect x="8" y="34" width="32" height="2"/><rect x="6" y="36" width="36" height="2"/><rect x="6" y="38" width="36" height="2"/><rect x="6" y="40" width="36" height="2"/></g><g fill="#4A4540"><rect x="8" y="0" width="4" height="2"/><rect x="36" y="0" width="4" height="2"/><rect x="6" y="2" width="2" height="2"/><rect x="12" y="2" width="2" height="2"/><rect x="34" y="2" width="2" height="2"/><rect x="40" y="2" width="2" height="2"/><rect x="6" y="4" width="2" height="2"/><rect x="14" y="4" width="2" height="2"/><rect x="32" y="4" width="2" height="2"/><rect x="40" y="4" width="2" height="2"/><rect x="4" y="6" width="2" height="2"/><rect x="16" y="6" width="2" height="2"/><rect x="30" y="6" width="2" height="2"/><rect x="42" y="6" width="2" height="2"/><rect x="4" y="8" width="2" height="2"/><rect x="18" y="8" width="12" height="2"/><rect x="42" y="8" width="2" height="2"/><rect x="4" y="10" width="2" height="2"/><rect x="42" y="10" width="2" height="2"/><rect x="4" y="12" width="2" height="2"/><rect x="42" y="12" width="2" height="2"/><rect x="4" y="14" width="2" height="2"/><rect x="42" y="14" width="2" height="2"/><rect x="4" y="16" width="2" height="2"/><rect x="42" y="16" width="2" height="2"/><rect x="4" y="18" width="2" height="2"/><rect x="42" y="18" width="2" height="2"/><rect x="4" y="20" width="2" height="2"/><rect x="12" y="20" width="6" height="2"/><rect x="30" y="20" width="6" height="2"/><rect x="42" y="20" width="2" height="2"/><rect x="4" y="22" width="2" height="2"/><rect x="12" y="22" width="6" height="2"/><rect x="30" y="22" width="6" height="2"/><rect x="42" y="22" width="2" height="2"/><rect x="4" y="24" width="2" height="2"/><rect x="12" y="24" width="6" height="2"/><rect x="30" y="24" width="6" height="2"/><rect x="42" y="24" width="2" height="2"/><rect x="0" y="26" width="8" height="2"/><rect x="40" y="26" width="8" height="2"/><rect x="4" y="28" width="2" height="2"/><rect x="22" y="28" width="4" height="2"/><rect x="42" y="28" width="2" height="2"/><rect x="0" y="30" width="8" height="2"/><rect x="22" y="30" width="4" height="2"/><rect x="40" y="30" width="8" height="2"/><rect x="4" y="32" width="2" height="2"/><rect x="20" y="32" width="2" height="2"/><rect x="26" y="32" width="2" height="2"/><rect x="42" y="32" width="2" height="2"/><rect x="0" y="34" width="8" height="2"/><rect x="40" y="34" width="8" height="2"/><rect x="4" y="36" width="2" height="2"/><rect x="42" y="36" width="2" height="2"/><rect x="4" y="38" width="2" height="2"/><rect x="42" y="38" width="2" height="2"/><rect x="6" y="42" width="36" height="2"/></g><g fill="#FFB0A0"><rect x="8" y="4" width="2" height="2"/><rect x="38" y="4" width="2" height="2"/><rect x="8" y="6" width="4" height="2"/><rect x="36" y="6" width="4" height="2"/><rect x="8" y="8" width="4" height="2"/><rect x="36" y="8" width="4" height="2"/><rect x="22" y="26" width="4" height="2"/><rect x="10" y="28" width="6" height="2"/><rect x="32" y="28" width="6" height="2"/><rect x="10" y="30" width="6" height="2"/><rect x="32" y="30" width="6" height="2"/><rect x="10" y="32" width="6" height="2"/><rect x="32" y="32" width="6" height="2"/></g></svg>`,
 go: `<svg width="48" height="44" viewBox="0 0 48 44" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><g fill="#9A9590"><rect x="8" y="2" width="4" height="2"/><rect x="36" y="2" width="4" height="2"/><rect x="10" y="4" width="4" height="2"/><rect x="34" y="4" width="4" height="2"/><rect x="6" y="6" width="2" height="2"/><rect x="12" y="6" width="4" height="2"/><rect x="32" y="6" width="4" height="2"/><rect x="40" y="6" width="2" height="2"/><rect x="6" y="8" width="2" height="2"/><rect x="12" y="8" width="6" height="2"/><rect x="30" y="8" width="6" height="2"/><rect x="40" y="8" width="2" height="2"/><rect x="6" y="10" width="36" height="2"/><rect x="6" y="12" width="36" height="2"/><rect x="6" y="14" width="36" height="2"/><rect x="6" y="16" width="36" height="2"/><rect x="6" y="18" width="36" height="2"/><rect x="6" y="20" width="6" height="2"/><rect x="14" y="20" width="4" height="2"/><rect x="18" y="20" width="12" height="2"/><rect x="32" y="20" width="4" height="2"/><rect x="36" y="20" width="6" height="2"/><rect x="6" y="22" width="6" height="2"/><rect x="18" y="22" width="12" height="2"/><rect x="36" y="22" width="6" height="2"/><rect x="6" y="24" width="6" height="2"/><rect x="18" y="24" width="12" height="2"/><rect x="36" y="24" width="6" height="2"/><rect x="8" y="26" width="14" height="2"/><rect x="26" y="26" width="14" height="2"/><rect x="6" y="28" width="4" height="2"/><rect x="16" y="28" width="18" height="2"/><rect x="38" y="28" width="4" height="2"/><rect x="8" y="30" width="2" height="2"/><rect x="16" y="30" width="6" height="2"/><rect x="26" y="30" width="6" height="2"/><rect x="38" y="30" width="2" height="2"/><rect x="6" y="32" width="4" height="2"/><rect x="16" y="32" width="6" height="2"/><rect x="26" y="32" width="6" height="2"/><rect x="38" y="32" width="4" height="2"/><rect x="8" y="34" width="32" height="2"/><rect x="6" y="36" width="36" height="2"/><rect x="6" y="38" width="36" height="2"/><rect x="6" y="40" width="36" height="2"/></g><g fill="#4A4540"><rect x="8" y="0" width="4" height="2"/><rect x="36" y="0" width="4" height="2"/><rect x="6" y="2" width="2" height="2"/><rect x="12" y="2" width="2" height="2"/><rect x="34" y="2" width="2" height="2"/><rect x="40" y="2" width="2" height="2"/><rect x="6" y="4" width="2" height="2"/><rect x="14" y="4" width="2" height="2"/><rect x="32" y="4" width="2" height="2"/><rect x="40" y="4" width="2" height="2"/><rect x="4" y="6" width="2" height="2"/><rect x="16" y="6" width="2" height="2"/><rect x="30" y="6" width="2" height="2"/><rect x="42" y="6" width="2" height="2"/><rect x="4" y="8" width="2" height="2"/><rect x="18" y="8" width="12" height="2"/><rect x="42" y="8" width="2" height="2"/><rect x="4" y="10" width="2" height="2"/><rect x="42" y="10" width="2" height="2"/><rect x="4" y="12" width="2" height="2"/><rect x="42" y="12" width="2" height="2"/><rect x="4" y="14" width="2" height="2"/><rect x="42" y="14" width="2" height="2"/><rect x="4" y="16" width="2" height="2"/><rect x="42" y="16" width="2" height="2"/><rect x="4" y="18" width="2" height="2"/><rect x="42" y="18" width="2" height="2"/><rect x="4" y="20" width="2" height="2"/><rect x="12" y="20" width="2" height="2"/><rect x="30" y="20" width="2" height="2"/><rect x="42" y="20" width="2" height="2"/><rect x="4" y="22" width="2" height="2"/><rect x="12" y="22" width="6" height="2"/><rect x="30" y="22" width="6" height="2"/><rect x="42" y="22" width="2" height="2"/><rect x="4" y="24" width="2" height="2"/><rect x="12" y="24" width="6" height="2"/><rect x="30" y="24" width="6" height="2"/><rect x="42" y="24" width="2" height="2"/><rect x="0" y="26" width="8" height="2"/><rect x="40" y="26" width="8" height="2"/><rect x="4" y="28" width="2" height="2"/><rect x="34" y="28" width="2" height="2"/><rect x="42" y="28" width="2" height="2"/><rect x="0" y="30" width="8" height="2"/><rect x="22" y="30" width="4" height="2"/><rect x="40" y="30" width="8" height="2"/><rect x="4" y="32" width="2" height="2"/><rect x="22" y="32" width="4" height="2"/><rect x="42" y="32" width="2" height="2"/><rect x="0" y="34" width="8" height="2"/><rect x="40" y="34" width="8" height="2"/><rect x="4" y="36" width="2" height="2"/><rect x="42" y="36" width="2" height="2"/><rect x="4" y="38" width="2" height="2"/><rect x="42" y="38" width="2" height="2"/><rect x="6" y="42" width="36" height="2"/></g><g fill="#FFFFFF"><rect x="10" y="20" width="2" height="2"/><rect x="30" y="20" width="2" height="2"/></g><g fill="#FFB0A0"><rect x="8" y="4" width="2" height="2"/><rect x="38" y="4" width="2" height="2"/><rect x="8" y="6" width="4" height="2"/><rect x="36" y="6" width="4" height="2"/><rect x="8" y="8" width="4" height="2"/><rect x="36" y="8" width="4" height="2"/><rect x="22" y="26" width="4" height="2"/><rect x="10" y="28" width="6" height="2"/><rect x="32" y="28" width="6" height="2"/><rect x="10" y="30" width="6" height="2"/><rect x="32" y="30" width="6" height="2"/><rect x="10" y="32" width="6" height="2"/><rect x="32" y="32" width="6" height="2"/></g></svg>`,
 oops: `<svg width="48" height="44" viewBox="0 0 48 44" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><g fill="#9A9590"><rect x="14" y="4" width="20" height="2"/><rect x="10" y="6" width="28" height="2"/><rect x="6" y="8" width="36" height="2"/><rect x="4" y="10" width="40" height="2"/><rect x="6" y="12" width="36" height="2"/><rect x="4" y="14" width="40" height="2"/><rect x="6" y="16" width="36" height="2"/><rect x="6" y="18" width="36" height="2"/><rect x="6" y="20" width="36" height="2"/><rect x="6" y="22" width="36" height="2"/><rect x="6" y="24" width="6" height="2"/><rect x="18" y="24" width="12" height="2"/><rect x="36" y="24" width="6" height="2"/><rect x="8" y="26" width="4" height="2"/><rect x="14" y="26" width="8" height="2"/><rect x="26" y="26" width="8" height="2"/><rect x="36" y="26" width="4" height="2"/><rect x="6" y="28" width="4" height="2"/><rect x="16" y="28" width="16" height="2"/><rect x="38" y="28" width="4" height="2"/><rect x="8" y="30" width="2" height="2"/><rect x="16" y="30" width="16" height="2"/><rect x="38" y="30" width="2" height="2"/><rect x="6" y="32" width="4" height="2"/><rect x="16" y="32" width="4" height="2"/><rect x="28" y="32" width="4" height="2"/><rect x="38" y="32" width="4" height="2"/><rect x="8" y="34" width="32" height="2"/><rect x="6" y="36" width="36" height="2"/><rect x="6" y="38" width="36" height="2"/><rect x="6" y="40" width="36" height="2"/></g><g fill="#4A4540"><rect x="14" y="2" width="20" height="2"/><rect x="10" y="4" width="4" height="2"/><rect x="34" y="4" width="4" height="2"/><rect x="6" y="6" width="4" height="2"/><rect x="38" y="6" width="4" height="2"/><rect x="4" y="8" width="2" height="2"/><rect x="42" y="8" width="2" height="2"/><rect x="0" y="10" width="4" height="2"/><rect x="44" y="10" width="4" height="2"/><rect x="0" y="12" width="4" height="2"/><rect x="44" y="12" width="4" height="2"/><rect x="0" y="14" width="4" height="2"/><rect x="44" y="14" width="4" height="2"/><rect x="4" y="16" width="2" height="2"/><rect x="42" y="16" width="2" height="2"/><rect x="4" y="18" width="2" height="2"/><rect x="42" y="18" width="2" height="2"/><rect x="4" y="20" width="2" height="2"/><rect x="42" y="20" width="2" height="2"/><rect x="4" y="22" width="2" height="2"/><rect x="42" y="22" width="2" height="2"/><rect x="4" y="24" width="2" height="2"/><rect x="12" y="24" width="6" height="2"/><rect x="30" y="24" width="6" height="2"/><rect x="42" y="24" width="2" height="2"/><rect x="0" y="26" width="8" height="2"/><rect x="40" y="26" width="8" height="2"/><rect x="4" y="28" width="2" height="2"/><rect x="42" y="28" width="2" height="2"/><rect x="0" y="30" width="8" height="2"/><rect x="40" y="30" width="8" height="2"/><rect x="4" y="32" width="2" height="2"/><rect x="20" y="32" width="8" height="2"/><rect x="42" y="32" width="2" height="2"/><rect x="0" y="34" width="8" height="2"/><rect x="40" y="34" width="8" height="2"/><rect x="4" y="36" width="2" height="2"/><rect x="42" y="36" width="2" height="2"/><rect x="4" y="38" width="2" height="2"/><rect x="42" y="38" width="2" height="2"/><rect x="6" y="42" width="36" height="2"/></g><g fill="#FFB0A0"><rect x="4" y="12" width="2" height="2"/><rect x="42" y="12" width="2" height="2"/><rect x="22" y="26" width="4" height="2"/><rect x="10" y="28" width="6" height="2"/><rect x="32" y="28" width="6" height="2"/><rect x="10" y="30" width="6" height="2"/><rect x="32" y="30" width="6" height="2"/><rect x="10" y="32" width="6" height="2"/><rect x="32" y="32" width="6" height="2"/></g><g fill="#88BFD9"><rect x="12" y="26" width="2" height="6"/><rect x="34" y="26" width="2" height="6"/></g></svg>`,
-sleeping: `<svg width="48" height="44" viewBox="0 0 48 44" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><g fill="#9A9590"><rect x="8" y="2" width="4" height="2"/><rect x="36" y="2" width="4" height="2"/><rect x="10" y="4" width="4" height="2"/><rect x="34" y="4" width="4" height="2"/><rect x="6" y="6" width="2" height="2"/><rect x="12" y="6" width="4" height="2"/><rect x="32" y="6" width="4" height="2"/><rect x="40" y="6" width="2" height="2"/><rect x="6" y="8" width="2" height="2"/><rect x="12" y="8" width="6" height="2"/><rect x="30" y="8" width="6" height="2"/><rect x="40" y="8" width="2" height="2"/><rect x="6" y="10" width="36" height="2"/><rect x="6" y="12" width="36" height="2"/><rect x="6" y="14" width="36" height="2"/><rect x="6" y="16" width="36" height="2"/><rect x="6" y="18" width="36" height="2"/><rect x="6" y="20" width="36" height="2"/><rect x="6" y="22" width="6" height="2"/><rect x="18" y="22" width="12" height="2"/><rect x="36" y="22" width="6" height="2"/><rect x="6" y="24" width="36" height="2"/><rect x="8" y="26" width="14" height="2"/><rect x="26" y="26" width="14" height="2"/><rect x="6" y="28" width="36" height="2"/><rect x="8" y="30" width="32" height="2"/><rect x="6" y="32" width="36" height="2"/><rect x="8" y="34" width="32" height="2"/><rect x="6" y="36" width="36" height="2"/><rect x="6" y="38" width="36" height="2"/><rect x="6" y="40" width="36" height="2"/></g><g fill="#4A4540"><rect x="8" y="0" width="4" height="2"/><rect x="36" y="0" width="4" height="2"/><rect x="6" y="2" width="2" height="2"/><rect x="12" y="2" width="2" height="2"/><rect x="34" y="2" width="2" height="2"/><rect x="40" y="2" width="2" height="2"/><rect x="6" y="4" width="2" height="2"/><rect x="14" y="4" width="2" height="2"/><rect x="32" y="4" width="2" height="2"/><rect x="40" y="4" width="2" height="2"/><rect x="4" y="6" width="2" height="2"/><rect x="16" y="6" width="2" height="2"/><rect x="30" y="6" width="2" height="2"/><rect x="42" y="6" width="2" height="2"/><rect x="4" y="8" width="2" height="2"/><rect x="18" y="8" width="12" height="2"/><rect x="42" y="8" width="2" height="2"/><rect x="4" y="10" width="2" height="2"/><rect x="42" y="10" width="2" height="2"/><rect x="4" y="12" width="2" height="2"/><rect x="42" y="12" width="2" height="2"/><rect x="4" y="14" width="2" height="2"/><rect x="42" y="14" width="2" height="2"/><rect x="4" y="16" width="2" height="2"/><rect x="42" y="16" width="2" height="2"/><rect x="4" y="18" width="2" height="2"/><rect x="42" y="18" width="2" height="2"/><rect x="4" y="20" width="2" height="2"/><rect x="42" y="20" width="2" height="2"/><rect x="4" y="22" width="2" height="2"/><rect x="12" y="22" width="6" height="2"/><rect x="30" y="22" width="6" height="2"/><rect x="42" y="22" width="2" height="2"/><rect x="4" y="24" width="2" height="2"/><rect x="42" y="24" width="2" height="2"/><rect x="0" y="26" width="8" height="2"/><rect x="40" y="26" width="8" height="2"/><rect x="4" y="28" width="2" height="2"/><rect x="42" y="28" width="2" height="2"/><rect x="0" y="30" width="8" height="2"/><rect x="40" y="30" width="8" height="2"/><rect x="4" y="32" width="2" height="2"/><rect x="42" y="32" width="2" height="2"/><rect x="0" y="34" width="8" height="2"/><rect x="40" y="34" width="8" height="2"/><rect x="4" y="36" width="2" height="2"/><rect x="42" y="36" width="2" height="2"/><rect x="4" y="38" width="2" height="2"/><rect x="42" y="38" width="2" height="2"/><rect x="6" y="42" width="36" height="2"/></g><g fill="#FFB0A0"><rect x="8" y="4" width="2" height="2"/><rect x="38" y="4" width="2" height="2"/><rect x="8" y="6" width="4" height="2"/><rect x="36" y="6" width="4" height="2"/><rect x="8" y="8" width="4" height="2"/><rect x="36" y="8" width="4" height="2"/></g><g fill="#C8C4C0" opacity="0.5"><rect x="10" y="20" width="8" height="2"/><rect x="30" y="20" width="8" height="2"/></g></svg>`,
 };
 
 const TI_ICONS = {
@@ -378,11 +364,7 @@ const CURRENCIES = [
   { code: 'BRL', symbol: 'R$', name: 'Brazilian Real' },
 ];
 
-const REMINDER_OPTIONS = [0, 5, 10, 15, 30, 60, 120, 240, 480, 1440, 2880];
-
-// ─── Push config ─────────────────────────────────────────────────────────────
-const VAPID_PUBLIC_KEY = 'BLpLqz1wBuBDjvUasJWNijffahqH3VZ-pCivZ4duQbyI9VC5t76GdxY0ih8xrhDHW4YQdqNz5iAUbbpIH5oET5g';
-const WORKER_URL = 'https://biscuit-push.hanbit-designs.workers.dev';
+const REMINDER_OPTIONS = [5, 10, 15, 30, 60, 120, 240, 480, 1440, 2880];
 
 const state = {
   activeTab: 'trip',
@@ -395,11 +377,11 @@ const state = {
     fxRates: { 'JPY': 0.0067, 'KRW': 0.00073 },
     showCat: true, catQuiet: true,
     quietStartHour: 23, quietEndHour: 7,
-    pushOn: false, autoUpdateZone: true,
+    pushOn: true, autoUpdateZone: true,
     defaultReminders: [30, 60], fxLastRefresh: Date.now(),
   },
   debugStateOverride: null,
-  firedReminders: [], // "eventId:reminderMin" keys — prevents double-firing in foreground
+  firedReminders: [], // array of "eventId:reminderMin" strings — prevents double-firing
 };
 
 function getActiveTrip() {
@@ -418,7 +400,7 @@ function saveState() {
     }));
   } catch (e) { /* quota exceeded, private mode, etc. — fail silently */ }
   debouncedSyncSchedule();
-  scheduleNextReminder(); // re-arm precision timer whenever events/reminders change
+  scheduleNextReminder();
 }
 function loadState() {
   try {
@@ -588,23 +570,27 @@ function computeCatState() {
     .map(e => ({ ...e, sd: new Date(e.start) }))
     .sort((a, b) => a.sd - b.sd);
 
-  // Priority 1 — GO: any event that started within the last 5 min and isn't over yet
-  // (use durationMin as the window; fall back to 5 min for all-day events)
-  const go = sorted.find(e => {
-    const m = (e.sd - now) / 60000; // negative = started
+  // Priority 1 — GO: event in progress (started but not finished)
+  // Use most recently started go event so overlapping events show the current one
+  const goEvents = sorted.filter(e => {
+    const m = (e.sd - now) / 60000;
     const dur = e.allDay ? 1440 : (e.durationMin || 60);
-    return m <= 0 && m > -dur; // started but not finished
+    return m <= 0 && m > -dur;
   });
-  if (go) return { state: 'go', event: go };
+  if (goEvents.length > 0) {
+    // Pick the most recently started (last in the go list)
+    const go = goEvents[goEvents.length - 1];
+    return { state: 'go', event: go };
+  }
 
-  // Priority 2 — HEADSUP: next event starts within 30 min (beats oops — upcoming > missed)
+  // Priority 2 — HEADSUP: next event within 30 min (beats oops)
   const next = sorted.find(e => e.sd > now);
   if (next) {
     const m = (next.sd - now) / 60000;
     if (m <= 30) return { state: 'headsup', event: next };
   }
 
-  // Priority 3 — OOPS: most recent event that ended within the last 10 min
+  // Priority 3 — OOPS: most recent event ended within last 10 min
   const oops = sorted.find(e => {
     const dur = e.allDay ? 1440 : (e.durationMin || 60);
     const endMinsAgo = -(e.sd - now) / 60000 - dur;
@@ -612,9 +598,8 @@ function computeCatState() {
   });
   if (oops) return { state: 'oops', event: oops };
 
-  // Priority 4 — IDLE: next future event (far away)
+  // Priority 4 — IDLE
   if (next) return { state: 'idle', event: next };
-
   return { state: 'idle', event: null };
 }
 function isQuietHoursNow() {
@@ -633,29 +618,6 @@ function bubbleText(s, e) {
   if (s === 'headsup') { const m = Math.max(1, Math.round(minutesUntil(e.start))); return `${sn} in ${fmtDuration(m)}!`; }
   if (s === 'oops') return `missed ${sn}`;
   return '';
-}
-
-// Tap easter egg — cycles through surprise reactions
-const EASTER_EGGS = ['meow?', 'purrrr', '(=ↀωↀ=)', '...zzz', 'pet me!', 'nya~', '(＾• ω •＾)', '*bonk*', 'biscuit!', 'feed me'];
-let _tapCount = 0, _tapTimer = null, _easterActive = false;
-function handleCatTap() {
-  if (_easterActive) return;
-  _tapCount++;
-  clearTimeout(_tapTimer);
-  _tapTimer = setTimeout(() => { _tapCount = 0; }, 600);
-  if (_tapCount >= 3) {
-    _tapCount = 0;
-    _easterActive = true;
-    const msg = EASTER_EGGS[Math.floor(Math.random() * EASTER_EGGS.length)];
-    const bubble = document.getElementById('cat-bubble');
-    const bt = document.getElementById('bubble-text');
-    bubble.classList.remove('cat-hidden');
-    bt.textContent = msg;
-    setTimeout(() => {
-      _easterActive = false;
-      renderCat(); // restore normal state
-    }, 2000);
-  }
 }
 
 function renderCat() {
@@ -723,12 +685,11 @@ function renderTrip() {
 
   if (upcoming) {
     const m = Math.max(0, Math.round(minutesUntil(upcoming.start)));
-    const upNextLabel = upcoming.allDay ? 'TODAY' : (m < 1 ? 'NOW' : 'IN ' + fmtDuration(m).toUpperCase());
     html += `<div class="up-next">
-      <div class="up-next-header"><div class="up-next-dot"></div><div class="lbl" style="color: var(--accent-text);">UP NEXT · ${upNextLabel}</div></div>
+      <div class="up-next-header"><div class="up-next-dot"></div><div class="lbl" style="color: var(--accent-text);">UP NEXT · ${m < 1 ? 'NOW' : 'IN ' + fmtDuration(m).toUpperCase()}</div></div>
       <div class="up-next-title">${escapeHtml(upcoming.title)}</div>
       <div class="up-next-meta">
-        <div>${upcoming.allDay ? 'All day' : escapeHtml(fmtTimeInZone(new Date(upcoming.start), tz))}${upcoming.location ? ' · ' + escapeHtml(upcoming.location) : ''}</div>
+        <div>${escapeHtml(fmtTimeInZone(new Date(upcoming.start), tz))}${upcoming.location ? ' · ' + escapeHtml(upcoming.location) : ''}</div>
         ${upcoming.bookingRef ? `<div>Booking <span class="pixel-font" style="color: var(--text);">${escapeHtml(upcoming.bookingRef)}</span></div>` : ''}
         ${upcoming.price ? `<div>Cost <span class="pixel-font" style="color: var(--text);">${escapeHtml(fmtMoneyNative(upcoming.price, upcoming.priceCurrency))}</span></div>` : ''}
       </div>
@@ -749,8 +710,6 @@ function renderTrip() {
   dayKeys.forEach(k => {
     const evs = byDay.get(k);
     const isToday = k === todayKey;
-    // Skip today if it has no events — only show it when there's something to display
-    if (isToday && evs.length === 0) return;
     const sampleDate = isToday ? now : new Date(evs[0].start);
     const dateLabel = fmtFullDate(sampleDate, tz).toUpperCase();
     const headerLabel = isToday ? `TODAY · ${dateLabel}` : dateLabel;
@@ -762,8 +721,8 @@ function renderTrip() {
       const ck = e.checkedOff ? 'checked' : '';
       html += `<div class="evt-row ${ck}" data-event-id="${escapeAttr(e.id)}">
         <button class="evt-check" data-toggle="${escapeAttr(e.id)}" aria-label="Toggle done"><i class="ti ti-check"></i></button>
-        <div class="evt-time pixel-font">${e.allDay ? 'All day' : escapeHtml(fmtTimeInZone(new Date(e.start), tz))}</div>
-        <div style="flex: 1; min-width: 0;"><div class="evt-title">${escapeHtml(e.title)}</div><div class="evt-meta">${e.allDay ? '' : fmtDuration(e.durationMin) + ' '}${e.location ? (e.allDay ? '' : '· ') + escapeHtml(e.location) : ''}</div></div>
+        <div class="evt-time pixel-font">${escapeHtml(fmtTimeInZone(new Date(e.start), tz))}</div>
+        <div style="flex: 1; min-width: 0;"><div class="evt-title">${escapeHtml(e.title)}</div><div class="evt-meta">${fmtDuration(e.durationMin)}${e.location ? ' · ' + escapeHtml(e.location) : ''}</div></div>
         ${e.price ? `<div class="evt-price">${escapeHtml(fmtMoneyNative(e.price, e.priceCurrency))}</div>` : ''}
       </div>`;
     });
@@ -793,139 +752,6 @@ function renderTrip() {
   document.querySelectorAll('.evt-row').forEach(r => r.addEventListener('click', () => { const e = trip.events.find(x => x.id === r.getAttribute('data-event-id')); if (e) openAddEventModal(e); }));
 }
 
-// ─── Currency calculator ──────────────────────────────────────────────────────
-const calcState = { fromAmt: '1', liveRate: null, rateTs: null, fetching: false };
-
-async function fetchLiveRate(from, to) {
-  if (from === to) { calcState.liveRate = 1; calcState.rateKey = `${from}_${to}`; calcState.rateTs = Date.now(); return 1; }
-  const key = `${from}_${to}`;
-  const now = Date.now();
-  if (calcState.rateKey === key && calcState.liveRate && calcState.rateTs && now - calcState.rateTs < 3600000) return calcState.liveRate;
-  calcState.fetching = true;
-  const ctrl = new AbortController();
-  const timeout = setTimeout(() => ctrl.abort(), 8000);
-  try {
-    const res = await fetch(`${WORKER_URL}/fx?from=${from}&to=${to}`, {
-      signal: ctrl.signal,
-      cache: 'no-store',
-    });
-    clearTimeout(timeout);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    const rate = data.rates?.[to];
-    if (!rate) throw new Error(`No rate for ${to}`);
-    calcState.liveRate = rate;
-    calcState.rateKey  = key;
-    calcState.rateTs   = now;
-    calcState.fetchErr = null;
-    return rate;
-  } catch (e) {
-    clearTimeout(timeout);
-    calcState.fetchErr = e.name === 'AbortError' ? 'Timed out' : e.message;
-    return null;
-  } finally {
-    calcState.fetching = false;
-  }
-}
-
-function renderCurrencyCalc(trip) {
-  const fromCur = calcState.fromCur || trip.travelCurrency;
-  const toCur   = calcState.toCur   || state.settings.homeCurrency;
-  const rate    = calcState.liveRate && calcState.rateKey === `${fromCur}_${toCur}` ? calcState.liveRate
-                : state.settings.fxRates[fromCur] ? state.settings.fxRates[fromCur] / (state.settings.fxRates[toCur] || 1) : null;
-  const fmtNum  = n => n >= 1000 ? n.toLocaleString(undefined, { maximumFractionDigits: 0 }) : n.toLocaleString(undefined, { maximumFractionDigits: 2 });
-  const isLive  = calcState.liveRate && calcState.rateKey === `${fromCur}_${toCur}`;
-  const rateAge = calcState.rateTs ? Math.round((Date.now() - calcState.rateTs) / 60000) : null;
-  const rateStr = rate ? `1 ${fromCur} = ${rate >= 1000 ? rate.toLocaleString(undefined,{maximumFractionDigits:0}) : rate.toLocaleString(undefined,{maximumFractionDigits:4})} ${toCur}` : '';
-  const hint    = calcState.fetching ? 'Fetching live rate…'
-                : isLive ? `${rateStr} · live`
-                : calcState.fetchErr ? `${rateStr || 'No rate available'}`
-                : rateStr ? `${rateStr}` : 'No rate available';
-
-  // If already rendered, only update the dynamic parts — never destroy the input
-  const existing = document.getElementById('currency-calc');
-  if (existing && existing.dataset.rendered === 'true') {
-    const amt = parseFloat(document.getElementById('calc-input')?.value) || 0;
-    const result = rate ? (amt * rate) : null;
-    const resEl = document.getElementById('calc-result');
-    const hintEl = document.getElementById('calc-hint');
-    const fromEl = document.getElementById('calc-from-btn');
-    const toEl   = document.getElementById('calc-to-btn');
-    if (resEl)  resEl.textContent  = result !== null ? fmtNum(result) : '—';
-    if (hintEl) hintEl.textContent = hint;
-    if (fromEl) fromEl.textContent = fromCur;
-    if (toEl)   toEl.textContent   = toCur;
-    return;
-  }
-
-  // Full render (first time or after currency switch)
-  const amt    = parseFloat(calcState.fromAmt) || 0;
-  const result = rate ? (amt * rate) : null;
-  const el = document.getElementById('currency-calc');
-  if (!el) return;
-  el.dataset.rendered = 'true';
-  el.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;">
-      <div class="lbl">CURRENCY</div>
-      <button class="pill-add" id="calc-refresh" style="color:var(--text-3);border-color:var(--border);">↻</button>
-    </div>
-    <div class="calc-row">
-      <div class="calc-side">
-        <input class="calc-input" id="calc-input" type="number" inputmode="decimal" placeholder="0" value="${escapeAttr(String(calcState.fromAmt))}">
-        <button class="calc-currency-btn" id="calc-from-btn">${escapeHtml(fromCur)}</button>
-      </div>
-      <button class="calc-swap" id="calc-swap-btn">⇄</button>
-      <div class="calc-side right">
-        <div class="calc-result" id="calc-result">${result !== null ? fmtNum(result) : '—'}</div>
-        <button class="calc-currency-btn" id="calc-to-btn">${escapeHtml(toCur)}</button>
-      </div>
-    </div>
-    <div class="calc-rate-hint" id="calc-hint">${escapeHtml(hint)}</div>`;
-
-  // Input — only update result, never re-render
-  document.getElementById('calc-input').addEventListener('input', e => {
-    calcState.fromAmt = e.target.value;
-    const a = parseFloat(e.target.value) || 0;
-    const r = rate ? (a * rate) : null;
-    document.getElementById('calc-result').textContent = r !== null ? fmtNum(r) : '—';
-  });
-  document.getElementById('calc-input').addEventListener('focus', e => e.target.select());
-
-  document.getElementById('calc-refresh').addEventListener('click', () => {
-    calcState.rateTs = null; calcState.liveRate = null;
-    el.dataset.rendered = '';
-    fetchLiveRate(fromCur, toCur).then(() => renderCurrencyCalc(trip));
-  });
-
-  document.getElementById('calc-swap-btn').addEventListener('click', () => {
-    [calcState.fromCur, calcState.toCur] = [toCur, fromCur];
-    calcState.liveRate = null; calcState.rateTs = null;
-    el.dataset.rendered = '';
-    fetchLiveRate(calcState.fromCur || trip.travelCurrency, calcState.toCur || state.settings.homeCurrency).then(() => renderCurrencyCalc(trip));
-    renderCurrencyCalc(trip);
-  });
-
-  const ALL_CURRENCIES = ['USD','EUR','GBP','JPY','KRW','CNY','AUD','CAD','CHF','HKD','SGD','TWD','THB','INR','MXN','BRL','NZD','SEK','NOK','DKK','PLN','VND','PHP','IDR','MYR','AED','SAR','TRY'];
-  const openPicker = (which) => {
-    const cur = which === 'from' ? fromCur : toCur;
-    const opts = ALL_CURRENCIES.map(c => `<button class="picker-row${c===cur?' selected':''}" data-cur="${c}">${c}</button>`).join('');
-    openBottomSheet('Select currency', `<div style="padding:0 4px">${opts}</div>`, () => {});
-    setTimeout(() => {
-      document.querySelectorAll('[data-cur]').forEach(b => b.addEventListener('click', () => {
-        if (which === 'from') calcState.fromCur = b.dataset.cur;
-        else calcState.toCur = b.dataset.cur;
-        calcState.liveRate = null; calcState.rateTs = null;
-        el.dataset.rendered = '';
-        closeSheet();
-        fetchLiveRate(calcState.fromCur || trip.travelCurrency, calcState.toCur || state.settings.homeCurrency).then(() => renderCurrencyCalc(trip));
-        renderCurrencyCalc(trip);
-      }));
-    }, 50);
-  };
-  document.getElementById('calc-from-btn').addEventListener('click', () => openPicker('from'));
-  document.getElementById('calc-to-btn').addEventListener('click', () => openPicker('to'));
-}
-
 function renderBudget() {
   const trip = getActiveTrip();
   if (!trip) { document.getElementById('screen-content').innerHTML = `<div class="empty" style="padding: 60px 24px;">No trips yet.</div>`; return; }
@@ -938,8 +764,7 @@ function renderBudget() {
   const pace = trip.budgetTotal * (dayOf / dayTotal);
   const onTrack = total <= pace;
 
-  let html = `<div class="calc-card" id="currency-calc"></div>
-  <div class="trip-header-card" id="trip-header-card" role="button" tabindex="0">
+  let html = `<div class="trip-header-card" id="trip-header-card" role="button" tabindex="0">
     <i class="ti ti-pencil trip-edit-pencil"></i>
     <div class="lbl">${escapeHtml((trip.name || 'Untitled trip').toUpperCase())}</div>
     <div style="font-size: 11px; color: var(--text-2); margin-top: 4px;">Day ${dayOf} of ${dayTotal} · ${escapeHtml(s_fmtDate(trip.tripStart))} → ${escapeHtml(s_fmtDate(trip.tripEnd))}</div>
@@ -970,11 +795,6 @@ function renderBudget() {
   });
   html += `</div>`;
   document.getElementById('screen-content').innerHTML = html;
-  // Render calculator immediately with stored rate, then fetch live rate
-  const fromCur = calcState.fromCur || trip.travelCurrency;
-  const toCur   = calcState.toCur   || state.settings.homeCurrency;
-  renderCurrencyCalc(trip);
-  fetchLiveRate(fromCur, toCur).then(() => renderCurrencyCalc(trip));
   document.getElementById('trip-header-card').addEventListener('click', openTripSwitcher);
   document.getElementById('add-expense-btn').addEventListener('click', openAddExpenseSheet);
   document.querySelectorAll('.expense-row').forEach(r => r.addEventListener('click', () => {
@@ -1005,7 +825,6 @@ function renderNotes() {
   trip.notes.forEach(note => {
     html += `<div class="note-card" data-note-id="${escapeAttr(note.id)}">
       <div class="note-card-header">
-        <span class="note-card-drag" aria-hidden="true">⠿</span>
         <input class="note-title-input" data-note-title="${escapeAttr(note.id)}" value="${escapeAttr(note.title)}" placeholder="Untitled list">
         <div class="note-type-seg">
           <button class="${note.type === 'text' ? 'active' : ''}" data-note-type="text" data-note-id="${escapeAttr(note.id)}">TEXT</button>
@@ -1019,8 +838,7 @@ function renderNotes() {
     } else {
       note.items.forEach(it => {
         const ck = it.checked ? 'checked' : '';
-        html += `<div class="check-row ${ck}" data-item-id="${escapeAttr(it.id)}" data-note-id="${escapeAttr(note.id)}">
-          <span class="drag-handle" aria-hidden="true">⠿</span>
+        html += `<div class="check-row ${ck}">
           <button class="check-box" data-check-toggle="${escapeAttr(note.id)}__${escapeAttr(it.id)}" aria-label="Toggle done"><i class="ti ti-check"></i></button>
           <input class="check-text" data-check-text="${escapeAttr(note.id)}__${escapeAttr(it.id)}" value="${escapeAttr(it.text)}" placeholder="New item">
           <button class="check-del" data-check-delete="${escapeAttr(note.id)}__${escapeAttr(it.id)}" aria-label="Delete item"><i class="ti ti-x"></i></button>
@@ -1059,100 +877,11 @@ function renderNotes() {
   document.querySelectorAll('[data-check-delete]').forEach(b => b.addEventListener('click', () => { const [nid, iid] = b.getAttribute('data-check-delete').split('__'); const n = trip.notes.find(x => x.id === nid); if (!n) return; n.items = n.items.filter(x => x.id !== iid); renderNotes(); }));
   document.querySelectorAll('[data-add-item]').forEach(b => b.addEventListener('click', () => { const id = b.getAttribute('data-add-item'); const n = trip.notes.find(x => x.id === id); if (!n) return; n.items.push({ id: newId(), text: '', checked: false }); renderNotes(); const inputs = document.querySelectorAll(`[data-note-id="${id}"] .check-text`); if (inputs.length) inputs[inputs.length-1].focus(); }));
   document.getElementById('add-category').addEventListener('click', () => { trip.notes.push({ id: newId(), title: '', type: 'checklist', items: [], text: '' }); renderNotes(); const titles = document.querySelectorAll('.note-title-input'); if (titles.length) titles[titles.length-1].focus(); });
-
-  // Drag-to-reorder checklist items (touch + mouse)
-  // Handlers are attached to window once and cleaned up on next renderNotes
-  let dragSrc = null;
-  const _onDragMove = e => {
-    if (!dragSrc) return;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    const noteId = dragSrc.dataset.noteId;
-    document.querySelectorAll(`.check-row[data-note-id="${noteId}"]`).forEach(r => r.classList.remove('drag-over'));
-    const els = [...document.querySelectorAll(`.check-row[data-note-id="${noteId}"]`)];
-    const target = els.find(r => { const rect = r.getBoundingClientRect(); return clientY < rect.bottom && r !== dragSrc; });
-    if (target) target.classList.add('drag-over');
-  };
-  const _onDragEnd = e => {
-    if (!dragSrc) return;
-    const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
-    const noteId = dragSrc.dataset.noteId;
-    const n = trip.notes.find(x => x.id === noteId);
-    if (n) {
-      const els = [...document.querySelectorAll(`.check-row[data-note-id="${noteId}"]`)];
-      const target = els.find(r => r.classList.contains('drag-over'));
-      if (target && target !== dragSrc) {
-        const si = n.items.findIndex(x => x.id === dragSrc.dataset.itemId);
-        const ti = n.items.findIndex(x => x.id === target.dataset.itemId);
-        if (si >= 0 && ti >= 0) { const [item] = n.items.splice(si, 1); n.items.splice(ti, 0, item); saveState(); }
-      }
-    }
-    document.querySelectorAll('.check-row').forEach(r => { r.classList.remove('dragging'); r.classList.remove('drag-over'); });
-    dragSrc = null;
-    window.removeEventListener('mousemove', _onDragMove);
-    window.removeEventListener('touchmove', _onDragMove);
-    window.removeEventListener('mouseup', _onDragEnd);
-    window.removeEventListener('touchend', _onDragEnd);
-    renderNotes();
-  };
-  document.querySelectorAll('.drag-handle').forEach(handle => {
-    const row = handle.closest('.check-row');
-    handle.addEventListener('mousedown', e => {
-      dragSrc = row; row.classList.add('dragging'); e.stopPropagation();
-      window.addEventListener('mousemove', _onDragMove, { passive: true });
-      window.addEventListener('mouseup', _onDragEnd);
-    });
-    handle.addEventListener('touchstart', e => {
-      dragSrc = row; row.classList.add('dragging'); e.stopPropagation();
-      window.addEventListener('touchmove', _onDragMove, { passive: true });
-      window.addEventListener('touchend', _onDragEnd);
-    }, { passive: true });
-  });
-
-  // Drag-to-reorder whole note cards
-  let cardDragSrc = null;
-  const _onCardMove = e => {
-    if (!cardDragSrc) return;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    document.querySelectorAll('.note-card').forEach(c => c.classList.remove('drag-over'));
-    const cards = [...document.querySelectorAll('.note-card')];
-    const target = cards.find(c => { const r = c.getBoundingClientRect(); return clientY < r.top + r.height / 2 && c !== cardDragSrc; });
-    if (target) target.classList.add('drag-over');
-  };
-  const _onCardEnd = e => {
-    if (!cardDragSrc) return;
-    const cards = [...document.querySelectorAll('.note-card')];
-    const target = cards.find(c => c.classList.contains('drag-over'));
-    if (target && target !== cardDragSrc) {
-      const si = trip.notes.findIndex(x => x.id === cardDragSrc.dataset.noteId);
-      const ti = trip.notes.findIndex(x => x.id === target.dataset.noteId);
-      if (si >= 0 && ti >= 0) { const [note] = trip.notes.splice(si, 1); trip.notes.splice(ti, 0, note); saveState(); }
-    }
-    document.querySelectorAll('.note-card').forEach(c => { c.classList.remove('dragging'); c.classList.remove('drag-over'); });
-    cardDragSrc = null;
-    window.removeEventListener('mousemove', _onCardMove);
-    window.removeEventListener('touchmove', _onCardMove);
-    window.removeEventListener('mouseup', _onCardEnd);
-    window.removeEventListener('touchend', _onCardEnd);
-    renderNotes();
-  };
-  document.querySelectorAll('.note-card-drag').forEach(handle => {
-    const card = handle.closest('.note-card');
-    handle.addEventListener('mousedown', e => {
-      cardDragSrc = card; card.classList.add('dragging'); e.stopPropagation();
-      window.addEventListener('mousemove', _onCardMove, { passive: true });
-      window.addEventListener('mouseup', _onCardEnd);
-    });
-    handle.addEventListener('touchstart', e => {
-      cardDragSrc = card; card.classList.add('dragging'); e.stopPropagation();
-      window.addEventListener('touchmove', _onCardMove, { passive: true });
-      window.addEventListener('touchend', _onCardEnd);
-    }, { passive: true });
-  });
 }
 
 function renderSettings() {
   const s = state.settings;
-  const pills = s.defaultReminders.map(r => `<span class="pill">${fmtReminderShort(r)}<span class="x" data-remove-reminder="${r}">×</span></span>`).join('');
+  const pills = s.defaultReminders.map(r => `<span class="pill">${fmtReminder(r)}<span class="x" data-remove-reminder="${r}">×</span></span>`).join('');
   const fh = h => { const x = h % 12 === 0 ? 12 : h % 12; return `${x}:00 ${h < 12 ? 'AM' : 'PM'}`; };
 
   const html = `<div style="text-align: center; padding: 14px 0 4px;"><div style="font-size: 16px; font-weight: 600; color: var(--text);">Settings</div></div>
@@ -1170,7 +899,7 @@ function renderSettings() {
       <div style="padding-left: 30px;">${pills}<button class="pill-add" id="add-reminder-btn"><i class="ti ti-plus"></i> add</button><div class="field-hint" style="margin-top: 6px;">Auto-applied to new events</div></div>
     </div>
     <div class="field-row" data-open="quiet-hours" style="cursor: pointer;"><div class="field-icon"><i class="ti ti-moon"></i></div><div class="field-content"><div class="field-label">QUIET HOURS</div><div class="field-value pixel-font">${fh(s.quietStartHour)} – ${fh(s.quietEndHour)}</div><div class="field-hint">Local time · no pings during these hours</div></div><div class="chevron"><i class="ti ti-chevron-right"></i></div></div>
-    <div class="field-row"><div class="field-icon"><i class="ti ti-device-mobile"></i></div><div class="field-content"><div class="field-label">PUSH NOTIFICATIONS</div><div class="field-hint" id="push-hint">${'Notification' in window && Notification.permission === 'denied' ? '⚠ Blocked in browser/OS settings' : 'Background reminders via Cloudflare · requires permission'}</div></div><button class="toggle ${s.pushOn ? 'on' : ''}" data-toggle-setting="pushOn"><div class="thumb"></div></button></div>
+    <div class="field-row"><div class="field-icon"><i class="ti ti-device-mobile"></i></div><div class="field-content"><div class="field-label">PUSH NOTIFICATIONS</div><div class="field-hint">${'Notification' in window && Notification.permission === 'denied' ? '⚠ Blocked in browser settings' : 'Master switch · also requires OS permission'}</div></div><button class="toggle ${s.pushOn ? 'on' : ''}" data-toggle-setting="pushOn"><div class="thumb"></div></button></div>
   </div>
 
   <div class="lbl section-label">MONEY</div>
@@ -1197,39 +926,26 @@ function renderSettings() {
 
   document.querySelectorAll('[data-toggle-setting]').forEach(b => b.addEventListener('click', () => {
     const k = b.getAttribute('data-toggle-setting');
+    // Special case: enabling push requires OS permission + push subscription
     if (k === 'pushOn' && !state.settings.pushOn) {
       if (!('Notification' in window)) { alert('Notifications are not supported in this browser.'); return; }
       if (Notification.permission === 'denied') { alert('Notifications are blocked. Enable them in your browser/OS settings, then try again.'); return; }
+      if (!WORKER_URL) { alert('Push worker URL not set. Add WORKER_URL to index.html first.'); return; }
       Notification.requestPermission().then(async perm => {
         if (perm !== 'granted') { alert('Permission not granted — notifications stay off.'); return; }
         try {
           state.settings.pushOn = true;
           b.classList.add('on');
           saveState();
-          const hint = document.getElementById('push-hint');
-          if (hint) hint.textContent = 'Subscribing…';
-          await syncSchedule(true);
-          // Verify subscription landed
-          const sub = await getPushSubscription();
-          if (!sub) throw new Error('Subscription not created — try again');
+          await syncSchedule(true); // subscribe + upload schedule in one shot
           new Notification('Biscuit', { body: 'Background reminders are on. The cat will find you.', icon: './icon-192.png', silent: true });
-          if (hint) hint.textContent = '✓ Subscribed · background reminders active';
         } catch (err) {
-          console.error('Push subscribe error:', err);
+          console.error('Push subscription failed:', err);
           state.settings.pushOn = false;
           b.classList.remove('on');
-          saveState();
-          alert('Push subscription failed: ' + err.message + '\n\nTry: Settings → toggle off → toggle on again.');
+          alert('Push subscription failed: ' + err.message);
         }
       });
-      return;
-    }
-    // Turning push OFF — unsubscribe from push manager too
-    if (k === 'pushOn' && state.settings.pushOn) {
-      state.settings.pushOn = false;
-      b.classList.remove('on');
-      saveState();
-      getPushSubscription().then(sub => sub?.unsubscribe());
       return;
     }
     state.settings[k] = !state.settings[k];
@@ -1247,35 +963,11 @@ function renderSettings() {
     else if (a === 'fx-rates') openFxRatesSheet();
   }));
   document.getElementById('reset-demo').addEventListener('click', () => { if (confirm('Wipe all trips, events, expenses, and notes? This re-seeds demo data.')) { try { localStorage.removeItem(STORAGE_KEY); } catch (e) {} seedTrips(); state.debugStateOverride = null; render(); } });
-
-  // Async: check real subscription status and update hint
-  if ('serviceWorker' in navigator && 'PushManager' in window) {
-    getPushSubscription().then(sub => {
-      const hint = document.getElementById('push-hint');
-      if (!hint) return;
-      if (Notification.permission === 'denied') {
-        hint.textContent = '⚠ Blocked in browser/OS settings';
-      } else if (state.settings.pushOn && sub) {
-        hint.textContent = '✓ Subscribed · cron fires every minute';
-      } else if (state.settings.pushOn && !sub) {
-        hint.textContent = '⚠ Toggle is on but not subscribed — toggle off and on again';
-      } else {
-        hint.textContent = 'Background reminders via Cloudflare · requires permission';
-      }
-    }).catch(() => {});
-  }
 }
 function fmtReminder(r) {
-  if (r === 0) return 'At time of event';
-  if (r >= 1440) { const d = r / 1440; return `${d} day${d === 1 ? '' : 's'} before`; }
-  if (r >= 60) { const h = r / 60; return `${h}h before`; }
-  return `${r} min before`;
-}
-function fmtReminderShort(r) {
-  if (r === 0) return 'at time';
-  if (r >= 1440) { const d = r / 1440; return `${d}d`; }
-  if (r >= 60) { return `${r/60}h`; }
-  return `${r}m`;
+  if (r >= 1440) { const d = r / 1440; return `${d} day${d === 1 ? '' : 's'}`; }
+  if (r >= 60) { const h = r / 60; return `${h} h`; }
+  return `${r} min`;
 }
 
 function openAddEventModal(existingEvent) {
@@ -1288,73 +980,31 @@ function openAddEventModal(existingEvent) {
   const tz = trip.travelZone;
   const ds = existingEvent ? new Date(existingEvent.start) : new Date(now.getTime() + 3600000);
   const isoLocal = d => { const p = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12: false }).formatToParts(d); const o = {}; p.forEach(x => o[x.type] = x.value); return `${o.year}-${o.month}-${o.day}T${o.hour === '24' ? '00' : o.hour}:${o.minute}`; };
-  const e = existingEvent || { title: '', start: ds.toISOString(), durationMin: 60, allDay: false, location: '', reminders: [...state.settings.defaultReminders], bookingRef: '', notes: '', price: null, priceCurrency: trip.travelCurrency, category: 'activity' };
-  const isoDateOnly = d => { const p = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(d); const o = {}; p.forEach(x => o[x.type] = x.value); return `${o.year}-${o.month}-${o.day}`; };
-  const isAllDay = !!e.allDay;
+  const e = existingEvent || { title: '', start: ds.toISOString(), durationMin: 60, location: '', reminders: [...state.settings.defaultReminders], bookingRef: '', notes: '', price: null, priceCurrency: trip.travelCurrency, category: 'activity' };
   const currencyOpts = `<option value="${trip.travelCurrency}" ${(e.priceCurrency || trip.travelCurrency) === trip.travelCurrency ? 'selected' : ''}>${trip.travelCurrency} ${trip.travelCurrencySymbol}</option><option value="USD" ${e.priceCurrency === 'USD' ? 'selected' : ''}>USD $</option>`;
 
   body.innerHTML = `<div class="input-card"><div class="field-label">TITLE</div><input type="text" id="ev-title" placeholder="Tsukiji food tour" value="${escapeAttr(e.title)}"></div>
-    <div class="input-card"><div class="field-label" style="display:flex;align-items:center;justify-content:space-between;">
-      <span>WHEN <span style="font-weight: 400; color: var(--text-3); text-transform: none; letter-spacing: 0;">· ${escapeHtml(trip.travelLabel)} time</span></span>
-      <label style="display:flex;align-items:center;gap:6px;font-size:10px;letter-spacing:1px;font-weight:700;color:var(--text-2);cursor:pointer;">
-        <input type="checkbox" id="ev-allday" ${isAllDay ? 'checked' : ''} style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;"> ALL DAY
-      </label>
-    </div>
-      <div class="row" style="margin-top: 6px;" id="ev-start-row">
-        <div class="col" id="ev-start-col">
-          <input type="${isAllDay ? 'date' : 'datetime-local'}" id="ev-start" value="${isAllDay ? isoDateOnly(new Date(e.start)) : isoLocal(new Date(e.start))}">
-          <div class="input-hint" id="ev-start-hint"></div>
-        </div>
-      </div>
-      <div id="ev-dur-row" style="${isAllDay ? 'display:none;' : ''}">
+    <div class="input-card"><div class="field-label">WHEN <span style="font-weight: 400; color: var(--text-3); text-transform: none; letter-spacing: 0;">· ${escapeHtml(trip.travelLabel)} time</span></div>
+      <div class="row" style="margin-top: 6px;"><div class="col"><input type="datetime-local" id="ev-start" value="${isoLocal(new Date(e.start))}"><div class="input-hint" id="ev-start-hint"></div></div></div>
       <div class="divider"></div>
-      <div class="row"><div class="col"><div class="field-label">DURATION</div><div class="row" style="gap: 8px; margin-top: 4px;"><div class="col"><input type="number" inputmode="numeric" id="ev-dur-h" min="0" max="23" step="1" placeholder="0" value="${Math.floor(e.durationMin / 60)}" style="text-align:center;"><div style="text-align:center;font-size:10px;color:var(--text-2);margin-top:2px;letter-spacing:1px;">HR</div></div><div style="display:flex;align-items:center;padding:0 2px;font-size:18px;color:var(--text-2);">:</div><div class="col"><input type="number" inputmode="numeric" id="ev-dur-m" min="0" max="59" step="5" placeholder="0" value="${e.durationMin % 60}" style="text-align:center;"><div style="text-align:center;font-size:10px;color:var(--text-2);margin-top:2px;letter-spacing:1px;">MIN</div></div></div></div></div>
-      </div>
+      <div class="row"><div class="col"><div class="field-label">DURATION</div><div class="row" style="gap: 8px; margin-top: 4px;"><div class="col"><input type="number" id="ev-dur-h" min="0" max="23" step="1" placeholder="0" value="${Math.floor(e.durationMin / 60)}" style="text-align:center;"><div style="text-align:center;font-size:10px;color:var(--text-2);margin-top:2px;letter-spacing:1px;">HR</div></div><div style="display:flex;align-items:center;padding:0 2px;font-size:18px;color:var(--text-2);">:</div><div class="col"><input type="number" id="ev-dur-m" min="0" max="59" step="5" placeholder="0" value="${e.durationMin % 60}" style="text-align:center;"><div style="text-align:center;font-size:10px;color:var(--text-2);margin-top:2px;letter-spacing:1px;">MIN</div></div></div></div></div>
     </div>
     <div class="input-card"><div class="field-label">WHERE</div><input type="text" id="ev-location" placeholder="Tsukiji Outer Market" value="${escapeAttr(e.location || '')}"></div>
     <div class="input-card"><div class="field-label">PRICE <span style="font-weight: 400; color: var(--text-3); text-transform: none; letter-spacing: 0;">· syncs to Money</span></div>
-      <div class="row" style="margin-top: 4px;"><div class="col"><input type="number" inputmode="decimal" id="ev-price" min="0" step="1" placeholder="0" value="${e.price || ''}"></div><div class="col" style="flex: 0 0 90px;"><select id="ev-price-currency">${currencyOpts}</select></div></div>
+      <div class="row" style="margin-top: 4px;"><div class="col"><input type="number" id="ev-price" min="0" step="1" placeholder="0" value="${e.price || ''}"></div><div class="col" style="flex: 0 0 90px;"><select id="ev-price-currency">${currencyOpts}</select></div></div>
       <div class="divider"></div>
       <div class="field-label">CATEGORY</div>
       <select id="ev-category" style="margin-top: 4px;">${['food','transit','shopping','lodging','activity','other'].map(c => `<option value="${c}" ${(e.category || 'activity') === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
     </div>
-    <div class="input-card"><div class="field-label" style="margin-bottom: 8px;">REMIND ME</div><div id="reminders-edit">${e.reminders.map(r => `<span class="pill">${fmtReminder(r)}<span class="x" data-mod-remove="${r}">×</span></span>`).join('')}<button class="pill-add" id="mod-add-reminder"><i class="ti ti-plus"></i> add</button></div></div>
+    <div class="input-card"><div class="field-label" style="margin-bottom: 8px;">REMIND ME</div><div id="reminders-edit">${e.reminders.map(r => `<span class="pill">${fmtReminder(r)} before<span class="x" data-mod-remove="${r}">×</span></span>`).join('')}<button class="pill-add" id="mod-add-reminder"><i class="ti ti-plus"></i> add</button></div></div>
     <div class="input-card"><div class="field-label">BOOKING REF</div><input type="text" id="ev-booking" placeholder="TYO-4827, confirmation #, guide name..." value="${escapeAttr(e.bookingRef || '')}"></div>
     <div class="input-card"><div class="field-label">NOTES</div><textarea id="ev-notes" rows="3" placeholder="Anything else...">${escapeHtml(e.notes || '')}</textarea></div>
     ${existingEvent ? `<div style="text-align: center; padding: 8px 16px;"><button class="btn-ghost" id="delete-event" style="color: var(--accent-text); border-color: var(--accent-bg);">Delete event</button></div>` : ''}`;
 
-  const updHint = () => {
-    if (document.getElementById('ev-allday').checked) { document.getElementById('ev-start-hint').textContent = ''; return; }
-    const v = document.getElementById('ev-start').value; if (!v) return;
-    const d = new Date(v); const bo = -new Date().getTimezoneOffset()/60; const to = zoneOffsetHours(trip.travelZone, new Date());
-    const adj = new Date(d.getTime() + (bo - to)*3600000);
-    document.getElementById('ev-start-hint').textContent = `${fmtDayShort(adj, state.settings.homeZone)} ${fmtTimeInZone(adj, state.settings.homeZone)} ${state.settings.homeLabel}`;
-  };
+  const updHint = () => { const v = document.getElementById('ev-start').value; if (!v) return; const d = new Date(v); const bo = -new Date().getTimezoneOffset()/60; const to = zoneOffsetHours(trip.travelZone, new Date()); const adj = new Date(d.getTime() - (bo - to)*3600000); document.getElementById('ev-start-hint').textContent = `${fmtDayShort(adj, state.settings.homeZone)} ${fmtTimeInZone(adj, state.settings.homeZone)} ${state.settings.homeLabel}`; };
   document.getElementById('ev-start').addEventListener('input', updHint); updHint();
 
-  // All-day toggle — swap input type and show/hide duration
-  document.getElementById('ev-allday').addEventListener('change', () => {
-    const allDay = document.getElementById('ev-allday').checked;
-    const startInput = document.getElementById('ev-start');
-    const durRow = document.getElementById('ev-dur-row');
-    const curVal = startInput.value;
-    if (allDay) {
-      // Strip time — keep date portion
-      const datePart = curVal.split('T')[0] || isoDateOnly(new Date());
-      startInput.type = 'date';
-      startInput.value = datePart;
-      durRow.style.display = 'none';
-      document.getElementById('ev-start-hint').textContent = '';
-    } else {
-      const datePart = curVal || isoDateOnly(new Date());
-      startInput.type = 'datetime-local';
-      startInput.value = datePart + 'T09:00';
-      durRow.style.display = '';
-      updHint();
-    }
-  });
-
-  const rerender = ev => { document.getElementById('reminders-edit').innerHTML = ev.reminders.map(r => `<span class="pill">${fmtReminder(r)}<span class="x" data-mod-remove="${r}">×</span></span>`).join('') + `<button class="pill-add" id="mod-add-reminder"><i class="ti ti-plus"></i> add</button>`; bind(ev); applyIcons(document.getElementById('modal-body')); };
+  const rerender = ev => { document.getElementById('reminders-edit').innerHTML = ev.reminders.map(r => `<span class="pill">${fmtReminder(r)} before<span class="x" data-mod-remove="${r}">×</span></span>`).join('') + `<button class="pill-add" id="mod-add-reminder"><i class="ti ti-plus"></i> add</button>`; bind(ev); applyIcons(document.getElementById('modal-body')); };
   const bind = ev => {
     document.querySelectorAll('[data-mod-remove]').forEach(x => x.addEventListener('click', () => { const r = parseInt(x.getAttribute('data-mod-remove'), 10); ev.reminders = ev.reminders.filter(v => v !== r); rerender(ev); }));
     document.getElementById('mod-add-reminder').addEventListener('click', () => openReminderPicker(ev.reminders, r => { ev.reminders.push(r); ev.reminders.sort((a, b) => a - b); rerender(ev); }));
@@ -1377,27 +1027,19 @@ function saveEventModal() {
   if (!title) { alert('Title is required'); return; }
   const startStr = document.getElementById('ev-start').value;
   if (!startStr) { alert('Start time is required'); return; }
-  const allDay = document.getElementById('ev-allday').checked;
-  let startISO;
-  if (allDay) {
-    // Store as midnight travel-zone time on that date
-    startISO = new Date(startStr + 'T00:00:00').toISOString();
-  } else {
-    const d = new Date(startStr);
-    const bo = -new Date().getTimezoneOffset()/60;
-    const to = zoneOffsetHours(trip.travelZone, d);
-    startISO = new Date(d.getTime() + (bo - to)*3600000).toISOString();
-  }
+  const d = new Date(startStr);
+  const bo = -new Date().getTimezoneOffset()/60;
+  const to = zoneOffsetHours(trip.travelZone, d);
+  const adj = new Date(d.getTime() - (bo - to)*3600000);
   const pv = document.getElementById('ev-price').value;
   const data = {
     id: isNew ? newId() : e.id,
     title,
-    allDay,
     location: document.getElementById('ev-location').value.trim(),
     bookingRef: document.getElementById('ev-booking').value.trim(),
     notes: document.getElementById('ev-notes').value.trim(),
-    start: startISO,
-    durationMin: allDay ? 1440 : ((parseInt(document.getElementById('ev-dur-h').value, 10) || 0) * 60 + (parseInt(document.getElementById('ev-dur-m').value, 10) || 0) || 60),
+    start: adj.toISOString(),
+    durationMin: (parseInt(document.getElementById('ev-dur-h').value, 10) || 0) * 60 + (parseInt(document.getElementById('ev-dur-m').value, 10) || 0) || 60,
     reminders: [...e.reminders],
     checkedOff: isNew ? false : e.checkedOff,
     price: pv ? parseFloat(pv) : null,
@@ -1434,7 +1076,7 @@ function openAddExpenseSheet(existing) {
   const currencyOpts = `<option value="${trip.travelCurrency}" ${e.currency === trip.travelCurrency ? 'selected' : ''}>${trip.travelCurrency} ${trip.travelCurrencySymbol}</option><option value="USD" ${e.currency === 'USD' ? 'selected' : ''}>USD $</option>`;
   const categories = ['food','transit','shopping','lodging','activity','other'];
   const html = `<div class="input-card"><div class="field-label">DESCRIPTION</div><input type="text" id="ex-title" placeholder="Ichiran ramen, taxi to Roppongi..." value="${escapeAttr(e.title)}"></div>
-    <div class="input-card"><div class="field-label">AMOUNT</div><div class="row" style="margin-top: 4px;"><div class="col"><input type="number" inputmode="decimal" id="ex-amount" min="0" step="1" placeholder="0" value="${e.amount || ''}"></div><div class="col" style="flex: 0 0 90px;"><select id="ex-currency">${currencyOpts}</select></div></div></div>
+    <div class="input-card"><div class="field-label">AMOUNT</div><div class="row" style="margin-top: 4px;"><div class="col"><input type="number" id="ex-amount" min="0" step="1" placeholder="0" value="${e.amount || ''}"></div><div class="col" style="flex: 0 0 90px;"><select id="ex-currency">${currencyOpts}</select></div></div></div>
     <div class="input-card"><div class="field-label">CATEGORY</div><select id="ex-category" style="margin-top: 4px;">${categories.map(c => `<option value="${c}" ${e.category === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
     ${isEdit ? `<div style="text-align: center; padding: 8px 16px 24px;"><button class="btn-ghost" id="delete-expense" style="color: var(--accent-text); border-color: var(--accent-bg);">Delete expense</button></div>` : ''}`;
   openBottomSheet(isEdit ? 'Edit expense' : 'New expense', html, () => {
@@ -1521,7 +1163,7 @@ function openTripDetailsSheet(existingTrip) {
     <div class="input-card"><div class="row" style="margin-top: 4px;"><div class="col"><div class="field-label">START DATE</div><input type="date" id="trip-start" value="${escapeAttr(t.tripStart || '')}" style="margin-top: 4px;"></div><div class="col"><div class="field-label">END DATE</div><input type="date" id="trip-end" value="${escapeAttr(t.tripEnd || '')}" style="margin-top: 4px;"></div></div></div>
     <div class="input-card"><div class="field-label">TRAVEL TIMEZONE</div><select id="trip-zone" style="margin-top: 4px;">${tzRows}</select></div>
     <div class="input-card"><div class="field-label">TRAVEL CURRENCY</div><select id="trip-currency" style="margin-top: 4px;">${curRows}</select></div>
-    <div class="input-card"><div class="field-label">BUDGET TOTAL ($)</div><input type="number" inputmode="decimal" id="trip-budget" min="0" step="50" value="${t.budgetTotal}" style="margin-top: 4px;"><div class="input-hint">Daily pace = total ÷ trip length</div></div>`;
+    <div class="input-card"><div class="field-label">BUDGET TOTAL ($)</div><input type="number" id="trip-budget" min="0" step="50" value="${t.budgetTotal}" style="margin-top: 4px;"><div class="input-hint">Daily pace = total ÷ trip length</div></div>`;
   openBottomSheet(isNew ? 'New trip' : 'Trip details', html, () => {
     const name = document.getElementById('trip-name').value.trim();
     const start = document.getElementById('trip-start').value;
@@ -1629,7 +1271,7 @@ function openFxRatesSheet() {
   if (list.length === 0) { alert('No travel currencies in use yet.'); return; }
   const rows = list.map(c => `<div class="input-card">
     <div class="field-label">1 ${escapeHtml(c)} = ${escapeHtml(s.homeCurrency)}</div>
-    <input type="number" inputmode="decimal" data-fx="${escapeAttr(c)}" step="0.0001" min="0" value="${s.fxRates[c] || 1}" style="margin-top: 4px; font-size: 16px; font-weight: 500;">
+    <input type="number" data-fx="${escapeAttr(c)}" step="0.0001" min="0" value="${s.fxRates[c] || 1}" style="margin-top: 4px; font-size: 16px; font-weight: 500;">
   </div>`).join('');
   const html = `${rows}<div class="input-hint" style="text-align: center; margin: 4px 14px;">Manual for now · auto-refresh from API not yet wired</div>`;
   openBottomSheet('FX rates', html, () => {
@@ -1647,7 +1289,7 @@ function openReminderPicker(currentList, onSelect) {
   const available = REMINDER_OPTIONS.filter(r => !currentList.includes(r));
   if (available.length === 0) { alert('All available reminders are already added.'); return; }
   const rows = available.map(r => `<button class="picker-row" data-reminder="${r}">
-    <div style="flex: 1; font-size: 13px; font-weight: 500;">${escapeHtml(fmtReminder(r))}</div>
+    <div style="flex: 1; font-size: 13px; font-weight: 500;">${escapeHtml(fmtReminder(r))} before</div>
   </button>`).join('');
   openBottomSheet('Add reminder', `<div style="max-height: 55vh; overflow-y: auto;">${rows}</div>`, null, { hideSave: true });
   document.querySelectorAll('.picker-row[data-reminder]').forEach(b => b.addEventListener('click', () => {
@@ -1659,32 +1301,27 @@ function openReminderPicker(currentList, onSelect) {
 // ─── Push subscription & schedule sync ───────────────────────────────────────
 
 function urlB64ToUint8Array(b64) {
-  return Uint8Array.from(atob(b64.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+  const raw = atob(b64.replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from(raw, c => c.charCodeAt(0));
 }
+
 async function getPushSubscription() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
   const reg = await navigator.serviceWorker.ready;
   return reg.pushManager.getSubscription();
 }
+
 async function subscribePush() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
   const reg = await navigator.serviceWorker.ready;
   let sub = await reg.pushManager.getSubscription();
-  if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(VAPID_PUBLIC_KEY) });
+  if (!sub) {
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlB64ToUint8Array(VAPID_PUBLIC_KEY),
+    });
+  }
   return sub;
-}
-// Cat state PNG icons as inline data URLs — works on iOS push notifications
-// (SVG icons are ignored by iOS; these are 192x192 solid-color PNGs)
-const CAT_NOTIF_ICONS = {
-  idle:    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAABZElEQVR42u3SsQkAAAgEsd+/srFxWlcQ60AmOC7TBW+RAANhIAyEgcBAGAgDYSAwEAbCQBgIDISBMBAGAgNhIAyEgTAQGAgDYSAMBAbCQBgIA4GBMBAGwkBgIAyEgTAQGAgDYSAMhIHAQBgIA2EgMBAGwkAYCAyEgTAQBgIDYSAMhIEwEBgIA2EgDAQGwkAYCAOBgTAQBsJAYCAMhIEwEAYCA2EgDISBwEAYCANhIDAQBsJAGAgMhIEwEAbCQGAgDISBMBAYCANhIAyEgcBAGAgDYSAwEAbCQBgIDISBMBAGwkBgIAyEgTAQGAgDYSAMBAbCQBgIA4GBMBAGwkAYSAUMhIEwEAYCA2EgDISBwEAYCANhIDAQBsJAGAgMhIEwEAbCQGAgDISBMBAYCANhIAwEBsJAGAgDgYEwEAbCQBgIDISBMBAGgqsF08t+tmVf9PMAAAAASUVORK5CYII=',
-  headsup: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAABY0lEQVR42u3SQQ0AAAjEsPOMDTyDBcK7SRUsy3TBWyTAQBgIA2EgMBAGwkAYCAyEgTAQBgIDYSAMhIHAQBgIA2EgDAQGwkAYCAOBgTAQBsJAYCAMhIEwEBgIA2EgDISBwEAYCANhIDAQBsJAGAgMhIEwEAYCA2EgDISBwEAYCANhIAwEBsJAGAgDgYEwEAbCQGAgDISBMBAYCANhIAyEgcBAGAgDYSAwEAbCQBgIDISBMBAGAgNhIAyEgTAQGAgDYSAMBAbCQBgIA4GBMBAGwkBgIAyEgTAQGAgDYSAMhIHAQBgIA2EgMBAGwkAYCAyEgTAQBgIDYSAMhIEwEBgIA2EgDAQGwkAYCAOBgTAQBsJAYCAMhIEwEAZSAQNhIAyEgcBAGAgDYSAwEAbCQBgIDISBMBAGAgNhIAyEgTAQGAgDYSAMBAbCQBgIA4GBMBAGwkBgIAyEgTAQBgIDYSAMhIHgagFbRvDDIysmkgAAAABJRU5ErkJggg==',
-  go:      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAABZElEQVR42u3SQQ0AAAjEsJOGDPSiDAuEd5MqWJbpgrdIgIEwEAbCQGAgDISBMBAYCANhIAwEBsJAGAgDgYEwEAbCQBgIDISBMBAGAgNhIAyEgcBAGAgDYSAwEAbCQBgIA4GBMBAGwkBgIAyEgTAQGAgDYSAMBAbCQBgIA4GBMBAGwkAYCAyEgTAQBgIDYSAMhIHAQBgIA2EgMBAGwkAYCAOBgTAQBsJAYCAMhIEwEBgIA2EgDAQGwkAYCANhIDAQBsJAGAgMhIEwEAYCA2EgDISBwEAYCANhIDAQBsJAGAgDgYEwEAbCQGAgDISBMBAYCANhIAwEBsJAGAgDYSAwEAbCQBgIDISBMBAGAgNhIAyEgcBAGAgDYSAMpAIGwkAYCAOBgTAQBsJAYCAMhIEwEBgIA2EgDAQGwkAYCANhIDAQBsJAGAgMhIEwEAYCA2EgDISBwEAYCANhIAwEBsJAGAgDwdUC5XarX/9MR3cAAAAASUVORK5CYII=',
-  oops:    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAABZElEQVR42u3SQQ0AAAjEsJOPK3TgBguEd5MqWJbqgbdIgIEwEAbCQGAgDISBMBAYCANhIAwEBsJAGAgDgYEwEAbCQBgIDISBMBAGAgNhIAyEgcBAGAgDYSAwEAbCQBgIA4GBMBAGwkBgIAyEgTAQGAgDYSAMBAbCQBgIA4GBMBAGwkAYCAyEgTAQBgIDYSAMhIHAQBgIA2EgMBAGwkAYCAOBgTAQBsJAYCAMhIEwEBgIA2EgDAQGwkAYCANhIDAQBsJAGAgMhIEwEAYCA2EgDISBwEAYCANhIDAQBsJAGAgDgYEwEAbCQGAgDISBMBAYCANhIAwEBsJAGAgDYSAwEAbCQBgIDISBMBAGAgNhIAyEgcBAGAgDYSAMpAIGwkAYCAOBgTAQBsJAYCAMhIEwEBgIA2EgDAQGwkAYCANhIDAQBsJAGAgMhIEwEAYCA2EgDISBwEAYCANhIAwEBsJAGAgDwdUCisQR70QL77AAAAAASUVORK5CYII=',
-};
-function catIconForReminder(r) {
-  if (r === 0) return CAT_NOTIF_ICONS.go;
-  if (r <= 30) return CAT_NOTIF_ICONS.headsup;
-  return CAT_NOTIF_ICONS.idle;
 }
 
 function computeReminderSchedule() {
@@ -1696,70 +1333,55 @@ function computeReminderSchedule() {
       const startMs = new Date(e.start).getTime();
       (e.reminders || []).forEach(r => {
         const fireAt = startMs - r * 60000;
-        if (fireAt <= now) return;
-        const body = r === 0 ? `Right meow!${e.location ? ' · ' + e.location : ''}` : `In ${fmtReminderShort(r)}${e.location ? ' · ' + e.location : ''}`;
-        schedule.push({ eventId: e.id, title: e.title, body, fireAt, icon: catIconForReminder(r) });
+        if (fireAt <= now) return; // already past
+        const body = r === 0
+          ? `Starting now!${e.location ? ' · ' + e.location : ''}`
+          : `In ${fmtReminder(r)}${e.location ? ' · ' + e.location : ''}`;
+        schedule.push({ eventId: e.id, title: e.title, body, fireAt });
       });
     });
   });
   return schedule;
 }
+
 let _syncTimer = null;
 async function syncSchedule(includeSubscription = false) {
-  if (!WORKER_URL || !state.settings.pushOn) return;
+  if (!WORKER_URL) return;
+  if (!state.settings.pushOn) return;
   const schedule = computeReminderSchedule();
   try {
     if (includeSubscription) {
       const sub = await subscribePush();
       if (!sub) return;
-      await fetch(WORKER_URL + '/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: sub.toJSON(), schedule }) });
+      await fetch(WORKER_URL + '/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription: sub.toJSON(), schedule }),
+      });
     } else {
       const sub = await getPushSubscription();
-      if (!sub) return;
-      await fetch(WORKER_URL + '/schedule', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ schedule }) });
+      if (!sub) return; // not subscribed yet — nothing to update
+      await fetch(WORKER_URL + '/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ schedule }),
+      });
     }
-  } catch (_) { /* network unavailable — fail silently */ }
+  } catch (e) { /* network unavailable — fail silently */ }
 }
 function debouncedSyncSchedule() {
   clearTimeout(_syncTimer);
   _syncTimer = setTimeout(() => syncSchedule(false), 2000);
 }
 
-function render() {
-  renderClocks();
-  renderCat();
-  if (state.activeTab === 'trip') renderTrip();
-  else if (state.activeTab === 'budget') renderBudget();
-  else if (state.activeTab === 'notes') renderNotes();
-  else if (state.activeTab === 'settings') renderSettings();
-  applyIcons();
-  saveState();
-}
-
-document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { state.activeTab = t.dataset.tab; document.querySelectorAll('.tab').forEach(x => x.removeAttribute('aria-current')); t.setAttribute('aria-current', 'page'); render(); document.getElementById('scroll-area').scrollTop = 0; }));
-document.getElementById('cat-fab').addEventListener('click', () => {
-  handleCatTap();
-  if (!_easterActive) openAddEventModal();
-});
-document.getElementById('add-fab-mini').addEventListener('click', () => openAddEventModal());
-document.getElementById('modal-cancel').addEventListener('click', closeModal);
-document.getElementById('modal-save').addEventListener('click', saveEventModal);
-document.getElementById('bs-cancel').addEventListener('click', closeBottomSheet);
-document.getElementById('bs-save').addEventListener('click', () => { if (_bsOnSave) { const r = _bsOnSave(); if (r !== false) closeBottomSheet(); } });
-document.getElementById('bs-backdrop').addEventListener('click', closeBottomSheet);
-document.getElementById('debug-badge').addEventListener('click', () => { const c = [null, 'idle', 'headsup', 'go', 'oops', 'sleeping']; const i = c.indexOf(state.debugStateOverride); state.debugStateOverride = c[(i + 1) % c.length]; renderCat(); if (state.activeTab === 'trip') renderTrip(); });
-
-// Precision reminder scheduler — fires a setTimeout aimed at the exact ms
-// of each upcoming reminder rather than relying on a fixed interval.
+// Precision reminder scheduler — arms a setTimeout for the exact ms of the next reminder
 let _reminderTimer = null;
 function scheduleNextReminder() {
   clearTimeout(_reminderTimer);
   if (!state.settings.pushOn) return;
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
-
   const now = Date.now();
   let nextFireAt = Infinity;
-
   state.trips.forEach(trip => {
     trip.events.forEach(e => {
       if (e.checkedOff) return;
@@ -1772,23 +1394,22 @@ function scheduleNextReminder() {
       });
     });
   });
-
   if (nextFireAt !== Infinity) {
     const delay = Math.max(0, nextFireAt - Date.now());
     _reminderTimer = setTimeout(() => {
       checkAndFireReminders();
-      scheduleNextReminder(); // arm for the one after
+      scheduleNextReminder();
     }, delay);
   }
 }
-// Background reminders are handled by the Cloudflare Worker cron.
+
 function checkAndFireReminders() {
   if (!state.settings.pushOn) return;
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
   if (isQuietHoursNow()) return;
   const now = Date.now();
 
-  // Prune stale fired keys
+  // Prune stale fired keys across ALL trips
   const validKeys = new Set();
   state.trips.forEach(trip => {
     trip.events.forEach(e => {
@@ -1797,15 +1418,19 @@ function checkAndFireReminders() {
   });
   state.firedReminders = state.firedReminders.filter(k => validKeys.has(k));
 
-  // Check every trip's events — fire within a 65-second window (covers the 60s tick)
+  let fired = false;
+  // Check ALL trips (not just active)
   state.trips.forEach(trip => {
     trip.events.forEach(e => {
       if (e.checkedOff) return;
       const startMs = new Date(e.start).getTime();
       (e.reminders || []).forEach(rMin => {
         const fireAt = startMs - rMin * 60000;
+        // Unique tag: eventId + reminderMin + fireAt timestamp prevents collision between events
         const key = `${e.id}:${rMin}`;
+        const tag = `${e.id}:${rMin}:${fireAt}`;
         if (state.firedReminders.includes(key)) return;
+        // 65s window — covers precision timer drift + 60s fallback interval
         if (now >= fireAt && now < fireAt + 65000) {
           const body = rMin === 0
             ? `Right meow!${e.location ? ' · ' + e.location : ''}`
@@ -1814,32 +1439,55 @@ function checkAndFireReminders() {
             new Notification(e.title, {
               body,
               icon: catIconForReminder(rMin),
-              tag: key,
+              tag,  // unique per event+time — no collision between overlapping events
               silent: false,
             });
           } catch (_) {}
           state.firedReminders.push(key);
-          saveState();
+          fired = true;
         }
       });
     });
   });
+  if (fired) saveState(); // triggers debouncedSyncSchedule → re-uploads schedule to Worker
 }
+
+function render() {
+  document.getElementById('dual-clock-wrap').style.display = state.activeTab === 'settings' ? 'none' : '';
+  renderClocks();
+  renderCat();
+  if (state.activeTab === 'trip') renderTrip();
+  else if (state.activeTab === 'budget') renderBudget();
+  else if (state.activeTab === 'notes') renderNotes();
+  else if (state.activeTab === 'settings') renderSettings();
+  applyIcons();
+  saveState();
+}
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { state.activeTab = t.dataset.tab; document.querySelectorAll('.tab').forEach(x => x.removeAttribute('aria-current')); t.setAttribute('aria-current', 'page'); render(); document.getElementById('scroll-area').scrollTop = 0; }));
+document.getElementById('cat-fab').addEventListener('click', () => openAddEventModal());
+document.getElementById('add-fab-mini').addEventListener('click', () => openAddEventModal());
+document.getElementById('modal-cancel').addEventListener('click', closeModal);
+document.getElementById('modal-save').addEventListener('click', saveEventModal);
+document.getElementById('bs-cancel').addEventListener('click', closeBottomSheet);
+document.getElementById('bs-save').addEventListener('click', () => { if (_bsOnSave) { const r = _bsOnSave(); if (r !== false) closeBottomSheet(); } });
+document.getElementById('bs-backdrop').addEventListener('click', closeBottomSheet);
+document.getElementById('debug-badge').addEventListener('click', () => { const c = [null, 'idle', 'headsup', 'go', 'oops']; const i = c.indexOf(state.debugStateOverride); state.debugStateOverride = c[(i + 1) % c.length]; renderCat(); if (state.activeTab === 'trip') renderTrip(); });
 
 function init() {
   if (!loadState()) seedTrips();
   render();
+  // Sync reminder schedule to Worker on startup (covers events added while offline)
   if (state.settings.pushOn && WORKER_URL) syncSchedule(false);
-  // 30s tick — clocks, cat state, trip view
+  // 30s tick — clocks, cat, trip view, fallback reminder check
   setInterval(() => {
     renderClocks(); renderCat();
     if (state.activeTab === 'trip') renderTrip();
+    checkAndFireReminders();
   }, 30000);
-  // 60s safety net — catches any precision timer drift or missed fires
-  setInterval(checkAndFireReminders, 60000);
   // Precision scheduler — fires setTimeout aimed at exact reminder ms
   scheduleNextReminder();
-  // Run immediately in case app opened near a reminder time
+  // Check immediately on load in case we opened near a reminder time
   setTimeout(checkAndFireReminders, 500);
 }
 init();
@@ -1851,57 +1499,19 @@ if ('serviceWorker' in navigator) {
 }
 
 // Keep focused inputs visible above the iOS keyboard
-// Track whether a text input is actually focused — visualViewport fires for
-// many non-keyboard reasons (address bar, bounce scroll, zoom) so we gate on this.
-let _inputFocused = false;
-const INPUT_SEL = 'input:not([type=checkbox]):not([type=radio]):not([type=date]):not([type=datetime-local]):not([type=button]):not([type=submit]), textarea';
-document.addEventListener('focusin', e => {
-  if (e.target.matches(INPUT_SEL)) _inputFocused = true;
-});
-document.addEventListener('focusout', () => {
-  // Small delay so focus moving between inputs doesn't flash
-  setTimeout(() => {
-    _inputFocused = !!(document.activeElement && document.activeElement.matches(INPUT_SEL));
-    if (!_inputFocused) {
-      const phone = document.querySelector('.phone');
-      if (phone) phone.classList.remove('keyboard-open');
-      const sa = document.getElementById('scroll-area');
-      const bsBody = document.getElementById('bs-body');
-      if (sa) sa.style.paddingBottom = '';
-      if (bsBody) bsBody.style.paddingBottom = '';
-    }
-  }, 150);
-});
-
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', () => {
-    if (!_inputFocused) return; // address bar / scroll / zoom — ignore
     const keyboardH = window.innerHeight - window.visualViewport.height;
     const sa = document.getElementById('scroll-area');
     const bsBody = document.getElementById('bs-body');
-    const phone = document.querySelector('.phone');
     const pad = keyboardH > 80 ? keyboardH + 16 : 0;
-    if (pad) {
-      phone.classList.add('keyboard-open');
-    } else {
-      phone.classList.remove('keyboard-open');
-    }
     if (sa) sa.style.paddingBottom = pad ? pad + 'px' : '';
     if (bsBody) bsBody.style.paddingBottom = pad ? pad + 'px' : '';
     if (pad) {
       setTimeout(() => {
         const f = document.activeElement;
-        if (f && f.tagName !== 'BODY') {
-          const scrollEl = (sa && sa.contains(f)) ? sa : (bsBody && bsBody.contains(f)) ? bsBody : null;
-          if (scrollEl) {
-            const rect = f.getBoundingClientRect();
-            const visibleBottom = window.visualViewport.height + window.visualViewport.offsetTop;
-            if (rect.bottom > visibleBottom - 16) scrollEl.scrollTop += rect.bottom - (visibleBottom - 16);
-          } else {
-            f.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          }
-        }
-      }, 100);
+        if (f && f.tagName !== 'BODY') f.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 50);
     }
   });
 }
