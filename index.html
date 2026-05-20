@@ -230,12 +230,19 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
   <div class="debug-badge" id="debug-badge" title="Click to cycle cat state (debug)">DEBUG: <span id="debug-state">--</span></div>
   <div class="dual-clock-wrap" id="dual-clock-wrap">
     <div class="dual-clock">
-      <div class="zone"><div class="lbl" id="home-label">ATL</div><div class="pixel-font time" id="clock-home">--:--</div><div class="date" id="date-home">--</div></div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-        <div class="offset" id="offset-display">+--</div>
-        <div id="wx-display" style="font-size:11px;color:var(--text-3);letter-spacing:0;white-space:nowrap;"></div>
+      <div class="zone">
+        <div class="lbl" id="home-label">ATL</div>
+        <div class="pixel-font time" id="clock-home">--:--</div>
+        <div class="date" id="date-home">--</div>
+        <div id="wx-home" style="font-size:11px;color:var(--text-3);margin-top:2px;min-height:14px;"></div>
       </div>
-      <div class="zone right"><div class="lbl" id="travel-label">TYO</div><div class="pixel-font time" id="clock-travel">--:--</div><div class="date" id="date-travel">--</div></div>
+      <div class="offset" id="offset-display">+--</div>
+      <div class="zone right">
+        <div class="lbl" id="travel-label">TYO</div>
+        <div class="pixel-font time" id="clock-travel">--:--</div>
+        <div class="date" id="date-travel">--</div>
+        <div id="wx-travel" style="font-size:11px;color:var(--text-3);margin-top:2px;min-height:14px;"></div>
+      </div>
     </div>
   </div>
   <div class="scroll-area" id="scroll-area">
@@ -330,34 +337,34 @@ function applyIcons(root) {
 }
 
 const TIMEZONES = [
-  { tz: 'America/Anchorage', label: 'ANC', name: 'Alaska' },
-  { tz: 'America/Los_Angeles', label: 'LAX', name: 'Pacific · Los Angeles' },
-  { tz: 'America/Denver', label: 'DEN', name: 'Mountain · Denver' },
-  { tz: 'America/Chicago', label: 'CHI', name: 'Central · Chicago' },
-  { tz: 'America/New_York', label: 'ATL', name: 'Eastern · NYC/ATL' },
-  { tz: 'America/Toronto', label: 'YYZ', name: 'Toronto' },
-  { tz: 'America/Mexico_City', label: 'MEX', name: 'Mexico City' },
-  { tz: 'America/Sao_Paulo', label: 'SAO', name: 'São Paulo' },
-  { tz: 'Pacific/Honolulu', label: 'HNL', name: 'Hawaii' },
-  { tz: 'Europe/London', label: 'LON', name: 'London' },
-  { tz: 'Europe/Paris', label: 'PAR', name: 'Paris' },
-  { tz: 'Europe/Berlin', label: 'BER', name: 'Berlin' },
-  { tz: 'Europe/Madrid', label: 'MAD', name: 'Madrid' },
-  { tz: 'Europe/Rome', label: 'ROM', name: 'Rome' },
-  { tz: 'Europe/Athens', label: 'ATH', name: 'Athens' },
-  { tz: 'Europe/Istanbul', label: 'IST', name: 'Istanbul' },
-  { tz: 'Africa/Cairo', label: 'CAI', name: 'Cairo' },
-  { tz: 'Africa/Johannesburg', label: 'JNB', name: 'Johannesburg' },
-  { tz: 'Asia/Dubai', label: 'DXB', name: 'Dubai' },
-  { tz: 'Asia/Kolkata', label: 'DEL', name: 'India' },
-  { tz: 'Asia/Bangkok', label: 'BKK', name: 'Bangkok' },
-  { tz: 'Asia/Shanghai', label: 'PEK', name: 'China' },
-  { tz: 'Asia/Hong_Kong', label: 'HKG', name: 'Hong Kong' },
-  { tz: 'Asia/Singapore', label: 'SIN', name: 'Singapore' },
-  { tz: 'Asia/Seoul', label: 'SEL', name: 'Seoul' },
-  { tz: 'Asia/Tokyo', label: 'TYO', name: 'Tokyo' },
-  { tz: 'Australia/Sydney', label: 'SYD', name: 'Sydney' },
-  { tz: 'Pacific/Auckland', label: 'AKL', name: 'Auckland' },
+  { tz: 'America/Anchorage',     label: 'ANC', name: 'Alaska',               lat: 61.22,  lon: -149.90 },
+  { tz: 'America/Los_Angeles',   label: 'LAX', name: 'Pacific · Los Angeles', lat: 34.05,  lon: -118.24 },
+  { tz: 'America/Denver',        label: 'DEN', name: 'Mountain · Denver',     lat: 39.74,  lon: -104.98 },
+  { tz: 'America/Chicago',       label: 'CHI', name: 'Central · Chicago',     lat: 41.85,  lon: -87.65  },
+  { tz: 'America/New_York',      label: 'ATL', name: 'Eastern · NYC/ATL',     lat: 33.75,  lon: -84.39  },
+  { tz: 'America/Toronto',       label: 'YYZ', name: 'Toronto',               lat: 43.65,  lon: -79.38  },
+  { tz: 'America/Mexico_City',   label: 'MEX', name: 'Mexico City',           lat: 19.43,  lon: -99.13  },
+  { tz: 'America/Sao_Paulo',     label: 'SAO', name: 'São Paulo',             lat: -23.55, lon: -46.63  },
+  { tz: 'Pacific/Honolulu',      label: 'HNL', name: 'Hawaii',               lat: 21.31,  lon: -157.86 },
+  { tz: 'Europe/London',         label: 'LON', name: 'London',                lat: 51.51,  lon: -0.13   },
+  { tz: 'Europe/Paris',          label: 'PAR', name: 'Paris',                 lat: 48.85,  lon: 2.35    },
+  { tz: 'Europe/Berlin',         label: 'BER', name: 'Berlin',                lat: 52.52,  lon: 13.40   },
+  { tz: 'Europe/Madrid',         label: 'MAD', name: 'Madrid',                lat: 40.42,  lon: -3.70   },
+  { tz: 'Europe/Rome',           label: 'ROM', name: 'Rome',                  lat: 41.90,  lon: 12.50   },
+  { tz: 'Europe/Athens',         label: 'ATH', name: 'Athens',               lat: 37.98,  lon: 23.73   },
+  { tz: 'Europe/Istanbul',       label: 'IST', name: 'Istanbul',              lat: 41.01,  lon: 28.95   },
+  { tz: 'Africa/Cairo',          label: 'CAI', name: 'Cairo',                 lat: 30.04,  lon: 31.24   },
+  { tz: 'Africa/Johannesburg',   label: 'JNB', name: 'Johannesburg',          lat: -26.20, lon: 28.04   },
+  { tz: 'Asia/Dubai',            label: 'DXB', name: 'Dubai',                 lat: 25.20,  lon: 55.27   },
+  { tz: 'Asia/Kolkata',          label: 'DEL', name: 'India',                 lat: 28.61,  lon: 77.21   },
+  { tz: 'Asia/Bangkok',          label: 'BKK', name: 'Bangkok',               lat: 13.75,  lon: 100.52  },
+  { tz: 'Asia/Shanghai',         label: 'PEK', name: 'China',                 lat: 39.91,  lon: 116.39  },
+  { tz: 'Asia/Hong_Kong',        label: 'HKG', name: 'Hong Kong',             lat: 22.32,  lon: 114.17  },
+  { tz: 'Asia/Singapore',        label: 'SIN', name: 'Singapore',             lat: 1.35,   lon: 103.82  },
+  { tz: 'Asia/Seoul',            label: 'SEL', name: 'Seoul',                 lat: 37.57,  lon: 126.98  },
+  { tz: 'Asia/Tokyo',            label: 'TYO', name: 'Tokyo',                 lat: 35.69,  lon: 139.69  },
+  { tz: 'Australia/Sydney',      label: 'SYD', name: 'Sydney',                lat: -33.87, lon: 151.21  },
+  { tz: 'Pacific/Auckland',      label: 'AKL', name: 'Auckland',              lat: -36.86, lon: 174.76  },
 ];
 
 const CURRENCIES = [
@@ -664,8 +671,10 @@ function renderClocks() {
   document.getElementById('home-label').textContent = state.settings.homeLabel;
   document.getElementById('travel-label').textContent = travelLabel;
   document.getElementById('offset-display').textContent = offsetDeltaLabel(state.settings.homeZone, travelZone, now);
-  const wxEl = document.getElementById('wx-display');
-  if (wxEl) wxEl.textContent = wx.temp !== null ? `${wxIcon(wx.code)} ${wx.temp}°` : '';
+  const wxHome   = document.getElementById('wx-home');
+  const wxTravel = document.getElementById('wx-travel');
+  if (wxHome)   wxHome.textContent   = wxStr(wx.home);
+  if (wxTravel) wxTravel.textContent = wxStr(wx.travel);
 }
 
 function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -1578,7 +1587,7 @@ function checkAndFireReminders() {
 }
 
 // ─── Weather ─────────────────────────────────────────────────────────────────
-const wx = { temp: null, code: null, ts: null };
+const wx = { home: null, travel: null };
 function wxIcon(c) {
   if (c === 0) return '☀';
   if (c <= 3) return '⛅';
@@ -1589,20 +1598,30 @@ function wxIcon(c) {
   if (c <= 82) return '🌦';
   return '⛈';
 }
-function fetchWeather() {
-  if (!navigator.geolocation) return;
-  if (wx.ts && Date.now() - wx.ts < 1800000) return; // 30-min cache
-  navigator.geolocation.getCurrentPosition(pos => {
-    const { latitude: lat, longitude: lon } = pos.coords;
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&current=temperature_2m,weather_code&temperature_unit=fahrenheit`, { cache: 'no-store' })
-      .then(r => r.json())
-      .then(d => {
-        wx.temp = Math.round(d.current.temperature_2m);
-        wx.code = d.current.weather_code;
-        wx.ts = Date.now();
-        renderClocks();
-      }).catch(() => {});
-  }, () => {}, { maximumAge: 1800000, timeout: 8000 });
+function wxStr(w) { return w ? `${wxIcon(w.code)} ${w.temp}°` : ''; }
+
+async function fetchWxForZone(tz) {
+  const z = TIMEZONES.find(t => t.tz === tz);
+  if (!z) return null;
+  const cached = wx[tz];
+  if (cached && Date.now() - cached.ts < 1800000) return cached;
+  try {
+    const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${z.lat}&longitude=${z.lon}&current=temperature_2m,weather_code&temperature_unit=fahrenheit`, { cache: 'no-store' });
+    const d = await r.json();
+    const result = { temp: Math.round(d.current.temperature_2m), code: d.current.weather_code, ts: Date.now() };
+    wx[tz] = result;
+    return result;
+  } catch (_) { return null; }
+}
+
+async function fetchWeather() {
+  const trip = getActiveTrip();
+  const homeZone   = state.settings.homeZone;
+  const travelZone = trip ? trip.travelZone : homeZone;
+  const [h, t] = await Promise.all([fetchWxForZone(homeZone), fetchWxForZone(travelZone)]);
+  wx.home   = h;
+  wx.travel = t;
+  renderClocks();
 }
 
 function render() {
