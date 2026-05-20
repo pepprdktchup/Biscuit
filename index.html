@@ -231,7 +231,10 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
   <div class="dual-clock-wrap" id="dual-clock-wrap">
     <div class="dual-clock">
       <div class="zone"><div class="lbl" id="home-label">ATL</div><div class="pixel-font time" id="clock-home">--:--</div><div class="date" id="date-home">--</div></div>
-      <div class="offset" id="offset-display">+--</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <div class="offset" id="offset-display">+--</div>
+        <div id="wx-display" style="font-size:11px;color:var(--text-3);letter-spacing:0;white-space:nowrap;"></div>
+      </div>
       <div class="zone right"><div class="lbl" id="travel-label">TYO</div><div class="pixel-font time" id="clock-travel">--:--</div><div class="date" id="date-travel">--</div></div>
     </div>
   </div>
@@ -661,6 +664,8 @@ function renderClocks() {
   document.getElementById('home-label').textContent = state.settings.homeLabel;
   document.getElementById('travel-label').textContent = travelLabel;
   document.getElementById('offset-display').textContent = offsetDeltaLabel(state.settings.homeZone, travelZone, now);
+  const wxEl = document.getElementById('wx-display');
+  if (wxEl) wxEl.textContent = wx.temp !== null ? `${wxIcon(wx.code)} ${wx.temp}°` : '';
 }
 
 function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -896,23 +901,11 @@ function renderNotes() {
   });
   document.querySelectorAll('[data-check-delete]').forEach(b => b.addEventListener('click', () => { const [nid, iid] = b.getAttribute('data-check-delete').split('__'); const n = trip.notes.find(x => x.id === nid); if (!n) return; n.items = n.items.filter(x => x.id !== iid); renderNotes(); }));
   document.querySelectorAll('[data-add-item]').forEach(b => b.addEventListener('click', () => { const id = b.getAttribute('data-add-item'); const n = trip.notes.find(x => x.id === id); if (!n) return; n.items.push({ id: newId(), text: '', checked: false }); renderNotes(); const inputs = document.querySelectorAll(`[data-note-id="${id}"] .check-text`); if (inputs.length) inputs[inputs.length-1].focus(); }));
-  // Swipe-to-delete for note cards
+  // Swipe-to-delete for note cards only (not checklist items)
   document.querySelectorAll('.note-card').forEach(card => {
     addSwipeToDelete(card, () => {
       const id = card.getAttribute('data-note-id');
       trip.notes = trip.notes.filter(x => x.id !== id);
-      saveState(); renderNotes();
-    });
-  });
-  // Swipe-to-delete for checklist items
-  document.querySelectorAll('.check-row').forEach(row => {
-    const nid = row.getAttribute('data-note-id');
-    const iid = row.getAttribute('data-item-id');
-    if (!nid || !iid) return;
-    addSwipeToDelete(row, () => {
-      const n = trip.notes.find(x => x.id === nid);
-      if (!n) return;
-      n.items = n.items.filter(x => x.id !== iid);
       saveState(); renderNotes();
     });
   });
@@ -1345,49 +1338,86 @@ function openReminderPicker(currentList, onSelect) {
   }));
 }
 
-// ─── Swipe-to-delete ─────────────────────────────────────────────────────────
+// ─── Swipe-to-delete — reveal DELETE button, tap to confirm ─────────────────
 function addSwipeToDelete(el, onDelete) {
-  let startX = 0, startY = 0, dx = 0, locked = false, deleted = false;
-  const THRESHOLD = 72;
+  const SNAP = 80;
+  let startX = 0, startY = 0, curDx = 0, locked = false, isOpen = false, deleted = false;
+
+  // Wrap el so the delete button can sit behind it
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:relative;overflow:hidden;';
+  // Transfer block-level margin (note cards have margin, evt-rows don't)
+  const m = getComputedStyle(el).margin;
+  if (m && m !== '0px') { wrap.style.margin = m; el.style.margin = '0'; }
+  el.parentNode.insertBefore(wrap, el);
+  wrap.appendChild(el);
+
+  const bg = document.createElement('button');
+  bg.style.cssText = `position:absolute;right:0;top:0;bottom:0;width:${SNAP}px;background:#FF3B30;color:#fff;border:none;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;z-index:1;`;
+  bg.textContent = 'DELETE';
+  wrap.appendChild(bg);
+
+  const snapOpen = () => {
+    isOpen = true;
+    el.style.transition = 'transform 0.2s ease';
+    el.style.transform = `translateX(-${SNAP}px)`;
+    setTimeout(() => el.style.transition = '', 200);
+  };
+  const snapClose = () => {
+    isOpen = false;
+    el.style.transition = 'transform 0.2s ease';
+    el.style.transform = '';
+    setTimeout(() => el.style.transition = '', 200);
+  };
+
+  bg.addEventListener('click', e => {
+    e.stopPropagation();
+    if (deleted) return;
+    deleted = true;
+    const h = wrap.offsetHeight;
+    wrap.style.transition = 'max-height 0.3s ease, opacity 0.2s ease';
+    wrap.style.overflow = 'hidden';
+    wrap.style.maxHeight = h + 'px';
+    requestAnimationFrame(() => { wrap.style.maxHeight = '0'; wrap.style.opacity = '0'; });
+    setTimeout(onDelete, 320);
+  });
+
+  // Tap outside open row → close it
+  document.addEventListener('touchstart', e => {
+    if (isOpen && !wrap.contains(e.target)) snapClose();
+  }, { passive: true });
 
   el.addEventListener('touchstart', e => {
     if (deleted) return;
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
-    dx = 0; locked = false;
-    el.classList.add('swiping');
+    curDx = 0; locked = false;
   }, { passive: true });
 
   el.addEventListener('touchmove', e => {
     if (deleted) return;
-    const cx = e.touches[0].clientX;
-    const cy = e.touches[0].clientY;
+    const cx = e.touches[0].clientX, cy = e.touches[0].clientY;
     if (!locked) {
       const adx = Math.abs(cx - startX), ady = Math.abs(cy - startY);
-      if (adx < 5 && ady < 5) return;
-      if (ady > adx) { el.classList.remove('swiping'); return; } // vertical scroll
+      if (adx < 4 && ady < 4) return;
+      if (ady > adx * 1.1) return; // vertical scroll — don't lock
       locked = true;
     }
-    dx = Math.min(0, cx - startX);
-    el.style.transform = `translateX(${dx}px)`;
+    const base = isOpen ? -SNAP : 0;
+    curDx = Math.min(0, Math.max(-SNAP * 1.2, (cx - startX) + base));
+    el.style.transition = 'none';
+    el.style.transform = `translateX(${curDx}px)`;
     e.preventDefault();
   }, { passive: false });
 
   el.addEventListener('touchend', () => {
-    if (deleted) return;
-    el.classList.remove('swiping');
-    if (dx < -THRESHOLD) {
-      deleted = true;
-      el.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
-      el.style.transform = 'translateX(-100%)';
-      el.style.opacity = '0';
-      setTimeout(onDelete, 200);
+    if (deleted || !locked) return;
+    if (isOpen) {
+      curDx > -SNAP * 0.4 ? snapClose() : snapOpen();
     } else {
-      el.style.transition = 'transform 0.2s ease';
-      el.style.transform = '';
-      setTimeout(() => el.style.transition = '', 200);
+      curDx < -SNAP * 0.4 ? snapOpen() : snapClose();
     }
-    dx = 0;
+    curDx = 0; locked = false;
   });
 }
 
@@ -1543,6 +1573,34 @@ function checkAndFireReminders() {
   if (fired) saveState(); // triggers debouncedSyncSchedule → re-uploads schedule to Worker
 }
 
+// ─── Weather ─────────────────────────────────────────────────────────────────
+const wx = { temp: null, code: null, ts: null };
+function wxIcon(c) {
+  if (c === 0) return '☀';
+  if (c <= 3) return '⛅';
+  if (c <= 48) return '🌫';
+  if (c <= 57) return '🌦';
+  if (c <= 67) return '🌧';
+  if (c <= 77) return '❄';
+  if (c <= 82) return '🌦';
+  return '⛈';
+}
+function fetchWeather() {
+  if (!navigator.geolocation) return;
+  if (wx.ts && Date.now() - wx.ts < 1800000) return; // 30-min cache
+  navigator.geolocation.getCurrentPosition(pos => {
+    const { latitude: lat, longitude: lon } = pos.coords;
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&current=temperature_2m,weather_code&temperature_unit=fahrenheit`, { cache: 'no-store' })
+      .then(r => r.json())
+      .then(d => {
+        wx.temp = Math.round(d.current.temperature_2m);
+        wx.code = d.current.weather_code;
+        wx.ts = Date.now();
+        renderClocks();
+      }).catch(() => {});
+  }, () => {}, { maximumAge: 1800000, timeout: 8000 });
+}
+
 function render() {
   document.getElementById('dual-clock-wrap').style.display = state.activeTab === 'settings' ? 'none' : '';
   renderClocks();
@@ -1570,6 +1628,7 @@ function init() {
   render();
   // Sync reminder schedule to Worker on startup (covers events added while offline)
   if (state.settings.pushOn && WORKER_URL) syncSchedule(false);
+  fetchWeather();
   // 30s tick — clocks, cat, trip view, fallback reminder check
   setInterval(() => {
     renderClocks(); renderCat();
