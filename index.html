@@ -904,18 +904,26 @@ function renderNotes() {
   document.querySelectorAll('[data-check-text]').forEach(el => {
     el.addEventListener('input', () => { const [nid, iid] = el.getAttribute('data-check-text').split('__'); const n = trip.notes.find(x => x.id === nid); const it = n && n.items.find(x => x.id === iid); if (it) it.text = el.value; });
     el.addEventListener('keydown', ev => {
-      if (ev.key !== 'Enter') return;
-      ev.preventDefault();
       const [nid, iid] = el.getAttribute('data-check-text').split('__');
       const n = trip.notes.find(x => x.id === nid);
       if (!n) return;
-      const idx = n.items.findIndex(x => x.id === iid);
-      const newItem = { id: newId(), text: '', checked: false };
-      n.items.splice(idx + 1, 0, newItem);
-      saveState();
-      renderNotes();
-      const newInput = document.querySelector(`[data-check-text="${nid}__${newItem.id}"]`);
-      if (newInput) newInput.focus();
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        const idx = n.items.findIndex(x => x.id === iid);
+        const newItem = { id: newId(), text: '', checked: false };
+        n.items.splice(idx + 1, 0, newItem);
+        saveState(); renderNotes();
+        const newInput = document.querySelector(`[data-check-text="${nid}__${newItem.id}"]`);
+        if (newInput) newInput.focus();
+      } else if (ev.key === 'Backspace' && el.value === '') {
+        ev.preventDefault();
+        const idx = n.items.findIndex(x => x.id === iid);
+        n.items.splice(idx, 1);
+        saveState(); renderNotes();
+        // Focus the item above, or the add-item button if none
+        const inputs = document.querySelectorAll(`[data-note-id="${nid}"] .check-text`);
+        if (inputs[idx - 1]) inputs[idx - 1].focus();
+      }
     });
   });
   document.querySelectorAll('[data-check-delete]').forEach(b => b.addEventListener('click', () => { const [nid, iid] = b.getAttribute('data-check-delete').split('__'); const n = trip.notes.find(x => x.id === nid); if (!n) return; n.items = n.items.filter(x => x.id !== iid); renderNotes(); }));
