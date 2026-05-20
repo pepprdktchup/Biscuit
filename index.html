@@ -831,13 +831,23 @@ function renderBudget() {
   document.getElementById('screen-content').innerHTML = html;
   document.getElementById('trip-header-card').addEventListener('click', openTripSwitcher);
   document.getElementById('add-expense-btn').addEventListener('click', openAddExpenseSheet);
-  document.querySelectorAll('.expense-row').forEach(r => r.addEventListener('click', () => {
-    const eid = r.getAttribute('data-event-id');
-    if (eid) { const e = trip.events.find(x => x.id === eid); if (e) openAddEventModal(e); return; }
-    const xid = r.getAttribute('data-expense-id');
-    const exp = trip.expenses.find(x => x.id === xid);
-    if (exp) openAddExpenseSheet(exp);
-  }));
+  document.querySelectorAll('.expense-row').forEach(r => {
+    r.addEventListener('click', () => {
+      const eid = r.getAttribute('data-event-id');
+      if (eid) { const e = trip.events.find(x => x.id === eid); if (e) openAddEventModal(e); return; }
+      const xid = r.getAttribute('data-expense-id');
+      const exp = trip.expenses.find(x => x.id === xid);
+      if (exp) openAddExpenseSheet(exp);
+    });
+    // Only allow swipe-delete on manual expenses (not event-linked ones)
+    if (!r.getAttribute('data-event-id')) {
+      addSwipeToDelete(r, () => {
+        const xid = r.getAttribute('data-expense-id');
+        trip.expenses = trip.expenses.filter(x => x.id !== xid);
+        saveState(); renderBudget();
+      });
+    }
+  });
 }
 function s_fmtDate(iso) {
   if (!iso) return '?';
@@ -1360,10 +1370,13 @@ function addSwipeToDelete(el, onDelete) {
   if (m && m !== '0px') { wrap.style.margin = m; el.style.margin = '0'; }
   el.parentNode.insertBefore(wrap, el);
   wrap.appendChild(el);
+  // Match border-radius so rounded cards don't show square DELETE corners
+  const br = getComputedStyle(el).borderRadius;
+  if (br && br !== '0px') wrap.style.borderRadius = br;
   // Inner element must sit above the delete button so it covers it by default
   el.style.position = 'relative';
   el.style.zIndex = '2';
-  el.style.background = el.classList.contains('note-card') ? 'var(--card)' : 'var(--bg)';
+  el.style.background = el.classList.contains('note-card') ? 'var(--card)' : el.classList.contains('expense-row') ? 'var(--card)' : 'var(--bg)';
 
   const bg = document.createElement('button');
   bg.style.cssText = `position:absolute;right:0;top:0;bottom:0;width:${SNAP}px;background:#FF3B30;color:#fff;border:none;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;z-index:1;`;
