@@ -1371,8 +1371,14 @@ function addSwipeToDelete(el, onDelete) {
   el.parentNode.insertBefore(wrap, el);
   wrap.appendChild(el);
   // Match border-radius so rounded cards don't show square DELETE corners
-  const br = getComputedStyle(el).borderRadius;
-  if (br && br !== '0px') wrap.style.borderRadius = br;
+  const cs2 = getComputedStyle(el);
+  const br = cs2.borderRadius;
+  if (br && br !== '0px') {
+    wrap.style.borderRadius = br;
+    // Move border to wrapper so there's no gap between card edge and clip boundary
+    wrap.style.border = cs2.border;
+    el.style.border = 'none';
+  }
   // Inner element must sit above the delete button so it covers it by default
   el.style.position = 'relative';
   el.style.zIndex = '2';
