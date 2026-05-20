@@ -1206,14 +1206,30 @@ function renderSettings() {
           state.settings.pushOn = true;
           b.classList.add('on');
           saveState();
+          const hint = document.getElementById('push-hint');
+          if (hint) hint.textContent = 'Subscribing…';
           await syncSchedule(true);
+          // Verify subscription landed
+          const sub = await getPushSubscription();
+          if (!sub) throw new Error('Subscription not created — try again');
           new Notification('Biscuit', { body: 'Background reminders are on. The cat will find you.', icon: './icon-192.png', silent: true });
+          if (hint) hint.textContent = '✓ Subscribed · background reminders active';
         } catch (err) {
+          console.error('Push subscribe error:', err);
           state.settings.pushOn = false;
           b.classList.remove('on');
-          alert('Push subscription failed: ' + err.message);
+          saveState();
+          alert('Push subscription failed: ' + err.message + '\n\nTry: Settings → toggle off → toggle on again.');
         }
       });
+      return;
+    }
+    // Turning push OFF — unsubscribe from push manager too
+    if (k === 'pushOn' && state.settings.pushOn) {
+      state.settings.pushOn = false;
+      b.classList.remove('on');
+      saveState();
+      getPushSubscription().then(sub => sub?.unsubscribe());
       return;
     }
     state.settings[k] = !state.settings[k];
