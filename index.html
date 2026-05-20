@@ -1697,7 +1697,7 @@ function computeReminderSchedule() {
       (e.reminders || []).forEach(r => {
         const fireAt = startMs - r * 60000;
         if (fireAt <= now) return;
-        const body = r === 0 ? `Right Meow!${e.location ? ' · ' + e.location : ''}` : `In ${fmtReminderShort(r)}${e.location ? ' · ' + e.location : ''}`;
+        const body = r === 0 ? `Right meow!${e.location ? ' · ' + e.location : ''}` : `In ${fmtReminderShort(r)}${e.location ? ' · ' + e.location : ''}`;
         schedule.push({ eventId: e.id, title: e.title, body, fireAt, icon: catIconForReminder(r) });
       });
     });
@@ -1808,7 +1808,7 @@ function checkAndFireReminders() {
         if (state.firedReminders.includes(key)) return;
         if (now >= fireAt && now < fireAt + 65000) {
           const body = rMin === 0
-            ? `Right Meow!${e.location ? ' · ' + e.location : ''}`
+            ? `Right meow!${e.location ? ' · ' + e.location : ''}`
             : `In ${fmtReminderShort(rMin)}${e.location ? ' · ' + e.location : ''}`;
           try {
             new Notification(e.title, {
