@@ -1385,7 +1385,7 @@ function addSwipeToDelete(el, onDelete) {
   el.style.background = el.classList.contains('note-card') ? 'var(--card)' : el.classList.contains('expense-row') ? 'var(--card)' : 'var(--bg)';
 
   const bg = document.createElement('button');
-  bg.style.cssText = `position:absolute;right:0;top:0;bottom:0;width:${SNAP}px;background:#FF3B30;color:#fff;border:none;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;z-index:1;`;
+  bg.style.cssText = `position:absolute;right:-${SNAP}px;top:0;bottom:0;width:${SNAP}px;background:#FF3B30;color:#fff;border:none;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;z-index:1;transition:right 0.2s ease;`;
   bg.textContent = 'DELETE';
   wrap.appendChild(bg);
 
@@ -1393,12 +1393,14 @@ function addSwipeToDelete(el, onDelete) {
     isOpen = true;
     el.style.transition = 'transform 0.2s ease';
     el.style.transform = `translateX(-${SNAP}px)`;
+    bg.style.right = '0';
     setTimeout(() => el.style.transition = '', 200);
   };
   const snapClose = () => {
     isOpen = false;
     el.style.transition = 'transform 0.2s ease';
     el.style.transform = '';
+    bg.style.right = `-${SNAP}px`;
     setTimeout(() => el.style.transition = '', 200);
   };
 
@@ -1439,6 +1441,8 @@ function addSwipeToDelete(el, onDelete) {
     curDx = Math.min(0, Math.max(-SNAP * 1.2, (cx - startX) + base));
     el.style.transition = 'none';
     el.style.transform = `translateX(${curDx}px)`;
+    bg.style.transition = 'none';
+    bg.style.right = `${-SNAP - curDx}px`;
     e.preventDefault();
   }, { passive: false });
 
