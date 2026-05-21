@@ -828,6 +828,10 @@ function renderBudget() {
   });
   html += `</div>`;
   document.getElementById('screen-content').innerHTML = html;
+
+  // Apply icons BEFORE swipe wrappers so SVGs are in place
+  applyIcons(document.getElementById('screen-content'));
+
   document.getElementById('trip-header-card').addEventListener('click', openTripSwitcher);
   document.getElementById('add-expense-btn').addEventListener('click', openAddExpenseSheet);
   document.querySelectorAll('.expense-row').forEach(r => {
@@ -838,11 +842,10 @@ function renderBudget() {
       const exp = trip.expenses.find(x => x.id === xid);
       if (exp) openAddExpenseSheet(exp);
     });
-    // Only allow swipe-delete on manual expenses (not event-linked ones)
     if (!r.getAttribute('data-event-id')) {
       addSwipeToDelete(r, () => {
         const xid = r.getAttribute('data-expense-id');
-        trip.expenses = trip.expenses.filter(x => x.id !== xid);
+        getActiveTrip().expenses = getActiveTrip().expenses.filter(x => x.id !== xid);
         saveState(); renderBudget();
       });
     }
@@ -1162,8 +1165,8 @@ function openAddExpenseSheet(existing) {
       getActiveTrip().expenses.push(newExp);
     }
     saveState();
-    // Render after sheet close animation completes
-    setTimeout(() => { state.activeTab = 'budget'; renderBudget(); }, 280);
+    // Render budget directly after sheet closes
+    setTimeout(() => renderBudget(), 280);
   });
   if (isEdit) {
     document.getElementById('delete-expense').addEventListener('click', () => {
