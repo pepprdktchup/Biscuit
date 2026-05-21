@@ -1767,19 +1767,58 @@ if ('serviceWorker' in navigator) {
 }
 
 // Keep focused inputs visible above the iOS keyboard
+// Track real keyboard open state — visualViewport fires for many non-keyboard reasons
+let _inputFocused = false;
+const INPUT_SEL = 'input:not([type=checkbox]):not([type=radio]):not([type=date]):not([type=datetime-local]):not([type=button]):not([type=submit]), textarea';
+document.addEventListener('focusin', e => {
+  if (e.target.matches(INPUT_SEL)) _inputFocused = true;
+});
+document.addEventListener('focusout', () => {
+  setTimeout(() => {
+    _inputFocused = !!(document.activeElement && document.activeElement.matches(INPUT_SEL));
+    if (!_inputFocused) {
+      const phone = document.querySelector('.phone');
+      if (phone) phone.classList.remove('keyboard-open');
+      const sa = document.getElementById('scroll-area');
+      const bsBody = document.getElementById('bs-body');
+      const bs = document.getElementById('bottom-sheet');
+      if (sa) sa.style.paddingBottom = '';
+      if (bsBody) bsBody.style.paddingBottom = '';
+      if (bs) bs.style.transform = bs.classList.contains('open') ? '' : 'translateY(100%)';
+    }
+  }, 150);
+});
+
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', () => {
+    if (!_inputFocused) return;
     const keyboardH = window.innerHeight - window.visualViewport.height;
     const sa = document.getElementById('scroll-area');
     const bsBody = document.getElementById('bs-body');
-    const pad = keyboardH > 80 ? keyboardH + 16 : 0;
-    if (sa) sa.style.paddingBottom = pad ? pad + 'px' : '';
-    if (bsBody) bsBody.style.paddingBottom = pad ? pad + 'px' : '';
+    const bs = document.getElementById('bottom-sheet');
+    const phone = document.querySelector('.phone');
+    const pad = keyboardH > 80 ? keyboardH : 0;
+
+    // Nav/cat hide
+    if (pad) phone.classList.add('keyboard-open');
+    else phone.classList.remove('keyboard-open');
+
+    // Main scroll area padding
+    if (sa) sa.style.paddingBottom = pad ? pad + 16 + 'px' : '';
+
+    // Bottom sheet — slide up above keyboard
+    if (bs && bs.classList.contains('open')) {
+      bs.style.transform = pad ? `translateY(-${pad}px)` : '';
+      if (bsBody) bsBody.style.paddingBottom = pad ? '24px' : '';
+    } else {
+      if (bsBody) bsBody.style.paddingBottom = pad ? pad + 16 + 'px' : '';
+    }
+
     if (pad) {
       setTimeout(() => {
         const f = document.activeElement;
         if (f && f.tagName !== 'BODY') f.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }, 50);
+      }, 100);
     }
   });
 }
