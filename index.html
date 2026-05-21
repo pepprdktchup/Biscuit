@@ -1173,15 +1173,16 @@ function openAddExpenseSheet(existing) {
     if (isEdit) {
       existing.title = title; existing.amount = amount; existing.currency = currency; existing.category = category;
     } else {
-      trip.expenses.push({ id: newId(), date: new Date().toISOString(), category, amount, currency, title });
+      getActiveTrip().expenses.push({ id: newId(), date: new Date().toISOString(), category, amount, currency, title });
     }
-    render();
+    saveState();
+    setTimeout(() => renderBudget(), 300);
   });
   if (isEdit) {
     document.getElementById('delete-expense').addEventListener('click', () => {
       if (confirm(`Delete expense "${existing.title}"?`)) {
-        trip.expenses = trip.expenses.filter(x => x.id !== existing.id);
-        closeBottomSheet(); render();
+        getActiveTrip().expenses = getActiveTrip().expenses.filter(x => x.id !== existing.id);
+        closeBottomSheet(); saveState(); setTimeout(() => renderBudget(), 300);
       }
     });
   }
