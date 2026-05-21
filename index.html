@@ -131,9 +131,11 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .bs-grabber { width: 36px; height: 4px; background: var(--border-strong); border-radius: 2px; margin: 8px auto 4px; flex-shrink: 0; }
 .bs-header { flex-shrink: 0; padding: 6px 16px 12px; display: flex; align-items: center; justify-content: space-between; }
 .bs-body { overflow-y: auto; padding: 4px 0 24px; }
-.expense-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 0.5px solid var(--border); cursor: pointer; }
+.expense-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 0.5px solid var(--border); cursor: pointer; position: relative; overflow: hidden; }
 .expense-row:last-child { border-bottom: 0; }
 .expense-row.from-event { background: linear-gradient(to right, rgba(255,140,115,0.04), transparent); }
+.expense-row-inner { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; position: relative; z-index: 2; background: inherit; transition: transform 0.2s ease; will-change: transform; }
+.expense-del-btn { position: absolute; right: 0; top: 0; bottom: 0; width: 80px; background: #FF3B30; color: #fff; border: none; font-size: 11px; font-weight: 700; letter-spacing: 1px; cursor: pointer; z-index: 1; display: flex; align-items: center; justify-content: center; }
 .expense-cat-icon { width: 32px; height: 32px; background: var(--accent-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent-text); font-size: 14px; flex-shrink: 0; }
 .expense-content { flex: 1; min-width: 0; }
 .expense-title { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
@@ -817,13 +819,17 @@ function renderBudget() {
   else all.forEach(x => {
     const icon = icons[x.category] || icons.other;
     const ha = toHomeCurrency(x.amount, x.currency);
+    const isManual = !x.fromEvent;
     html += `<div class="expense-row ${x.fromEvent ? 'from-event' : ''}" data-event-id="${escapeAttr(x.eventId || '')}" data-expense-id="${escapeAttr(x.id)}">
-      <div class="expense-cat-icon"><i class="${icon}"></i></div>
-      <div class="expense-content">
-        <div class="expense-title">${escapeHtml(x.title)}${x.fromEvent ? '<span class="link-mark">EVENT</span>' : ''}</div>
-        <div class="expense-meta">${escapeHtml(fmtDayShort(new Date(x.date), tz))} ${escapeHtml(fmtTimeInZone(new Date(x.date), tz))} · ${escapeHtml(x.category)}</div>
+      <div class="expense-row-inner">
+        <div class="expense-cat-icon"><i class="${icon}"></i></div>
+        <div class="expense-content">
+          <div class="expense-title">${escapeHtml(x.title)}${x.fromEvent ? '<span class="link-mark">EVENT</span>' : ''}</div>
+          <div class="expense-meta">${escapeHtml(fmtDayShort(new Date(x.date), tz))} ${escapeHtml(fmtTimeInZone(new Date(x.date), tz))} · ${escapeHtml(x.category)}</div>
+        </div>
+        <div class="expense-amount"><div class="native pixel-font">${escapeHtml(fmtMoneyNative(x.amount, x.currency))}</div><div class="home">${fmtMoneyHome(ha)}</div></div>
       </div>
-      <div class="expense-amount"><div class="native pixel-font">${escapeHtml(fmtMoneyNative(x.amount, x.currency))}</div><div class="home">${fmtMoneyHome(ha)}</div></div>
+      ${isManual ? `<button class="expense-del-btn" data-del-expense="${escapeAttr(x.id)}">DELETE</button>` : ''}
     </div>`;
   });
   html += `</div>`;
@@ -834,22 +840,73 @@ function renderBudget() {
 
   document.getElementById('trip-header-card').addEventListener('click', openTripSwitcher);
   document.getElementById('add-expense-btn').addEventListener('click', openAddExpenseSheet);
+
+  // Tap to edit
   document.querySelectorAll('.expense-row').forEach(r => {
-    r.addEventListener('click', () => {
+    r.addEventListener('click', e => {
+      if (e.target.closest('.expense-del-btn')) return;
       const eid = r.getAttribute('data-event-id');
-      if (eid) { const e = trip.events.find(x => x.id === eid); if (e) openAddEventModal(e); return; }
+      if (eid) { const ev = getActiveTrip().events.find(x => x.id === eid); if (ev) openAddEventModal(ev); return; }
       const xid = r.getAttribute('data-expense-id');
-      const exp = trip.expenses.find(x => x.id === xid);
+      const exp = getActiveTrip().expenses.find(x => x.id === xid);
       if (exp) openAddExpenseSheet(exp);
     });
-    if (!r.getAttribute('data-event-id')) {
-      addSwipeToDelete(r, () => {
-        const xid = r.getAttribute('data-expense-id');
-        getActiveTrip().expenses = getActiveTrip().expenses.filter(x => x.id !== xid);
-        saveState(); renderBudget();
-      });
-    }
   });
+
+  // Inline swipe-to-reveal DELETE (no DOM moving — inner div translates)
+  document.querySelectorAll('.expense-del-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const xid = btn.getAttribute('data-del-expense');
+      const t = getActiveTrip();
+      t.expenses = t.expenses.filter(x => x.id !== xid);
+      saveState(); renderBudget();
+    });
+  });
+
+  let swipeRow = null, swipeStartX = 0, swipeStartY = 0, swipeDx = 0, swipeLocked = false, swipeOpen = false;
+  const SNAP = 80;
+  document.querySelectorAll('.expense-row:not(.from-event)').forEach(r => {
+    const inner = r.querySelector('.expense-row-inner');
+    if (!inner) return;
+    r.addEventListener('touchstart', e => {
+      swipeRow = r; swipeStartX = e.touches[0].clientX; swipeStartY = e.touches[0].clientY;
+      swipeDx = 0; swipeLocked = false;
+    }, { passive: true });
+    r.addEventListener('touchmove', e => {
+      if (swipeRow !== r) return;
+      const dx = e.touches[0].clientX - swipeStartX;
+      const dy = Math.abs(e.touches[0].clientY - swipeStartY);
+      if (!swipeLocked) {
+        if (Math.abs(dx) < 4 && dy < 4) return;
+        if (dy > Math.abs(dx)) { swipeRow = null; return; }
+        swipeLocked = true;
+      }
+      const base = swipeOpen ? -SNAP : 0;
+      swipeDx = Math.min(0, Math.max(-SNAP, dx + base));
+      inner.style.transition = 'none';
+      inner.style.transform = `translateX(${swipeDx}px)`;
+      e.preventDefault();
+    }, { passive: false });
+    r.addEventListener('touchend', () => {
+      if (swipeRow !== r) return;
+      inner.style.transition = 'transform 0.2s ease';
+      if (swipeOpen ? swipeDx > -SNAP * 0.4 : swipeDx < -SNAP * 0.4) {
+        swipeOpen = !swipeOpen;
+      }
+      inner.style.transform = swipeOpen ? `translateX(-${SNAP}px)` : '';
+      swipeRow = null; swipeDx = 0;
+    });
+  });
+
+  // Close any open swipe row when tapping elsewhere
+  document.addEventListener('touchstart', e => {
+    if (!swipeOpen) return;
+    if (!e.target.closest('.expense-row')) {
+      document.querySelectorAll('.expense-row-inner').forEach(i => { i.style.transition = 'transform 0.2s ease'; i.style.transform = ''; });
+      swipeOpen = false;
+    }
+  }, { passive: true });
 }
 function s_fmtDate(iso) {
   if (!iso) return '?';
