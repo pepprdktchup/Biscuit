@@ -131,11 +131,12 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .bs-grabber { width: 36px; height: 4px; background: var(--border-strong); border-radius: 2px; margin: 8px auto 4px; flex-shrink: 0; }
 .bs-header { flex-shrink: 0; padding: 6px 16px 12px; display: flex; align-items: center; justify-content: space-between; }
 .bs-body { overflow-y: auto; padding: 4px 0 24px; }
-.expense-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 0.5px solid var(--border); cursor: pointer; position: relative; overflow: hidden; }
+.expense-row { display: flex; align-items: center; border-bottom: 0.5px solid var(--border); cursor: pointer; position: relative; overflow: hidden; background: var(--card); }
 .expense-row:last-child { border-bottom: 0; }
-.expense-row.from-event { background: linear-gradient(to right, rgba(255,140,115,0.04), transparent); }
-.expense-row-inner { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; position: relative; z-index: 2; background: inherit; transition: transform 0.2s ease; will-change: transform; }
-.expense-del-btn { position: absolute; right: 0; top: 0; bottom: 0; width: 80px; background: #FF3B30; color: #fff; border: none; font-size: 11px; font-weight: 700; letter-spacing: 1px; cursor: pointer; z-index: 1; display: flex; align-items: center; justify-content: center; }
+.expense-row.from-event { background: var(--card); }
+.expense-row-inner { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; padding: 12px 14px; position: relative; z-index: 2; background: var(--card); transition: transform 0.2s ease; will-change: transform; }
+.expense-row.from-event .expense-row-inner { background: linear-gradient(to right, rgba(255,140,115,0.06), var(--card)); }
+.expense-del-btn { position: absolute; right: -80px; top: 0; bottom: 0; width: 80px; background: #FF3B30; color: #fff; border: none; font-size: 11px; font-weight: 700; letter-spacing: 1px; cursor: pointer; z-index: 1; display: flex; align-items: center; justify-content: center; transition: right 0.2s ease; }
 .expense-cat-icon { width: 32px; height: 32px; background: var(--accent-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent-text); font-size: 14px; flex-shrink: 0; }
 .expense-content { flex: 1; min-width: 0; }
 .expense-title { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
@@ -884,17 +885,22 @@ function renderBudget() {
       }
       const base = swipeOpen ? -SNAP : 0;
       swipeDx = Math.min(0, Math.max(-SNAP, dx + base));
+      const btn = r.querySelector('.expense-del-btn');
       inner.style.transition = 'none';
       inner.style.transform = `translateX(${swipeDx}px)`;
+      if (btn) { btn.style.transition = 'none'; btn.style.right = `${-SNAP - swipeDx}px`; }
       e.preventDefault();
     }, { passive: false });
     r.addEventListener('touchend', () => {
       if (swipeRow !== r) return;
+      const btn = r.querySelector('.expense-del-btn');
       inner.style.transition = 'transform 0.2s ease';
+      if (btn) btn.style.transition = 'right 0.2s ease';
       if (swipeOpen ? swipeDx > -SNAP * 0.4 : swipeDx < -SNAP * 0.4) {
         swipeOpen = !swipeOpen;
       }
       inner.style.transform = swipeOpen ? `translateX(-${SNAP}px)` : '';
+      if (btn) btn.style.right = swipeOpen ? '0' : `-${SNAP}px`;
       swipeRow = null; swipeDx = 0;
     });
   });
@@ -1805,12 +1811,12 @@ function init() {
     if (dx > THRESHOLD) {
       m.style.transition = 'transform 0.25s ease';
       m.style.transform = 'translateX(100%)';
-      if (bd) bd.style.opacity = '0';
+      if (bd) { bd.style.transition = 'opacity 0.25s ease'; bd.style.opacity = '0'; }
       setTimeout(() => {
-        closeModal();
+        m.classList.remove('open');
         m.style.transform = '';
         m.style.transition = '';
-        if (bd) bd.style.opacity = '';
+        if (bd) { bd.classList.remove('open'); bd.style.opacity = ''; bd.style.transition = ''; }
       }, 250);
     } else {
       m.style.transition = 'transform 0.25s ease';
