@@ -1161,7 +1161,7 @@ function openAddExpenseSheet(existing) {
   const currencyOpts = `<option value="${trip.travelCurrency}" ${e.currency === trip.travelCurrency ? 'selected' : ''}>${trip.travelCurrency} ${trip.travelCurrencySymbol}</option><option value="USD" ${e.currency === 'USD' ? 'selected' : ''}>USD $</option>`;
   const categories = ['food','transit','shopping','lodging','activity','other'];
   const html = `<div class="input-card"><div class="field-label">DESCRIPTION</div><input type="text" id="ex-title" placeholder="Ichiran ramen, taxi to Roppongi..." value="${escapeAttr(e.title)}"></div>
-    <div class="input-card"><div class="field-label">AMOUNT</div><div class="row" style="margin-top: 4px;"><div class="col"><input type="number" id="ex-amount" min="0" step="1" placeholder="0" value="${e.amount || ''}"></div><div class="col" style="flex: 0 0 90px;"><select id="ex-currency">${currencyOpts}</select></div></div></div>
+    <div class="input-card"><div class="field-label">AMOUNT</div><div class="row" style="margin-top: 4px;"><div class="col"><input type="number" inputmode="decimal" id="ex-amount" min="0" step="1" placeholder="0" value="${e.amount || ''}"></div><div class="col" style="flex: 0 0 90px;"><select id="ex-currency">${currencyOpts}</select></div></div></div>
     <div class="input-card"><div class="field-label">CATEGORY</div><select id="ex-category" style="margin-top: 4px;">${categories.map(c => `<option value="${c}" ${e.category === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
     ${isEdit ? `<div style="text-align: center; padding: 8px 16px 24px;"><button class="btn-ghost" id="delete-expense" style="color: var(--accent-text); border-color: var(--accent-bg);">Delete expense</button></div>` : ''}`;
   openBottomSheet(isEdit ? 'Edit expense' : 'New expense', html, () => {
@@ -1176,7 +1176,9 @@ function openAddExpenseSheet(existing) {
       getActiveTrip().expenses.push({ id: newId(), date: new Date().toISOString(), category, amount, currency, title });
     }
     saveState();
-    setTimeout(renderBudget, 300);
+    // render() is called by bs-save handler after this callback returns, then closes sheet
+    // We delay renderBudget to run after closeBottomSheet completes
+    setTimeout(() => { state.activeTab = 'budget'; render(); }, 350);
   });
   if (isEdit) {
     document.getElementById('delete-expense').addEventListener('click', () => {
@@ -1896,7 +1898,7 @@ document.addEventListener('focusout', () => {
       const bs = document.getElementById('bottom-sheet');
       if (sa) sa.style.paddingBottom = '';
       if (bsBody) bsBody.style.paddingBottom = '';
-      if (bs) { bs.style.bottom = ''; bs.style.transform = bs.classList.contains('open') ? '' : 'translateY(100%)'; }
+      if (bs) { bs.style.bottom = ''; bs.style.maxHeight = ''; bs.style.transform = bs.classList.contains('open') ? '' : 'translateY(100%)'; }
     }
   }, 150);
 });
@@ -1918,10 +1920,11 @@ if (window.visualViewport) {
     // Main scroll area padding
     if (sa) sa.style.paddingBottom = pad ? pad + 16 + 'px' : '';
 
-    // Bottom sheet — use bottom offset instead of translateY so no gap appears at bottom
+    // Bottom sheet — grow upward by increasing max-height and bottom offset
     if (bs && bs.classList.contains('open')) {
-      bs.style.bottom = pad ? `${pad}px` : '';
-      if (bsBody) bsBody.style.paddingBottom = pad ? '24px' : '';
+      bs.style.bottom = pad ? `${pad}px` : '0';
+      bs.style.maxHeight = pad ? `calc(92vh + ${pad}px)` : '';
+      if (bsBody) bsBody.style.paddingBottom = '24px';
     } else {
       if (bsBody) bsBody.style.paddingBottom = pad ? pad + 16 + 'px' : '';
     }
