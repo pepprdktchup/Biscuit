@@ -106,6 +106,8 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .pill .x { cursor: pointer; opacity: 0.6; font-size: 12px; line-height: 1; }
 .pill .x:hover { opacity: 1; }
 .pill-add { display: inline-flex; align-items: center; gap: 6px; background: transparent; color: var(--text-2); border: 1px dashed var(--border-strong); font-size: 11px; font-weight: 600; padding: 5px 10px; border-radius: 999px; margin-right: 6px; margin-bottom: 6px; line-height: 1; vertical-align: middle; cursor: pointer; font-family: inherit; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(43,38,32,0.35); z-index: 29; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+.modal-backdrop.open { opacity: 1; pointer-events: auto; }
 .modal-overlay { position: absolute; inset: 0; background: var(--bg); z-index: 30; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.25s ease; }
 .modal-overlay.open { transform: translateY(0); }
 .modal-header { flex-shrink: 0; padding: 14px 16px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 0.5px solid var(--border); }
@@ -265,6 +267,7 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
     <button class="tab" data-tab="settings"><div class="tab-icon"><i class="ti ti-settings"></i></div><div class="tab-label">SETTINGS</div></button>
   </nav>
 
+  <div class="modal-backdrop" id="modal-backdrop"></div>
   <div class="modal-overlay" id="modal">
     <div class="modal-header"><div class="modal-title" id="modal-title">New event</div></div>
     <div class="modal-body" id="modal-body"></div>
@@ -387,7 +390,7 @@ const CURRENCIES = [
   { code: 'BRL', symbol: 'R$', name: 'Brazilian Real' },
 ];
 
-const REMINDER_OPTIONS = [5, 10, 15, 30, 60, 120, 240, 480, 1440, 2880];
+const REMINDER_OPTIONS = [0, 5, 10, 15, 30, 60, 120, 240, 480, 1440, 2880];
 
 const state = {
   activeTab: 'trip',
@@ -1063,7 +1066,7 @@ function openAddEventModal(existingEvent) {
       <div class="field-label">CATEGORY</div>
       <select id="ev-category" style="margin-top: 4px;">${['food','transit','shopping','lodging','activity','other'].map(c => `<option value="${c}" ${(e.category || 'activity') === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
     </div>
-    <div class="input-card"><div class="field-label" style="margin-bottom: 8px;">REMIND ME</div><div id="reminders-edit">${e.reminders.map(r => `<span class="pill">${fmtReminder(r)} before<span class="x" data-mod-remove="${r}">×</span></span>`).join('')}<button class="pill-add" id="mod-add-reminder"><i class="ti ti-plus"></i> add</button></div></div>
+    <div class="input-card"><div class="field-label" style="margin-bottom: 8px;">REMIND ME</div><div id="reminders-edit">${e.reminders.map(r => `<span class="pill">${fmtReminder(r)}<span class="x" data-mod-remove="${r}">×</span></span>`).join('')}<button class="pill-add" id="mod-add-reminder"><i class="ti ti-plus"></i> add</button></div></div>
     <div class="input-card"><div class="field-label">BOOKING REF</div><input type="text" id="ev-booking" placeholder="TYO-4827, confirmation #, guide name..." value="${escapeAttr(e.bookingRef || '')}"></div>
     <div class="input-card"><div class="field-label">NOTES</div><textarea id="ev-notes" rows="3" placeholder="Anything else...">${escapeHtml(e.notes || '')}</textarea></div>
     ${existingEvent ? `<div style="text-align: center; padding: 8px 16px;"><button class="btn-ghost" id="delete-event" style="color: var(--accent-text); border-color: var(--accent-bg);">Delete event</button></div>` : ''}`;
@@ -1071,7 +1074,7 @@ function openAddEventModal(existingEvent) {
   const updHint = () => { const v = document.getElementById('ev-start').value; if (!v) return; const d = new Date(v); const bo = -new Date().getTimezoneOffset()/60; const to = zoneOffsetHours(trip.travelZone, new Date()); const adj = new Date(d.getTime() + (bo - to)*3600000); document.getElementById('ev-start-hint').textContent = `${fmtDayShort(adj, state.settings.homeZone)} ${fmtTimeInZone(adj, state.settings.homeZone)} ${state.settings.homeLabel}`; };
   document.getElementById('ev-start').addEventListener('input', updHint); updHint();
 
-  const rerender = ev => { document.getElementById('reminders-edit').innerHTML = ev.reminders.map(r => `<span class="pill">${fmtReminder(r)} before<span class="x" data-mod-remove="${r}">×</span></span>`).join('') + `<button class="pill-add" id="mod-add-reminder"><i class="ti ti-plus"></i> add</button>`; bind(ev); applyIcons(document.getElementById('modal-body')); };
+  const rerender = ev => { document.getElementById('reminders-edit').innerHTML = ev.reminders.map(r => `<span class="pill">${fmtReminder(r)}<span class="x" data-mod-remove="${r}">×</span></span>`).join('') + `<button class="pill-add" id="mod-add-reminder"><i class="ti ti-plus"></i> add</button>`; bind(ev); applyIcons(document.getElementById('modal-body')); };
   const bind = ev => {
     document.querySelectorAll('[data-mod-remove]').forEach(x => x.addEventListener('click', () => { const r = parseInt(x.getAttribute('data-mod-remove'), 10); ev.reminders = ev.reminders.filter(v => v !== r); rerender(ev); }));
     document.getElementById('mod-add-reminder').addEventListener('click', () => openReminderPicker(ev.reminders, r => { ev.reminders.push(r); ev.reminders.sort((a, b) => a - b); rerender(ev); }));
@@ -1082,6 +1085,7 @@ function openAddEventModal(existingEvent) {
   body.__isNew = !existingEvent;
   if (existingEvent) document.getElementById('delete-event').addEventListener('click', () => { if (confirm('Delete this event?')) { trip.events = trip.events.filter(x => x.id !== existingEvent.id); closeModal(); render(); } });
   modal.classList.add('open');
+  document.getElementById('modal-backdrop').classList.add('open');
   applyIcons(document.getElementById('modal-body'));
 }
 function saveEventModal() {
@@ -1117,7 +1121,10 @@ function saveEventModal() {
   else { const i = trip.events.findIndex(x => x.id === e.id); if (i >= 0) trip.events[i] = data; }
   closeModal(); render();
 }
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.getElementById('modal-backdrop').classList.remove('open');
+}
 
 let _bsOnSave = null;
 function openBottomSheet(title, bodyHtml, onSave, options = {}) {
