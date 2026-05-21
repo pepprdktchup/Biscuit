@@ -126,7 +126,9 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .input-hint { font-size: 10px; color: var(--text-3); margin-top: 4px; }
 .bs-backdrop { position: absolute; inset: 0; background: rgba(43, 38, 32, 0.35); z-index: 25; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
 .bs-backdrop.open { opacity: 1; pointer-events: auto; }
-.bottom-sheet { position: absolute; bottom: 0; left: 0; right: 0; background: var(--bg); z-index: 30; border-top-left-radius: 22px; border-top-right-radius: 22px; box-shadow: 0 -8px 32px rgba(0,0,0,0.12); transform: translateY(100%); transition: transform 0.25s ease; max-height: 82%; display: flex; flex-direction: column; }
+.bottom-sheet { position: absolute; bottom: 0; left: 0; right: 0; background: var(--bg); z-index: 30; border-top-left-radius: 22px; border-top-right-radius: 22px; box-shadow: 0 -8px 32px rgba(0,0,0,0.12); transform: translateY(100%); transition: transform 0.25s ease; max-height: 92vh; display: flex; flex-direction: column; }
+/* Fill the gap between sheet bottom edge and keyboard with a solid block */
+.bottom-sheet::after { content: ''; display: block; position: fixed; bottom: -40px; left: 0; right: 0; height: 60px; background: var(--bg); z-index: 29; }
 .bottom-sheet.open { transform: translateY(0); }
 .bs-grabber { width: 36px; height: 4px; background: var(--border-strong); border-radius: 2px; margin: 8px auto 4px; flex-shrink: 0; }
 .bs-header { flex-shrink: 0; padding: 6px 16px 12px; display: flex; align-items: center; justify-content: space-between; }
@@ -839,6 +841,7 @@ function renderBudget() {
   });
   html += `</div>`;
   document.getElementById('screen-content').innerHTML = html;
+  applyIcons(document.getElementById('screen-content')); // MUST run before addSwipeToDelete moves DOM nodes
   renderCurrencyCalc(trip);
   fetchLiveRate(calcState.fromCur || trip.travelCurrency, calcState.toCur || state.settings.homeCurrency).then(() => renderCurrencyCalc(trip));
   document.getElementById('trip-header-card').addEventListener('click', openTripSwitcher);
@@ -846,16 +849,15 @@ function renderBudget() {
   document.querySelectorAll('.expense-row').forEach(r => {
     r.addEventListener('click', () => {
       const eid = r.getAttribute('data-event-id');
-      if (eid) { const e = trip.events.find(x => x.id === eid); if (e) openAddEventModal(e); return; }
+      if (eid) { const e = getActiveTrip().events.find(x => x.id === eid); if (e) openAddEventModal(e); return; }
       const xid = r.getAttribute('data-expense-id');
-      const exp = trip.expenses.find(x => x.id === xid);
+      const exp = getActiveTrip().expenses.find(x => x.id === xid);
       if (exp) openAddExpenseSheet(exp);
     });
-    // Only allow swipe-delete on manual expenses (not event-linked ones)
     if (!r.getAttribute('data-event-id')) {
       addSwipeToDelete(r, () => {
         const xid = r.getAttribute('data-expense-id');
-        trip.expenses = trip.expenses.filter(x => x.id !== xid);
+        getActiveTrip().expenses = getActiveTrip().expenses.filter(x => x.id !== xid);
         saveState(); renderBudget();
       });
     }
