@@ -1165,8 +1165,11 @@ function openAddExpenseSheet(existing) {
     <div class="input-card"><div class="field-label">CATEGORY</div><select id="ex-category" style="margin-top: 4px;">${categories.map(c => `<option value="${c}" ${e.category === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
     ${isEdit ? `<div style="text-align: center; padding: 8px 16px 24px;"><button class="btn-ghost" id="delete-expense" style="color: var(--accent-text); border-color: var(--accent-bg);">Delete expense</button></div>` : ''}`;
   openBottomSheet(isEdit ? 'Edit expense' : 'New expense', html, () => {
-    const title = document.getElementById('ex-title').value.trim();
-    const amount = parseFloat(document.getElementById('ex-amount').value);
+    const titleEl = document.getElementById('ex-title');
+    const amountEl = document.getElementById('ex-amount');
+    if (!titleEl || !amountEl) { alert('ERROR: form elements missing'); return false; }
+    const title = titleEl.value.trim();
+    const amount = parseFloat(amountEl.value);
     const currency = document.getElementById('ex-currency').value;
     const category = document.getElementById('ex-category').value;
     if (!title || !amount || amount <= 0) { alert('Description and amount required'); return false; }
@@ -1175,9 +1178,9 @@ function openAddExpenseSheet(existing) {
     } else {
       getActiveTrip().expenses.push({ id: newId(), date: new Date().toISOString(), category, amount, currency, title });
     }
+    const saved = getActiveTrip().expenses.length;
     saveState();
-    // render() is called by bs-save handler after this callback returns, then closes sheet
-    // We delay renderBudget to run after closeBottomSheet completes
+    alert(`Saved! Trip now has ${saved} expenses. Reloading...`);
     setTimeout(() => { state.activeTab = 'budget'; render(); }, 350);
   });
   if (isEdit) {
