@@ -1505,11 +1505,13 @@ function computeReminderSchedule() {
       const startMs = new Date(e.start).getTime();
       (e.reminders || []).forEach(r => {
         const fireAt = startMs - r * 60000;
-        if (fireAt <= now) return; // already past
+        // Include reminders up to 2 min in the past — covers clock drift and
+        // the case where saveState fires just after a reminder was due
+        if (fireAt <= now - 120000) return;
         const body = r === 0
-          ? `Starting now!${e.location ? ' · ' + e.location : ''}`
-          : `In ${fmtReminder(r)}${e.location ? ' · ' + e.location : ''}`;
-        schedule.push({ eventId: e.id, title: e.title, body, fireAt });
+          ? `Right meow!${e.location ? ' · ' + e.location : ''}`
+          : `In ${fmtReminderShort(r)}${e.location ? ' · ' + e.location : ''}`;
+        schedule.push({ eventId: e.id, title: e.title, body, fireAt, icon: catIconForReminder(r) });
       });
     });
   });
@@ -1621,7 +1623,14 @@ function checkAndFireReminders() {
       });
     });
   });
-  if (fired) saveState(); // triggers debouncedSyncSchedule → re-uploads schedule to Worker
+  if (fired) {
+    // Save fired keys but delay schedule sync by 5s so back-to-back reminders
+    // don't get dropped from the Worker schedule before they fire
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ trips: state.trips, activeTripId: state.activeTripId, settings: state.settings, firedReminders: state.firedReminders })); } catch (_) {}
+    clearTimeout(_syncTimer);
+    _syncTimer = setTimeout(() => syncSchedule(false), 5000);
+    scheduleNextReminder();
+  }
 }
 
 // ─── Weather ─────────────────────────────────────────────────────────────────
