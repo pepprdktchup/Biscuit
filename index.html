@@ -1160,8 +1160,8 @@ function openAddExpenseSheet(existing) {
     } else {
       trip.expenses.push({ id: newId(), date: new Date().toISOString(), category, amount, currency, title });
     }
-    closeBottomSheet();
-    render();
+    // Let the outer bs-save handler close the sheet, then render after transition
+    setTimeout(() => render(), 280);
   });
   if (isEdit) {
     document.getElementById('delete-expense').addEventListener('click', () => {
