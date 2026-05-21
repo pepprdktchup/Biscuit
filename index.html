@@ -1710,6 +1710,58 @@ function init() {
   // Check immediately on load in case we opened near a reminder time
   setTimeout(checkAndFireReminders, 500);
 }
+// Edge swipe to dismiss modal (swipe right from left edge → back/cancel)
+(function() {
+  let startX = 0, startY = 0, tracking = false;
+  const EDGE = 22, THRESHOLD = 60;
+  const getModal    = () => document.getElementById('modal');
+  const getBackdrop = () => document.getElementById('modal-backdrop');
+
+  document.addEventListener('touchstart', e => {
+    tracking = false;
+    if (!getModal().classList.contains('open')) return;
+    if (e.touches[0].clientX > EDGE) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    tracking = true;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', e => {
+    if (!tracking) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = Math.abs(e.touches[0].clientY - startY);
+    if (dy > dx) { tracking = false; getModal().style.transform = ''; return; }
+    if (dx < 0) return;
+    getModal().style.transition = 'none';
+    getModal().style.transform = `translateX(${dx}px)`;
+    const bd = getBackdrop();
+    if (bd) bd.style.opacity = String(Math.max(0, 0.35 * (1 - dx / 250)));
+  }, { passive: true });
+
+  document.addEventListener('touchend', e => {
+    if (!tracking) return;
+    tracking = false;
+    const dx = e.changedTouches[0].clientX - startX;
+    const m = getModal(), bd = getBackdrop();
+    if (dx > THRESHOLD) {
+      m.style.transition = 'transform 0.25s ease';
+      m.style.transform = 'translateX(100%)';
+      if (bd) bd.style.opacity = '0';
+      setTimeout(() => {
+        closeModal();
+        m.style.transform = '';
+        m.style.transition = '';
+        if (bd) bd.style.opacity = '';
+      }, 250);
+    } else {
+      m.style.transition = 'transform 0.25s ease';
+      m.style.transform = '';
+      if (bd) bd.style.opacity = '';
+      setTimeout(() => m.style.transition = '', 250);
+    }
+  }, { passive: true });
+})();
+
 init();
 
 if ('serviceWorker' in navigator) {
