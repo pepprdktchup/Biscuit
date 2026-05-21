@@ -143,6 +143,16 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .expense-amount .native { font-size: 13px; font-weight: 500; }
 .expense-amount .home { font-size: 11px; color: var(--text-3); margin-top: 2px; }
 .note-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin: 0 12px 12px; overflow: hidden; }
+.calc-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin: 12px 12px 0; padding: 14px 16px; }
+.calc-row { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+.calc-side { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.calc-side.right { align-items: flex-end; }
+.calc-input { width: 100%; font-size: 22px; font-weight: 600; font-family: var(--pixel); background: transparent; border: none; outline: none; color: var(--text); padding: 0; min-width: 0; }
+.calc-currency-btn { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-2); background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; cursor: pointer; white-space: nowrap; align-self: flex-start; }
+.calc-side.right .calc-currency-btn { align-self: flex-end; }
+.calc-result { font-size: 22px; font-weight: 600; font-family: var(--pixel); color: var(--accent-text); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.calc-swap { background: none; border: none; cursor: pointer; font-size: 18px; color: var(--text-3); padding: 0 4px; flex-shrink: 0; align-self: center; }
+.calc-rate-hint { font-size: 11px; color: var(--text-3); margin-top: 8px; }
 .note-card-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 0.5px solid var(--border); }
 .note-card-header.collapsed { border-bottom: none; }
 .note-collapse-btn { background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 11px; margin-left: auto; padding: 2px 6px; transition: transform 0.2s; flex-shrink: 0; }
