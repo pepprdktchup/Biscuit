@@ -1140,7 +1140,9 @@ function openBottomSheet(title, bodyHtml, onSave, options = {}) {
   document.getElementById('bs-title').textContent = title;
   document.getElementById('bs-body').innerHTML = bodyHtml;
   document.getElementById('bs-save').style.display = options.hideSave ? 'none' : '';
-  document.getElementById('bottom-sheet').classList.add('open');
+  const bs = document.getElementById('bottom-sheet');
+  bs.style.transform = ''; // clear any inline transform from keyboard handler
+  bs.classList.add('open');
   document.getElementById('bs-backdrop').classList.add('open');
   _bsOnSave = onSave;
   applyIcons(document.getElementById('bs-body'));
