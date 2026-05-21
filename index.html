@@ -800,7 +800,8 @@ function renderBudget() {
   const pace = trip.budgetTotal * (dayOf / dayTotal);
   const onTrack = total <= pace;
 
-  let html = `<div class="trip-header-card" id="trip-header-card" role="button" tabindex="0">
+  let html = `<div class="calc-card" id="currency-calc"></div>
+  <div class="trip-header-card" id="trip-header-card" role="button" tabindex="0">
     <i class="ti ti-pencil trip-edit-pencil"></i>
     <div class="lbl">${escapeHtml((trip.name || 'Untitled trip').toUpperCase())}</div>
     <div style="font-size: 11px; color: var(--text-2); margin-top: 4px;">Day ${dayOf} of ${dayTotal} · ${escapeHtml(s_fmtDate(trip.tripStart))} → ${escapeHtml(s_fmtDate(trip.tripEnd))}</div>
@@ -838,6 +839,10 @@ function renderBudget() {
 
   // Apply icons BEFORE swipe wrappers so SVGs are in place
   applyIcons(document.getElementById('screen-content'));
+
+  // Render currency calc + fetch live rate
+  renderCurrencyCalc(trip);
+  fetchLiveRate(calcState.fromCur || trip.travelCurrency, calcState.toCur || state.settings.homeCurrency).then(() => renderCurrencyCalc(trip));
 
   document.getElementById('trip-header-card').addEventListener('click', openTripSwitcher);
   document.getElementById('add-expense-btn').addEventListener('click', openAddExpenseSheet);
@@ -1428,7 +1433,7 @@ function openReminderPicker(currentList, onSelect) {
   const available = REMINDER_OPTIONS.filter(r => !currentList.includes(r));
   if (available.length === 0) { alert('All available reminders are already added.'); return; }
   const rows = available.map(r => `<button class="picker-row" data-reminder="${r}">
-    <div style="flex: 1; font-size: 13px; font-weight: 500;">${escapeHtml(fmtReminder(r))} before</div>
+    <div style="flex: 1; font-size: 13px; font-weight: 500;">${escapeHtml(fmtReminder(r))}</div>
   </button>`).join('');
   openBottomSheet('Add reminder', `<div style="max-height: 55vh; overflow-y: auto;">${rows}</div>`, null, { hideSave: true });
   document.querySelectorAll('.picker-row[data-reminder]').forEach(b => b.addEventListener('click', () => {
@@ -1437,7 +1442,18 @@ function openReminderPicker(currentList, onSelect) {
   }));
 }
 
-// ─── Swipe-to-delete — reveal DELETE button, tap to confirm ─────────────────
+// Cat state PNG icons as inline data URLs for push notifications (SVGs ignored by iOS)
+const CAT_NOTIF_ICONS = {
+  idle:    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAABZElEQVR42u3SsQkAAAgEsd+/srFxWlcQ60AmOC7TBW+RAANhIAyEgcBAGAgDYSAwEAbCQBgIDISBMBAGAgNhIAyEgTAQGAgDYSAMBAbCQBgIA4GBMBAGwkBgIAyEgTAQGAgDYSAMhIHAQBgIA2EgMBAGwkAYCAyEgTAQBgIDYSAMhIEwEBgIA2EgDAQGwkAYCAOBgTAQBsJAYCAMhIEwEAYCA2EgDISBwEAYCANhIDAQBsJAGAgMhIEwEAbCQGAgDISBMBAYCANhIAyEgcBAGAgDYSAwEAbCQBgIDISBMBAGwkBgIAyEgTAQGAgDYSAMBAbCQBgIA4GBMBAGwkAYSAUMhIEwEAYCA2EgDISBwEAYCANhIDAQBsJAGAgMhIEwEAbCQGAgDISBMBAYCANhIAwEBsJAGAgDgYEwEAbCQBgIDISBMBAGgqsF08t+tmVf9PMAAAAASUVORK5CYII=',
+  headsup: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAABY0lEQVR42u3SQQ0AAAjEsPOMDTyDBcK7SRUsy3TBWyTAQBgIA2EgMBAGwkAYCAyEgTAQBgIDYSAMhIHAQBgIA2EgDAQGwkAYCAOBgTAQBsJAYCAMhIEwEBgIA2EgDISBwEAYCANhIDAQBsJAGAgMhIEwEAYCA2EgDISBwEAYCANhIAwEBsJAGAgDgYEwEAbCQGAgDISBMBAYCANhIAyEgcBAGAgDYSAwEAbCQBgIDISBMBAGAgNhIAyEgTAQGAgDYSAMBAbCQBgIA4GBMBAGwkBgIAyEgTAQGAgDYSAMhIHAQBgIA2EgMBAGwkAYCAyEgTAQBgIDYSAMhIEwEBgIA2EgDAQGwkAYCAOBgTAQBsJAYCAMhIEwEAZSAQNhIAyEgcBAGAgDYSAwEAbCQBgIDISBMBAGAgNhIAyEgTAQGAgDYSAMBAbCQBgIA4GBMBAGwkBgIAyEgTAQBgIDYSAMhIHgagFbRvDDIysmkgAAAABJRU5ErkJggg==',
+  go:      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAABZElEQVR42u3SQQ0AAAjEsJOGDPSiDAuEd5MqWJbpgrdIgIEwEAbCQGAgDISBMBAYCANhIAwEBsJAGAgDgYEwEAbCQBgIDISBMBAGAgNhIAyEgcBAGAgDYSAwEAbCQBgIA4GBMBAGwkBgIAyEgTAQGAgDYSAMBAbCQBgIA4GBMBAGwkAYCAyEgTAQBgIDYSAMhIHAQBgIA2EgMBAGwkAYCAOBgTAQBsJAYCAMhIEwEBgIA2EgDAQGwkAYCANhIDAQBsJAGAgMhIEwEAYCA2EgDISBwEAYCANhIDAQBsJAGAgDgYEwEAbCQGAgDISBMBAYCANhIAwEBsJAGAgDYSAwEAbCQBgIDISBMBAGAgNhIAyEgcBAGAgDYSAMpAIGwkAYCAOBgTAQBsJAYCAMhIEwEBgIA2EgDAQGwkAYCANhIDAQBsJAGAgMhIEwEAYCA2EgDISBwEAYCANhIAwEBsJAGAgDwdUC5XarX/9MR3cAAAAASUVORK5CYII=',
+  oops:    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAABZElEQVR42u3SQQ0AAAjEsJOPK3TgBguEd5MqWJbqgbdIgIEwEAbCQGAgDISBMBAYCANhIAwEBsJAGAgDgYEwEAbCQBgIDISBMBAGAgNhIAyEgcBAGAgDYSAwEAbCQBgIA4GBMBAGwkBgIAyEgTAQGAgDYSAMBAbCQBgIA4GBMBAGwkAYCAyEgTAQBgIDYSAMhIHAQBgIA2EgMBAGwkAYCAOBgTAQBsJAYCAMhIEwEBgIA2EgDAQGwkAYCANhIDAQBsJAGAgMhIEwEAYCA2EgDISBwEAYCANhIDAQBsJAGAgDgYEwEAbCQGAgDISBMBAYCANhIAwEBsJAGAgDYSAwEAbCQBgIDISBMBAGAgNhIAyEgcBAGAgDYSAMpAIGwkAYCAOBgTAQBsJAYCAMhIEwEBgIA2EgDAQGwkAYCANhIDAQBsJAGAgMhIEwEAYCA2EgDISBwEAYCANhIAwEBsJAGAgDwdUCisQR70QL77AAAAAASUVORK5CYII=',
+};
+function catIconForReminder(r) {
+  if (r === 0) return CAT_NOTIF_ICONS.go;
+  if (r <= 30) return CAT_NOTIF_ICONS.headsup;
+  return CAT_NOTIF_ICONS.idle;
+}
 function addSwipeToDelete(el, onDelete) {
   const SNAP = 80;
   let startX = 0, startY = 0, curDx = 0, locked = false, isOpen = false, deleted = false;
@@ -1698,6 +1714,110 @@ function checkAndFireReminders() {
   }
 }
 
+// ─── Currency calculator ──────────────────────────────────────────────────────
+const calcState = { fromAmt: '1', liveRate: null, rateTs: null, rateKey: null, fetching: false, fetchErr: null };
+
+async function fetchLiveRate(from, to) {
+  if (from === to) { calcState.liveRate = 1; calcState.rateKey = `${from}_${to}`; calcState.rateTs = Date.now(); return 1; }
+  const key = `${from}_${to}`;
+  const now = Date.now();
+  if (calcState.rateKey === key && calcState.liveRate && calcState.rateTs && now - calcState.rateTs < 3600000) return calcState.liveRate;
+  calcState.fetching = true;
+  const ctrl = new AbortController();
+  const timeout = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    const res = await fetch(`${WORKER_URL}/fx?from=${from}&to=${to}`, { signal: ctrl.signal, cache: 'no-store' });
+    clearTimeout(timeout);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const rate = data.rates?.[to];
+    if (!rate) throw new Error(`No rate for ${to}`);
+    calcState.liveRate = rate; calcState.rateKey = key; calcState.rateTs = now; calcState.fetchErr = null;
+    return rate;
+  } catch (e) {
+    clearTimeout(timeout);
+    calcState.fetchErr = e.name === 'AbortError' ? 'Timed out' : e.message;
+    return null;
+  } finally { calcState.fetching = false; }
+}
+
+function renderCurrencyCalc(trip) {
+  const fromCur = calcState.fromCur || trip.travelCurrency;
+  const toCur   = calcState.toCur   || state.settings.homeCurrency;
+  const rate    = calcState.liveRate && calcState.rateKey === `${fromCur}_${toCur}` ? calcState.liveRate
+                : state.settings.fxRates[fromCur] ? state.settings.fxRates[fromCur] / (state.settings.fxRates[toCur] || 1) : null;
+  const fmtNum  = n => n >= 1000 ? n.toLocaleString(undefined, { maximumFractionDigits: 0 }) : n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  const isLive  = calcState.liveRate && calcState.rateKey === `${fromCur}_${toCur}`;
+  const rateStr = rate ? `1 ${fromCur} = ${rate >= 1000 ? rate.toLocaleString(undefined,{maximumFractionDigits:0}) : rate.toLocaleString(undefined,{maximumFractionDigits:4})} ${toCur}` : '';
+  const hint    = calcState.fetching ? 'Fetching live rate…' : isLive ? `${rateStr} · live` : rateStr || 'No rate available';
+  const existing = document.getElementById('currency-calc');
+  if (existing && existing.dataset.rendered === 'true') {
+    const amt = parseFloat(document.getElementById('calc-input')?.value) || 0;
+    const result = rate ? (amt * rate) : null;
+    const resEl = document.getElementById('calc-result'); const hintEl = document.getElementById('calc-hint');
+    if (resEl) resEl.textContent = result !== null ? fmtNum(result) : '—';
+    if (hintEl) hintEl.textContent = hint;
+    const fromEl = document.getElementById('calc-from-btn'); const toEl = document.getElementById('calc-to-btn');
+    if (fromEl) fromEl.textContent = fromCur; if (toEl) toEl.textContent = toCur;
+    return;
+  }
+  const amt = parseFloat(calcState.fromAmt) || 0;
+  const result = rate ? (amt * rate) : null;
+  const el = document.getElementById('currency-calc');
+  if (!el) return;
+  el.dataset.rendered = 'true';
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div class="lbl">CURRENCY</div>
+      <button class="pill-add" id="calc-refresh" style="color:var(--text-3);border-color:var(--border);">↻</button>
+    </div>
+    <div class="calc-row">
+      <div class="calc-side">
+        <input class="calc-input" id="calc-input" type="number" inputmode="decimal" placeholder="0" value="${escapeAttr(String(calcState.fromAmt))}">
+        <button class="calc-currency-btn" id="calc-from-btn">${escapeHtml(fromCur)}</button>
+      </div>
+      <button class="calc-swap" id="calc-swap-btn">⇄</button>
+      <div class="calc-side right">
+        <div class="calc-result" id="calc-result">${result !== null ? fmtNum(result) : '—'}</div>
+        <button class="calc-currency-btn" id="calc-to-btn">${escapeHtml(toCur)}</button>
+      </div>
+    </div>
+    <div class="calc-rate-hint" id="calc-hint">${escapeHtml(hint)}</div>`;
+  document.getElementById('calc-input').addEventListener('input', e => {
+    calcState.fromAmt = e.target.value;
+    const a = parseFloat(e.target.value) || 0; const r = rate ? (a * rate) : null;
+    document.getElementById('calc-result').textContent = r !== null ? fmtNum(r) : '—';
+  });
+  document.getElementById('calc-input').addEventListener('focus', e => e.target.select());
+  document.getElementById('calc-refresh').addEventListener('click', () => {
+    calcState.rateTs = null; calcState.liveRate = null; el.dataset.rendered = '';
+    fetchLiveRate(fromCur, toCur).then(() => renderCurrencyCalc(trip));
+  });
+  document.getElementById('calc-swap-btn').addEventListener('click', () => {
+    [calcState.fromCur, calcState.toCur] = [toCur, fromCur];
+    calcState.liveRate = null; calcState.rateTs = null; el.dataset.rendered = '';
+    fetchLiveRate(calcState.fromCur || trip.travelCurrency, calcState.toCur || state.settings.homeCurrency).then(() => renderCurrencyCalc(trip));
+    renderCurrencyCalc(trip);
+  });
+  const ALL_CURRENCIES = ['USD','EUR','GBP','JPY','KRW','CNY','AUD','CAD','CHF','HKD','SGD','TWD','THB','INR','MXN','BRL','NZD','SEK','NOK','DKK','PLN','VND','PHP','IDR','MYR','AED','SAR','TRY'];
+  const openPicker = (which) => {
+    const cur = which === 'from' ? fromCur : toCur;
+    const opts = ALL_CURRENCIES.map(c => `<button class="picker-row${c===cur?' selected':''}" data-cur="${c}">${c}</button>`).join('');
+    openBottomSheet('Select currency', `<div style="padding:0 4px">${opts}</div>`, () => {});
+    setTimeout(() => {
+      document.querySelectorAll('[data-cur]').forEach(b => b.addEventListener('click', () => {
+        if (which === 'from') calcState.fromCur = b.dataset.cur; else calcState.toCur = b.dataset.cur;
+        calcState.liveRate = null; calcState.rateTs = null; el.dataset.rendered = '';
+        closeBottomSheet();
+        fetchLiveRate(calcState.fromCur || trip.travelCurrency, calcState.toCur || state.settings.homeCurrency).then(() => renderCurrencyCalc(trip));
+        renderCurrencyCalc(trip);
+      }));
+    }, 50);
+  };
+  document.getElementById('calc-from-btn').addEventListener('click', () => openPicker('from'));
+  document.getElementById('calc-to-btn').addEventListener('click', () => openPicker('to'));
+}
+
 // ─── Weather ─────────────────────────────────────────────────────────────────
 const wx = { home: null, travel: null };
 function wxIcon(c) {
@@ -1749,14 +1869,32 @@ function render() {
 }
 
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { state.activeTab = t.dataset.tab; document.querySelectorAll('.tab').forEach(x => x.removeAttribute('aria-current')); t.setAttribute('aria-current', 'page'); render(); document.getElementById('scroll-area').scrollTop = 0; }));
-document.getElementById('cat-fab').addEventListener('click', () => openAddEventModal());
+// Triple-tap easter egg
+const EASTER_EGGS = ['meow?', 'purrrr', '(=ↀωↀ=)', '...zzz', 'pet me!', 'nya~', '(＾• ω •＾)', '*bonk*', 'biscuit!', 'feed me'];
+let _tapCount = 0, _tapTimer = null, _easterActive = false;
+function handleCatTap() {
+  if (_easterActive) return;
+  _tapCount++;
+  clearTimeout(_tapTimer);
+  _tapTimer = setTimeout(() => { _tapCount = 0; }, 600);
+  if (_tapCount >= 3) {
+    _tapCount = 0; _easterActive = true;
+    const msg = EASTER_EGGS[Math.floor(Math.random() * EASTER_EGGS.length)];
+    const bubble = document.getElementById('cat-bubble');
+    const bt = document.getElementById('bubble-text');
+    bubble.classList.remove('cat-hidden');
+    bt.textContent = msg;
+    setTimeout(() => { _easterActive = false; renderCat(); }, 2000);
+  }
+}
+document.getElementById('cat-fab').addEventListener('click', () => { handleCatTap(); if (!_easterActive) openAddEventModal(); });
 document.getElementById('add-fab-mini').addEventListener('click', () => openAddEventModal());
 document.getElementById('modal-cancel').addEventListener('click', closeModal);
 document.getElementById('modal-save').addEventListener('click', saveEventModal);
 document.getElementById('bs-cancel').addEventListener('click', closeBottomSheet);
 document.getElementById('bs-save').addEventListener('click', () => { if (_bsOnSave) { const r = _bsOnSave(); if (r !== false) closeBottomSheet(); } });
 document.getElementById('bs-backdrop').addEventListener('click', closeBottomSheet);
-document.getElementById('debug-badge').addEventListener('click', () => { const c = [null, 'idle', 'headsup', 'go', 'oops']; const i = c.indexOf(state.debugStateOverride); state.debugStateOverride = c[(i + 1) % c.length]; renderCat(); if (state.activeTab === 'trip') renderTrip(); });
+document.getElementById('debug-badge').addEventListener('click', () => { const c = [null, 'idle', 'headsup', 'go', 'oops', 'sleeping']; const i = c.indexOf(state.debugStateOverride); state.debugStateOverride = c[(i + 1) % c.length]; renderCat(); if (state.activeTab === 'trip') renderTrip(); });
 
 function init() {
   if (!loadState()) seedTrips();
