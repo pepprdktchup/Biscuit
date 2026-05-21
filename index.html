@@ -596,25 +596,21 @@ function computeCatState() {
     .map(e => ({ ...e, sd: new Date(e.start) }))
     .sort((a, b) => a.sd - b.sd);
 
-  // Priority 1 — GO: event in progress (started but not finished)
-  // Use most recently started go event so overlapping events show the current one
+  // Priority 1 — HEADSUP overrides GO if next event starts within 30 min
+  // You need the warning more than a reminder you're already in something
+  const next = sorted.find(e => e.sd > now);
+  if (next && (next.sd - now) / 60000 <= 30) return { state: 'headsup', event: next };
+
+  // Priority 2 — GO: event in progress, pick most recently started
   const goEvents = sorted.filter(e => {
     const m = (e.sd - now) / 60000;
     const dur = e.allDay ? 1440 : (e.durationMin || 60);
     return m <= 0 && m > -dur;
   });
-  if (goEvents.length > 0) {
-    // Pick the most recently started (last in the go list)
-    const go = goEvents[goEvents.length - 1];
-    return { state: 'go', event: go };
-  }
+  if (goEvents.length > 0) return { state: 'go', event: goEvents[goEvents.length - 1] };
 
-  // Priority 2 — HEADSUP: next event within 30 min (beats oops)
-  const next = sorted.find(e => e.sd > now);
-  if (next) {
-    const m = (next.sd - now) / 60000;
-    if (m <= 30) return { state: 'headsup', event: next };
-  }
+  // Priority 3 — HEADSUP: next event >0 but within 30 min (no overlap)
+  if (next && (next.sd - now) / 60000 <= 30) return { state: 'headsup', event: next };
 
   // Priority 3 — OOPS: most recent event ended within last 10 min
   const oops = sorted.find(e => {
