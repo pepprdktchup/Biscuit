@@ -1158,10 +1158,12 @@ function openAddExpenseSheet(existing) {
     if (isEdit) {
       existing.title = title; existing.amount = amount; existing.currency = currency; existing.category = category;
     } else {
-      trip.expenses.push({ id: newId(), date: new Date().toISOString(), category, amount, currency, title });
+      const newExp = { id: newId(), date: new Date().toISOString(), category, amount, currency, title };
+      getActiveTrip().expenses.push(newExp);
     }
-    // Let the outer bs-save handler close the sheet, then render after transition
-    setTimeout(() => render(), 280);
+    saveState();
+    // Render after sheet close animation completes
+    setTimeout(() => { state.activeTab = 'budget'; renderBudget(); }, 280);
   });
   if (isEdit) {
     document.getElementById('delete-expense').addEventListener('click', () => {
