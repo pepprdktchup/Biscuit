@@ -795,6 +795,21 @@ function renderTrip() {
     }
   });
 
+  // Budget summary card at bottom of trip tab
+  const all = allExpensesForView();
+  const spent = all.reduce((s, x) => s + toHomeCurrency(x.amount, x.currency), 0);
+  const todaySpentNative = all.filter(x => new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date(x.date)) === todayKey).reduce((s, x) => s + (x.currency === trip.travelCurrency ? x.amount : 0), 0);
+  const { dayOf, total: dayTotal } = computeTripDay();
+  const pace = trip.budgetTotal * (dayOf / dayTotal);
+  const onTrack = spent <= pace;
+  html += `<div class="budget-card" id="budget-card">
+    <div><div class="lbl">DAY ${dayOf} OF ${dayTotal} · BUDGET</div>
+      <div style="font-size: 16px; font-weight: 500; margin-top: 3px;">${fmtMoneyHome(spent)} <span style="color: var(--text-2); font-size: 12px; font-weight: 400;">of ${fmtMoneyHome(trip.budgetTotal)}</span></div></div>
+    <div style="text-align: right;"><div class="pixel-font" style="font-size: 11px; color: ${onTrack ? 'var(--success)' : 'var(--accent-text)'};">${onTrack ? 'ON TRACK' : 'OVER PACE'}</div>
+      <div style="font-size: 10px; color: var(--text-3); margin-top: 2px;">${escapeHtml(fmtMoneyNative(todaySpentNative, trip.travelCurrency))} today</div></div>
+  </div>`;
+  html += `<div style="height: 110px;"></div>`;
+
   document.getElementById('screen-content').innerHTML = html;
   applyIcons(document.getElementById('screen-content')); // fix disappearing checkmarks
 
