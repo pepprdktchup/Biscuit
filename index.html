@@ -1893,8 +1893,14 @@ document.getElementById('bs-cancel').addEventListener('click', closeBottomSheet)
 document.getElementById('bs-save').addEventListener('click', () => { if (_bsOnSave) { const r = _bsOnSave(); if (r !== false) closeBottomSheet(); } });
 document.getElementById('bs-backdrop').addEventListener('click', closeBottomSheet);
 document.getElementById('debug-badge').addEventListener('click', () => { const c = [null, 'idle', 'headsup', 'go', 'oops', 'sleeping']; const i = c.indexOf(state.debugStateOverride); state.debugStateOverride = c[(i + 1) % c.length]; renderCat(); if (state.activeTab === 'trip') renderTrip(); });
-document.getElementById('debug-badge').title = APP_VERSION;
-document.getElementById('debug-badge').addEventListener('dblclick', () => alert('Version: ' + APP_VERSION + '\nExpenses: ' + (getActiveTrip()?.expenses?.length ?? 'N/A')));
+// Long press debug badge → version + expense count
+(function() {
+  let _lt = null;
+  const el = document.getElementById('debug-badge');
+  el.addEventListener('touchstart', () => { _lt = setTimeout(() => { alert('v' + APP_VERSION + ' · expenses: ' + (getActiveTrip()?.expenses?.length ?? '?')); }, 800); }, { passive: true });
+  el.addEventListener('touchend', () => clearTimeout(_lt), { passive: true });
+  el.addEventListener('touchmove', () => clearTimeout(_lt), { passive: true });
+})();
 
 function init() {
   const hasData = !!localStorage.getItem(STORAGE_KEY);
