@@ -155,6 +155,7 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .calc-rate-hint { font-size: 11px; color: var(--text-3); margin-top: 8px; }
 .note-card-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 0.5px solid var(--border); }
 .note-card-header.collapsed { border-bottom: none; }
+.note-card-drag { color: var(--text-3); font-size: 16px; cursor: grab; padding: 2px 2px 2px 0; touch-action: none; flex-shrink: 0; }
 .note-collapse-btn { background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 11px; margin-left: auto; padding: 2px 6px; transition: transform 0.2s; flex-shrink: 0; }
 .note-collapse-btn.collapsed { transform: rotate(-90deg); }
 .note-body.collapsed { display: none; }
@@ -873,6 +874,7 @@ function renderNotes() {
     const collapsed = !!note.collapsed;
     html += `<div class="note-card" data-note-id="${escapeAttr(note.id)}">
       <div class="note-card-header${collapsed ? ' collapsed' : ''}">
+        <span class="note-card-drag" aria-hidden="true">⠿</span>
         <input class="note-title-input" data-note-title="${escapeAttr(note.id)}" value="${escapeAttr(note.title)}" placeholder="Untitled list">
         <div class="note-type-seg">
           <button class="${note.type === 'text' ? 'active' : ''}" data-note-type="text" data-note-id="${escapeAttr(note.id)}">TEXT</button>
@@ -947,6 +949,46 @@ function renderNotes() {
     renderNotes();
   }));
   document.getElementById('add-category').addEventListener('click', () => { trip.notes.push({ id: newId(), title: '', type: 'checklist', items: [], text: '' }); renderNotes(); const titles = document.querySelectorAll('.note-title-input'); if (titles.length) titles[titles.length-1].focus(); });
+
+  // Drag-to-reorder note cards
+  let _cardDragSrc = null;
+  const _onCardMove = e => {
+    if (!_cardDragSrc) return;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    document.querySelectorAll('.note-card').forEach(c => c.classList.remove('drag-over'));
+    const cards = [...document.querySelectorAll('.note-card')];
+    const target = cards.find(c => { const r = c.getBoundingClientRect(); return clientY < r.top + r.height / 2 && c !== _cardDragSrc; });
+    if (target) target.classList.add('drag-over');
+  };
+  const _onCardEnd = () => {
+    if (!_cardDragSrc) return;
+    const target = document.querySelector('.note-card.drag-over');
+    if (target && target !== _cardDragSrc) {
+      const si = trip.notes.findIndex(x => x.id === _cardDragSrc.dataset.noteId);
+      const ti = trip.notes.findIndex(x => x.id === target.dataset.noteId);
+      if (si >= 0 && ti >= 0) { const [note] = trip.notes.splice(si, 1); trip.notes.splice(ti, 0, note); saveState(); }
+    }
+    document.querySelectorAll('.note-card').forEach(c => { c.classList.remove('dragging'); c.classList.remove('drag-over'); });
+    _cardDragSrc = null;
+    window.removeEventListener('mousemove', _onCardMove);
+    window.removeEventListener('touchmove', _onCardMove);
+    window.removeEventListener('mouseup', _onCardEnd);
+    window.removeEventListener('touchend', _onCardEnd);
+    renderNotes();
+  };
+  document.querySelectorAll('.note-card-drag').forEach(handle => {
+    const card = handle.closest('.note-card');
+    handle.addEventListener('mousedown', e => {
+      _cardDragSrc = card; card.classList.add('dragging'); e.stopPropagation();
+      window.addEventListener('mousemove', _onCardMove, { passive: true });
+      window.addEventListener('mouseup', _onCardEnd);
+    });
+    handle.addEventListener('touchstart', e => {
+      _cardDragSrc = card; card.classList.add('dragging'); e.stopPropagation();
+      window.addEventListener('touchmove', _onCardMove, { passive: true });
+      window.addEventListener('touchend', _onCardEnd);
+    }, { passive: true });
+  });
 }
 
 function renderSettings() {
@@ -1035,9 +1077,10 @@ function renderSettings() {
   document.getElementById('reset-demo').addEventListener('click', () => { if (confirm('Wipe all trips, events, expenses, and notes? This re-seeds demo data.')) { try { localStorage.removeItem(STORAGE_KEY); } catch (e) {} seedTrips(); state.debugStateOverride = null; render(); } });
 }
 function fmtReminder(r) {
-  if (r >= 1440) { const d = r / 1440; return `${d} day${d === 1 ? '' : 's'}`; }
-  if (r >= 60) { const h = r / 60; return `${h} h`; }
-  return `${r} min`;
+  if (r === 0) return 'At time of event';
+  if (r >= 1440) { const d = r / 1440; return `${d} day${d === 1 ? '' : 's'} before`; }
+  if (r >= 60) { const h = r / 60; return `${h}h before`; }
+  return `${r} min before`;
 }
 
 function openAddEventModal(existingEvent) {
@@ -1365,7 +1408,7 @@ function openReminderPicker(currentList, onSelect) {
   const available = REMINDER_OPTIONS.filter(r => !currentList.includes(r));
   if (available.length === 0) { alert('All available reminders are already added.'); return; }
   const rows = available.map(r => `<button class="picker-row" data-reminder="${r}">
-    <div style="flex: 1; font-size: 13px; font-weight: 500;">${escapeHtml(fmtReminder(r))} before</div>
+    <div style="flex: 1; font-size: 13px; font-weight: 500;">${escapeHtml(fmtReminder(r))}</div>
   </button>`).join('');
   openBottomSheet('Add reminder', `<div style="max-height: 55vh; overflow-y: auto;">${rows}</div>`, null, { hideSave: true });
   document.querySelectorAll('.picker-row[data-reminder]').forEach(b => b.addEventListener('click', () => {
