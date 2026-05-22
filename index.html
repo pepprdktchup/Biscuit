@@ -1257,17 +1257,19 @@ function openAddExpenseSheet(existing) {
   const html = `<div class="input-card"><div class="field-label">DESCRIPTION</div><input type="text" id="ex-title" placeholder="Ichiran ramen, taxi to Roppongi..." value="${escapeAttr(e.title)}"></div>
     <div class="input-card"><div class="field-label">AMOUNT</div><div class="row" style="margin-top: 4px;"><div class="col"><input type="number" inputmode="decimal" id="ex-amount" min="0" step="1" placeholder="0" value="${e.amount || ''}"></div><div class="col" style="flex: 0 0 90px;"><select id="ex-currency">${currencyOpts}</select></div></div></div>
     <div class="input-card"><div class="field-label">CATEGORY</div><select id="ex-category" style="margin-top: 4px;">${categories.map(c => `<option value="${c}" ${e.category === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+    <div class="input-card"><div class="field-label">NOTES</div><textarea id="ex-notes" rows="3" placeholder="Any additional details..." style="width:100%;border:none;background:transparent;font-family:inherit;font-size:13px;color:var(--text);padding:4px 0;outline:none;resize:none;line-height:1.5;margin-top:4px;">${escapeHtml(e.notes || '')}</textarea></div>
     ${isEdit ? `<div style="text-align: center; padding: 8px 16px 24px;"><button class="btn-ghost" id="delete-expense" style="color: var(--accent-text); border-color: var(--accent-bg);">Delete expense</button></div>` : ''}`;
   openBottomSheet(isEdit ? 'Edit expense' : 'New expense', html, () => {
     const title = document.getElementById('ex-title').value.trim();
     const amount = parseFloat(document.getElementById('ex-amount').value);
     const currency = document.getElementById('ex-currency').value;
     const category = document.getElementById('ex-category').value;
+    const notes = document.getElementById('ex-notes').value.trim();
     if (!title || !amount || amount <= 0) { alert('Description and amount required'); return false; }
     if (isEdit) {
-      existing.title = title; existing.amount = amount; existing.currency = currency; existing.category = category;
+      existing.title = title; existing.amount = amount; existing.currency = currency; existing.category = category; existing.notes = notes;
     } else {
-      getActiveTrip().expenses.push({ id: newId(), date: new Date().toISOString(), category, amount, currency, title });
+      getActiveTrip().expenses.push({ id: newId(), date: new Date().toISOString(), category, amount, currency, title, notes });
     }
     saveState();
     render();
