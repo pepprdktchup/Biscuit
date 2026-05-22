@@ -843,7 +843,7 @@ function renderBudget() {
   renderCurrencyCalc(trip);
   fetchLiveRate(calcState.fromCur || trip.travelCurrency, calcState.toCur || state.settings.homeCurrency).then(() => renderCurrencyCalc(trip));
   document.getElementById('trip-header-card').addEventListener('click', openTripSwitcher);
-  document.getElementById('add-expense-btn').addEventListener('click', openAddExpenseSheet);
+  document.getElementById('add-expense-btn').addEventListener('click', () => openAddExpenseSheet());
   document.querySelectorAll('.expense-row').forEach(r => r.addEventListener('click', () => {
     const eid = r.getAttribute('data-event-id');
     if (eid) { const e = getActiveTrip().events.find(x => x.id === eid); if (e) openAddEventModal(e); return; }
