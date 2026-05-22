@@ -304,6 +304,7 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 
 <script>
 // ─── Push config — fill in WORKER_URL after deploying the Cloudflare Worker ──
+const APP_VERSION = '2026-05-22a';
 const VAPID_PUBLIC_KEY = 'BLpLqz1wBuBDjvUasJWNijffahqH3VZ-pCivZ4duQbyI9VC5t76GdxY0ih8xrhDHW4YQdqNz5iAUbbpIH5oET5g';
 const WORKER_URL = 'https://biscuit-push.hanbit-designs.workers.dev';
 
@@ -1892,6 +1893,8 @@ document.getElementById('bs-cancel').addEventListener('click', closeBottomSheet)
 document.getElementById('bs-save').addEventListener('click', () => { if (_bsOnSave) { const r = _bsOnSave(); if (r !== false) closeBottomSheet(); } });
 document.getElementById('bs-backdrop').addEventListener('click', closeBottomSheet);
 document.getElementById('debug-badge').addEventListener('click', () => { const c = [null, 'idle', 'headsup', 'go', 'oops', 'sleeping']; const i = c.indexOf(state.debugStateOverride); state.debugStateOverride = c[(i + 1) % c.length]; renderCat(); if (state.activeTab === 'trip') renderTrip(); });
+document.getElementById('debug-badge').title = APP_VERSION;
+document.getElementById('debug-badge').addEventListener('dblclick', () => alert('Version: ' + APP_VERSION + '\nExpenses: ' + (getActiveTrip()?.expenses?.length ?? 'N/A')));
 
 function init() {
   const hasData = !!localStorage.getItem(STORAGE_KEY);
