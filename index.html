@@ -1070,7 +1070,7 @@ function openAddEventModal(existingEvent) {
     </div>
     <div class="input-card"><div class="field-label">WHERE</div><input type="text" id="ev-location" placeholder="Tsukiji Outer Market" value="${escapeAttr(e.location || '')}"></div>
     <div class="input-card"><div class="field-label">PRICE <span style="font-weight: 400; color: var(--text-3); text-transform: none; letter-spacing: 0;">· syncs to Money</span></div>
-      <div class="row" style="margin-top: 4px;"><div class="col"><input type="number" id="ev-price" min="0" step="1" placeholder="0" value="${e.price || ''}"></div><div class="col" style="flex: 0 0 90px;"><select id="ev-price-currency">${currencyOpts}</select></div></div>
+      <div class="row" style="margin-top: 4px;"><div class="col"><input type="number" inputmode="decimal" id="ev-price" min="0" step="1" placeholder="0" value="${e.price || ''}"></div><div class="col" style="flex: 0 0 90px;"><select id="ev-price-currency">${currencyOpts}</select></div></div>
       <div class="divider"></div>
       <div class="field-label">CATEGORY</div>
       <select id="ev-category" style="margin-top: 4px;">${['food','transit','shopping','lodging','activity','other'].map(c => `<option value="${c}" ${(e.category || 'activity') === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
@@ -1167,7 +1167,7 @@ function openAddExpenseSheet(existing) {
   openBottomSheet(isEdit ? 'Edit expense' : 'New expense', html, () => {
     const titleEl = document.getElementById('ex-title');
     const amountEl = document.getElementById('ex-amount');
-    if (!titleEl || !amountEl) { alert('ERROR: form elements missing'); return false; }
+    if (!titleEl || !amountEl) return false;
     const title = titleEl.value.trim();
     const amount = parseFloat(amountEl.value);
     const currency = document.getElementById('ex-currency').value;
@@ -1178,10 +1178,9 @@ function openAddExpenseSheet(existing) {
     } else {
       getActiveTrip().expenses.push({ id: newId(), date: new Date().toISOString(), category, amount, currency, title });
     }
-    const saved = getActiveTrip().expenses.length;
     saveState();
-    alert(`Saved! Trip now has ${saved} expenses. Reloading...`);
-    setTimeout(() => { state.activeTab = 'budget'; render(); }, 350);
+    state.activeTab = 'budget';
+    render();
   });
   if (isEdit) {
     document.getElementById('delete-expense').addEventListener('click', () => {
