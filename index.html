@@ -172,7 +172,7 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .note-type-seg button.active { background: var(--card); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 .note-delete-btn { background: none; border: none; cursor: pointer; padding: 4px; color: var(--text-3); font-size: 16px; }
 .note-delete-btn:hover { color: var(--accent-text); }
-.note-body { padding: 8px 12px 12px; }
+.note-body { padding: 8px 12px 12px; max-height: 40vh; overflow-y: auto; }
 .note-textarea { width: 100%; border: none; background: transparent; font-family: inherit; font-size: 13px; color: var(--text); padding: 4px 0; outline: none; resize: none; min-height: 80px; max-height: 35vh; overflow-y: auto; line-height: 1.5; }
 .note-textarea::placeholder { color: var(--text-3); }
 .check-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
