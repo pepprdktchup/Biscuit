@@ -142,7 +142,10 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .expense-amount { text-align: right; flex-shrink: 0; }
 .expense-amount .native { font-size: 13px; font-weight: 500; }
 .expense-amount .home { font-size: 11px; color: var(--text-3); margin-top: 2px; }
-.note-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin: 0 12px 12px; overflow: hidden; }
+.filter-chip { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-2); cursor: pointer; flex-shrink: 0; }
+.past-day { opacity: 0.5; cursor: pointer; }
+.past-day:hover { opacity: 0.75; }
+.day-collapse-arrow { font-size: 11px; }
 .calc-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin: 12px 12px 0; padding: 14px 16px; }
 .calc-row { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
 .calc-side { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
@@ -418,7 +421,9 @@ const state = {
     defaultReminders: [30, 60], fxLastRefresh: Date.now(),
   },
   debugStateOverride: null,
-  firedReminders: [], // array of "eventId:reminderMin" strings — prevents double-firing
+  firedReminders: [],
+  tripFilter: 'upcoming', // 'upcoming' or 'all'
+  expandedDays: new Set(), // day keys expanded in 'all' mode
 };
 
 function getActiveTrip() {
@@ -709,32 +714,37 @@ function renderTrip() {
   const dateKey = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
   const todayKey = dateKey(now);
   const sorted = [...trip.events].sort((a, b) => new Date(a.start) - new Date(b.start));
-  const upcoming = sorted.find(e => !e.checkedOff && new Date(e.start) > now);
-  const { dayOf, total: dayTotal } = computeTripDay();
+  const upcoming = sorted.find(e => !e.checkedOff && (e.allDay || new Date(e.start) > now));
+  const tripFilter = state.tripFilter || 'upcoming'; // 'upcoming' or 'all'
+
   let html = '';
 
-  // Trip switcher chip — only show if more than one trip
+  // Top row: trip chip (left) + filter chip (right)
+  html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px 0 0;margin-bottom:0;">`;
   if (state.trips.length > 1) {
-    html += `<div class="trip-chip" id="trip-chip-trip" role="button" tabindex="0">
-      <span>${escapeHtml(trip.name)}</span>
-    </div>`;
+    html += `<div class="trip-chip" id="trip-chip-trip" role="button" tabindex="0"><span>${escapeHtml(trip.name)}</span></div>`;
+  } else {
+    html += `<div></div>`;
   }
+  html += `<button class="filter-chip" id="trip-filter-btn">${tripFilter === 'upcoming' ? 'UPCOMING' : 'ALL DAYS'}</button>`;
+  html += `</div>`;
 
+  // Up next card
   if (upcoming) {
-    const m = Math.max(0, Math.round(minutesUntil(upcoming.start)));
+    const m = upcoming.allDay ? null : Math.max(0, Math.round(minutesUntil(upcoming.start)));
+    const label = upcoming.allDay ? 'TODAY' : (m < 1 ? 'NOW' : 'IN ' + fmtDuration(m).toUpperCase());
     html += `<div class="up-next">
-      <div class="up-next-header"><div class="up-next-dot"></div><div class="lbl" style="color: var(--accent-text);">UP NEXT · ${m < 1 ? 'NOW' : 'IN ' + fmtDuration(m).toUpperCase()}</div></div>
+      <div class="up-next-header"><div class="up-next-dot"></div><div class="lbl" style="color: var(--accent-text);">UP NEXT · ${label}</div></div>
       <div class="up-next-title">${escapeHtml(upcoming.title)}</div>
       <div class="up-next-meta">
-        <div>${escapeHtml(fmtTimeInZone(new Date(upcoming.start), tz))}${upcoming.location ? ' · ' + escapeHtml(upcoming.location) : ''}</div>
+        <div>${upcoming.allDay ? 'All day' : escapeHtml(fmtTimeInZone(new Date(upcoming.start), tz))}${upcoming.location ? ' · ' + escapeHtml(upcoming.location) : ''}</div>
         ${upcoming.bookingRef ? `<div>Booking <span class="pixel-font" style="color: var(--text);">${escapeHtml(upcoming.bookingRef)}</span></div>` : ''}
         ${upcoming.price ? `<div>Cost <span class="pixel-font" style="color: var(--text);">${escapeHtml(fmtMoneyNative(upcoming.price, upcoming.priceCurrency))}</span></div>` : ''}
       </div>
     </div>`;
   }
 
-  // Group events by day-in-travel-timezone, then render each day chronologically.
-  // Today is always shown even if empty so it acts as an anchor.
+  // Group events by day
   const byDay = new Map();
   sorted.forEach(e => {
     const k = dateKey(new Date(e.start));
@@ -747,45 +757,77 @@ function renderTrip() {
   dayKeys.forEach(k => {
     const evs = byDay.get(k);
     const isToday = k === todayKey;
-    const sampleDate = isToday ? now : new Date(evs[0].start);
+    const isPast = k < todayKey;
+
+    // In upcoming mode, skip past days entirely
+    if (tripFilter === 'upcoming' && isPast) return;
+    // Skip today if no events and not filtering to upcoming
+    if (isToday && evs.length === 0 && tripFilter === 'upcoming') return;
+
+    const sampleDate = isToday ? now : (evs.length > 0 ? new Date(evs[0].start) : new Date(k + 'T12:00:00'));
     const dateLabel = fmtFullDate(sampleDate, tz).toUpperCase();
     const headerLabel = isToday ? `TODAY · ${dateLabel}` : dateLabel;
-    html += `<div class="day-header"><div class="lbl">${escapeHtml(headerLabel)}</div><div style="font-size: 11px; color: var(--text-3);">${evs.length} event${evs.length === 1 ? '' : 's'}</div></div>
-      <div class="dotted-rule" style="margin: 4px 16px;"></div>
-      <div class="evt-list">`;
-    if (evs.length === 0) html += `<div class="empty">No events. Tap the cat to add one.</div>`;
-    else evs.forEach(e => {
-      const ck = e.checkedOff ? 'checked' : '';
-      html += `<div class="evt-row ${ck}" data-event-id="${escapeAttr(e.id)}">
-        <button class="evt-check" data-toggle="${escapeAttr(e.id)}" aria-label="Toggle done"><i class="ti ti-check"></i></button>
-        <div class="evt-time pixel-font">${escapeHtml(fmtTimeInZone(new Date(e.start), tz))}</div>
-        <div style="flex: 1; min-width: 0;"><div class="evt-title">${escapeHtml(e.title)}</div><div class="evt-meta">${fmtDuration(e.durationMin)}${e.location ? ' · ' + escapeHtml(e.location) : ''}</div></div>
-        ${e.price ? `<div class="evt-price">${escapeHtml(fmtMoneyNative(e.price, e.priceCurrency))}</div>` : ''}
-      </div>`;
-    });
-    html += `</div>`;
+
+    // Past days in ALL mode are collapsed by default; store expanded state in a Set
+    const expandedKey = `expanded_${k}`;
+    const isExpanded = !isPast || (state.expandedDays && state.expandedDays.has(k));
+    const collapseIcon = isPast ? (isExpanded ? '▾' : '▸') : '';
+
+    html += `<div class="day-header${isPast ? ' past-day' : ''}" data-day-key="${escapeAttr(k)}">
+      <div class="lbl">${collapseIcon ? `<span class="day-collapse-arrow">${collapseIcon}</span> ` : ''}${escapeHtml(headerLabel)}</div>
+      <div style="font-size: 11px; color: var(--text-3);">${evs.length} event${evs.length === 1 ? '' : 's'}</div>
+    </div>
+    <div class="dotted-rule" style="margin: 4px 16px;"></div>`;
+
+    if (isExpanded) {
+      html += `<div class="evt-list">`;
+      if (evs.length === 0) html += `<div class="empty">No events. Tap the cat to add one.</div>`;
+      else evs.forEach(e => {
+        const ck = e.checkedOff ? 'checked' : '';
+        html += `<div class="evt-row ${ck}" data-event-id="${escapeAttr(e.id)}">
+          <button class="evt-check" data-toggle="${escapeAttr(e.id)}" aria-label="Toggle done"><i class="ti ti-check"></i></button>
+          <div class="evt-time pixel-font">${e.allDay ? 'All day' : escapeHtml(fmtTimeInZone(new Date(e.start), tz))}</div>
+          <div style="flex: 1; min-width: 0;"><div class="evt-title">${escapeHtml(e.title)}</div><div class="evt-meta">${e.allDay ? '' : fmtDuration(e.durationMin) + ' '}${e.location ? (e.allDay ? '' : '· ') + escapeHtml(e.location) : ''}</div></div>
+          ${e.price ? `<div class="evt-price">${escapeHtml(fmtMoneyNative(e.price, e.priceCurrency))}</div>` : ''}
+        </div>`;
+      });
+      html += `</div>`;
+    }
   });
 
-  const all = allExpensesForView();
-  const spent = all.reduce((s, x) => s + toHomeCurrency(x.amount, x.currency), 0);
-  const todaySpentNative = all.filter(x => new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date(x.date)) === todayKey).reduce((s, x) => s + (x.currency === trip.travelCurrency ? x.amount : 0), 0);
-  const pace = trip.budgetTotal * (dayOf / dayTotal);
-  const onTrack = spent <= pace;
-  html += `<div class="budget-card" id="budget-card">
-    <div><div class="lbl">DAY ${dayOf} OF ${dayTotal} · BUDGET</div>
-      <div style="font-size: 16px; font-weight: 500; margin-top: 3px;">${fmtMoneyHome(spent)} <span style="color: var(--text-2); font-size: 12px; font-weight: 400;">of ${fmtMoneyHome(trip.budgetTotal)}</span></div></div>
-    <div style="text-align: right;"><div class="pixel-font" style="font-size: 11px; color: ${onTrack ? 'var(--success)' : 'var(--accent-text)'};">${onTrack ? 'ON TRACK' : 'OVER PACE'}</div>
-      <div style="font-size: 10px; color: var(--text-3); margin-top: 2px;">${escapeHtml(fmtMoneyNative(todaySpentNative, trip.travelCurrency))} today</div></div>
-  </div>`;
-
-  // Bottom space so the last item isn't hidden behind the cat FAB (Trip tab only)
-  html += `<div style="height: 110px;"></div>`;
-
   document.getElementById('screen-content').innerHTML = html;
+  applyIcons(document.getElementById('screen-content')); // fix disappearing checkmarks
+
   if (state.trips.length > 1) {
-    document.getElementById('trip-chip-trip').addEventListener('click', openTripSwitcher);
+    const chipEl = document.getElementById('trip-chip-trip');
+    if (chipEl) chipEl.addEventListener('click', openTripSwitcher);
   }
-  document.querySelectorAll('[data-toggle]').forEach(b => b.addEventListener('click', ev => { ev.stopPropagation(); const e = trip.events.find(x => x.id === b.getAttribute('data-toggle')); if (e) { e.checkedOff = !e.checkedOff; render(); } }));
+
+  // Filter toggle
+  document.getElementById('trip-filter-btn').addEventListener('click', () => {
+    state.tripFilter = state.tripFilter === 'upcoming' ? 'all' : 'upcoming';
+    renderTrip();
+  });
+
+  // Expand/collapse past days
+  document.querySelectorAll('.day-header.past-day').forEach(h => {
+    h.addEventListener('click', () => {
+      const k = h.getAttribute('data-day-key');
+      if (!state.expandedDays) state.expandedDays = new Set();
+      if (state.expandedDays.has(k)) state.expandedDays.delete(k);
+      else state.expandedDays.add(k);
+      renderTrip();
+    });
+  });
+
+  // Checkmark toggle
+  document.querySelectorAll('[data-toggle]').forEach(b => b.addEventListener('click', ev => {
+    ev.stopPropagation();
+    const e = trip.events.find(x => x.id === b.getAttribute('data-toggle'));
+    if (e) { e.checkedOff = !e.checkedOff; saveState(); renderTrip(); }
+  }));
+
+  // Event row tap to edit + swipe to delete
   document.querySelectorAll('.evt-row').forEach(r => {
     r.addEventListener('click', () => { const e = trip.events.find(x => x.id === r.getAttribute('data-event-id')); if (e) openAddEventModal(e); });
     addSwipeToDelete(r, () => {
@@ -795,7 +837,6 @@ function renderTrip() {
     });
   });
 }
-
 function renderBudget() {
   const trip = getActiveTrip();
   if (!trip) { document.getElementById('screen-content').innerHTML = `<div class="empty" style="padding: 60px 24px;">No trips yet.</div>`; return; }
