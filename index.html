@@ -823,42 +823,97 @@ function renderBudget() {
   </div>
   <div class="day-header"><div class="lbl">EXPENSES</div><button class="pill-add" id="add-expense-btn"><i class="ti ti-plus"></i> add</button></div>
   <div class="dotted-rule" style="margin: 4px 16px;"></div>
-  <div class="card-block">`;
-  if (all.length === 0) html += `<div class="empty">No expenses yet. The cat applauds your frugality.</div>`;
-  else all.forEach(x => {
-    const icon = icons[x.category] || icons.other;
-    const ha = toHomeCurrency(x.amount, x.currency);
-    html += `<div class="expense-row ${x.fromEvent ? 'from-event' : ''}" data-event-id="${escapeAttr(x.eventId || '')}" data-expense-id="${escapeAttr(x.id)}">
-      <div class="expense-cat-icon"><i class="${icon}"></i></div>
-      <div class="expense-content">
-        <div class="expense-title">${escapeHtml(x.title)}${x.fromEvent ? '<span class="link-mark">EVENT</span>' : ''}</div>
-        <div class="expense-meta">${escapeHtml(fmtDayShort(new Date(x.date), tz))} ${escapeHtml(fmtTimeInZone(new Date(x.date), tz))} · ${escapeHtml(x.category)}</div>
-      </div>
-      <div class="expense-amount"><div class="native pixel-font">${escapeHtml(fmtMoneyNative(x.amount, x.currency))}</div><div class="home">${fmtMoneyHome(ha)}</div></div>
-    </div>`;
-  });
+  <div class="card-block" id="expense-list">`;
+
+  if (all.length === 0) {
+    html += `<div class="empty">No expenses yet. The cat applauds your frugality.</div>`;
+  } else {
+    all.forEach(x => {
+      const icon = icons[x.category] || icons.other;
+      const ha = toHomeCurrency(x.amount, x.currency);
+      const canDelete = !x.fromEvent;
+      html += `<div class="expense-row ${x.fromEvent ? 'from-event' : ''}" data-event-id="${escapeAttr(x.eventId || '')}" data-expense-id="${escapeAttr(x.id)}" style="position:relative;overflow:hidden;border-bottom:0.5px solid var(--border);">
+        <div class="expense-inner" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--card);position:relative;z-index:2;transition:transform 0.2s ease;will-change:transform;">
+          <div class="expense-cat-icon"><i class="${icon}"></i></div>
+          <div class="expense-content">
+            <div class="expense-title">${escapeHtml(x.title)}${x.fromEvent ? '<span class="link-mark">EVENT</span>' : ''}</div>
+            <div class="expense-meta">${escapeHtml(fmtDayShort(new Date(x.date), tz))} ${escapeHtml(fmtTimeInZone(new Date(x.date), tz))} · ${escapeHtml(x.category)}</div>
+          </div>
+          <div class="expense-amount"><div class="native pixel-font">${escapeHtml(fmtMoneyNative(x.amount, x.currency))}</div><div class="home">${fmtMoneyHome(ha)}</div></div>
+        </div>
+        ${canDelete ? `<button class="expense-del-reveal" data-xid="${escapeAttr(x.id)}" style="position:absolute;right:-80px;top:0;bottom:0;width:80px;background:#FF3B30;color:#fff;border:none;font-size:11px;font-weight:700;letter-spacing:1px;z-index:1;transition:right 0.2s ease;">DELETE</button>` : ''}
+      </div>`;
+    });
+  }
   html += `</div>`;
+
   document.getElementById('screen-content').innerHTML = html;
-  applyIcons(document.getElementById('screen-content')); // MUST run before addSwipeToDelete moves DOM nodes
+  applyIcons(document.getElementById('expense-list'));
   renderCurrencyCalc(trip);
   fetchLiveRate(calcState.fromCur || trip.travelCurrency, calcState.toCur || state.settings.homeCurrency).then(() => renderCurrencyCalc(trip));
   document.getElementById('trip-header-card').addEventListener('click', openTripSwitcher);
   document.getElementById('add-expense-btn').addEventListener('click', openAddExpenseSheet);
+
   document.querySelectorAll('.expense-row').forEach(r => {
-    r.addEventListener('click', () => {
+    r.addEventListener('click', e => {
+      if (e.target.closest('.expense-del-reveal')) return;
       const eid = r.getAttribute('data-event-id');
-      if (eid) { const e = getActiveTrip().events.find(x => x.id === eid); if (e) openAddEventModal(e); return; }
+      if (eid) { const ev = getActiveTrip().events.find(x => x.id === eid); if (ev) openAddEventModal(ev); return; }
       const xid = r.getAttribute('data-expense-id');
       const exp = getActiveTrip().expenses.find(x => x.id === xid);
       if (exp) openAddExpenseSheet(exp);
     });
-    if (!r.getAttribute('data-event-id')) {
-      addSwipeToDelete(r, () => {
-        const xid = r.getAttribute('data-expense-id');
-        getActiveTrip().expenses = getActiveTrip().expenses.filter(x => x.id !== xid);
-        saveState(); renderBudget();
-      });
-    }
+  });
+
+  document.querySelectorAll('.expense-del-reveal').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const xid = btn.getAttribute('data-xid');
+      getActiveTrip().expenses = getActiveTrip().expenses.filter(x => x.id !== xid);
+      saveState(); renderBudget();
+    });
+  });
+
+  let activeSwipeRow = null;
+  document.querySelectorAll('.expense-row:not(.from-event)').forEach(row => {
+    const inner = row.querySelector('.expense-inner');
+    const delBtn = row.querySelector('.expense-del-reveal');
+    if (!inner || !delBtn) return;
+    let sx = 0, sy = 0, dx = 0, locked = false, open = false;
+    const SNAP = 80;
+    row.addEventListener('touchstart', e => {
+      if (activeSwipeRow && activeSwipeRow !== row) {
+        const pi = activeSwipeRow.querySelector('.expense-inner');
+        const pb = activeSwipeRow.querySelector('.expense-del-reveal');
+        if (pi) { pi.style.transition = 'transform 0.2s ease'; pi.style.transform = ''; }
+        if (pb) { pb.style.transition = 'right 0.2s ease'; pb.style.right = '-80px'; }
+        activeSwipeRow = null;
+      }
+      sx = e.touches[0].clientX; sy = e.touches[0].clientY; dx = 0; locked = false;
+    }, { passive: true });
+    row.addEventListener('touchmove', e => {
+      const cx = e.touches[0].clientX, cy = e.touches[0].clientY;
+      if (!locked) {
+        if (Math.abs(cx-sx) < 4 && Math.abs(cy-sy) < 4) return;
+        if (Math.abs(cy-sy) > Math.abs(cx-sx)) return;
+        locked = true;
+      }
+      const base = open ? -SNAP : 0;
+      dx = Math.min(0, Math.max(-SNAP, (cx-sx)+base));
+      inner.style.transition = 'none'; inner.style.transform = `translateX(${dx}px)`;
+      delBtn.style.transition = 'none'; delBtn.style.right = `${-SNAP-dx}px`;
+      e.preventDefault();
+    }, { passive: false });
+    row.addEventListener('touchend', () => {
+      if (!locked) return;
+      inner.style.transition = 'transform 0.2s ease';
+      delBtn.style.transition = 'right 0.2s ease';
+      const shouldOpen = open ? dx > -SNAP*0.4 ? false : true : dx < -SNAP*0.4;
+      open = shouldOpen;
+      inner.style.transform = open ? `translateX(-${SNAP}px)` : '';
+      delBtn.style.right = open ? '0' : '-80px';
+      activeSwipeRow = open ? row : null;
+    });
   });
 }
 function s_fmtDate(iso) {
