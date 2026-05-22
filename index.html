@@ -1835,7 +1835,8 @@ document.getElementById('bs-backdrop').addEventListener('click', closeBottomShee
 document.getElementById('debug-badge').addEventListener('click', () => { const c = [null, 'idle', 'headsup', 'go', 'oops', 'sleeping']; const i = c.indexOf(state.debugStateOverride); state.debugStateOverride = c[(i + 1) % c.length]; renderCat(); if (state.activeTab === 'trip') renderTrip(); });
 
 function init() {
-  if (!loadState()) seedTrips();
+  const hasData = !!localStorage.getItem(STORAGE_KEY);
+  if (!loadState() && !hasData) seedTrips(); // only seed if localStorage is genuinely empty
   render();
   // Sync reminder schedule to Worker on startup (covers events added while offline)
   if (state.settings.pushOn && WORKER_URL) syncSchedule(false);
