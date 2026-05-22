@@ -142,7 +142,7 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .expense-amount { text-align: right; flex-shrink: 0; }
 .expense-amount .native { font-size: 13px; font-weight: 500; }
 .expense-amount .home { font-size: 11px; color: var(--text-3); margin-top: 2px; }
-.filter-chip { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-2); cursor: pointer; flex-shrink: 0; }
+.filter-chip { display: inline-flex; align-items: center; background: var(--bg); border: 1px solid var(--border); border-radius: 999px; padding: 6px 10px; font-size: 11px; font-weight: 500; letter-spacing: 0.04em; color: var(--text-2); cursor: pointer; flex-shrink: 0; text-transform: uppercase; }
 .past-day { opacity: 0.5; cursor: pointer; }
 .past-day:hover { opacity: 0.75; }
 .day-collapse-arrow { font-size: 11px; }
@@ -720,9 +720,9 @@ function renderTrip() {
   let html = '';
 
   // Top row: trip chip (left) + filter chip (right)
-  html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px 0 0;margin-bottom:0;">`;
+  html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px 0;">`;
   if (state.trips.length > 1) {
-    html += `<div class="trip-chip" id="trip-chip-trip" role="button" tabindex="0"><span>${escapeHtml(trip.name)}</span></div>`;
+    html += `<div class="trip-chip" id="trip-chip-trip" role="button" tabindex="0" style="margin:0;"><span>${escapeHtml(trip.name)}</span></div>`;
   } else {
     html += `<div></div>`;
   }
