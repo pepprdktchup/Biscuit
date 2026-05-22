@@ -156,6 +156,9 @@ body { background: var(--bg-frame); font-family: system-ui, -apple-system, "Sego
 .calc-result { font-size: 22px; font-weight: 600; font-family: var(--pixel); color: var(--accent-text); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .calc-swap { background: none; border: none; cursor: pointer; font-size: 18px; color: var(--text-3); padding: 0 4px; flex-shrink: 0; align-self: center; }
 .calc-rate-hint { font-size: 11px; color: var(--text-3); margin-top: 8px; }
+.note-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); margin: 0 12px 12px; overflow: hidden; transition: opacity 0.15s; }
+.note-card.dragging { opacity: 0.4; }
+.note-card.drag-over { outline: 2px solid var(--accent); outline-offset: 1px; }
 .note-card-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 0.5px solid var(--border); }
 .note-card-header.collapsed { border-bottom: none; }
 .note-card-drag { color: var(--text-3); font-size: 16px; cursor: grab; padding: 2px 2px 2px 0; touch-action: none; flex-shrink: 0; }
