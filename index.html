@@ -631,7 +631,7 @@ function computeCatState() {
   const trip = getActiveTrip();
   const events = trip ? trip.events : [];
   if (state.debugStateOverride) { const n = events.find(e => !e.checkedOff); return { state: state.debugStateOverride, event: n || null }; }
-  const now = trip ? nowNaive(trip.travelZone) : new Date();
+  const now = new Date();
   if (state.settings.catQuiet && isQuietHoursNow()) return { state: 'sleeping', event: null };
 
   const sorted = events
@@ -739,10 +739,9 @@ function renderTrip() {
   const now = new Date();
   const tz = trip.travelZone;
   const dateKey = (d) => new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
-  const todayKey = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit' }).format(now);
+  const todayKey = new Intl.DateTimeFormat('en-CA').format(now);
   const sorted = [...trip.events].sort((a, b) => new Date(a.start) - new Date(b.start));
-  const nowTz = nowNaive(tz);
-  const upcoming = sorted.find(e => !e.checkedOff && (e.allDay || new Date(e.start) > nowTz));
+  const upcoming = sorted.find(e => !e.checkedOff && (e.allDay || new Date(e.start) > now));
   const tripFilter = state.tripFilter || 'upcoming'; // 'upcoming' or 'all'
 
   let html = '';
@@ -759,7 +758,7 @@ function renderTrip() {
 
   // Up next card
   if (upcoming) {
-    const m = upcoming.allDay ? null : Math.max(0, Math.round(minutesUntil(upcoming.start, tz)));
+    const m = upcoming.allDay ? null : Math.max(0, Math.round(minutesUntil(upcoming.start)));
     const label = upcoming.allDay ? 'TODAY' : (m < 1 ? 'NOW' : 'IN ' + fmtDuration(m).toUpperCase());
     html += `<div class="up-next">
       <div class="up-next-header"><div class="up-next-dot"></div><div class="lbl" style="color: var(--accent-text);">UP NEXT · ${label}</div></div>
