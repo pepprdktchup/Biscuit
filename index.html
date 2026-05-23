@@ -649,8 +649,8 @@ function computeCatState() {
   const headsupMins = state.settings.headsupMins ?? 30;
   const oopsMins = state.settings.oopsMins ?? 10;
 
-  // HEADSUP: next event starts within headsupMins — takes priority over everything
-  const next = sorted.find(e => e.sd > now);
+  // HEADSUP: next TIMED event starts within headsupMins — takes priority over everything
+  const next = sorted.find(e => e.sd > now && !e.allDay);
   if (next && (next.sd - now) / 60000 <= headsupMins) return { state: 'headsup', event: next };
 
   // GO: event currently in progress
@@ -746,7 +746,11 @@ function renderTrip() {
   const dateKey = (d) => new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
   const todayKey = new Intl.DateTimeFormat('en-CA').format(now);
   const sorted = [...trip.events].sort((a, b) => new Date(a.start) - new Date(b.start));
-  const upcoming = sorted.find(e => !e.checkedOff && (e.allDay || new Date(e.start) > now));
+  const upcoming = sorted.find(e => {
+    if (e.checkedOff) return false;
+    if (e.allDay) return e.start.slice(0, 10) >= todayKey;
+    return new Date(e.start) > now;
+  });
   const tripFilter = state.tripFilter || 'upcoming'; // 'upcoming' or 'all'
 
   let html = '';
@@ -1236,10 +1240,16 @@ function openAddEventModal(existingEvent) {
   const currencyOpts = `<option value="${trip.travelCurrency}" ${(e.priceCurrency || trip.travelCurrency) === trip.travelCurrency ? 'selected' : ''}>${trip.travelCurrency} ${trip.travelCurrencySymbol}</option><option value="USD" ${e.priceCurrency === 'USD' ? 'selected' : ''}>USD $</option>`;
 
   body.innerHTML = `<div class="input-card"><div class="field-label">TITLE</div><input type="text" id="ev-title" placeholder="Tsukiji food tour" value="${escapeAttr(e.title)}"></div>
-    <div class="input-card"><div class="field-label">WHEN <span style="font-weight: 400; color: var(--text-3); text-transform: none; letter-spacing: 0;">· ${escapeHtml(trip.travelLabel)} time</span></div>
-      <div class="row" style="margin-top: 6px;"><div class="col"><input type="datetime-local" id="ev-start" value="${e.start && !e.start.endsWith('Z') ? e.start.slice(0,16) : isoLocal(new Date(e.start))}"><div class="input-hint" id="ev-start-hint"></div></div></div>
-      <div class="divider"></div>
-      <div class="row"><div class="col"><div class="field-label">DURATION</div><div class="row" style="gap: 8px; margin-top: 4px;"><div class="col"><input type="number" id="ev-dur-h" min="0" max="23" step="1" placeholder="0" value="${Math.floor(e.durationMin / 60)}" style="text-align:center;"><div style="text-align:center;font-size:10px;color:var(--text-2);margin-top:2px;letter-spacing:1px;">HR</div></div><div style="display:flex;align-items:center;padding:0 2px;font-size:18px;color:var(--text-2);">:</div><div class="col"><input type="number" id="ev-dur-m" min="0" max="59" step="5" placeholder="0" value="${e.durationMin % 60}" style="text-align:center;"><div style="text-align:center;font-size:10px;color:var(--text-2);margin-top:2px;letter-spacing:1px;">MIN</div></div></div></div></div>
+    <div class="input-card">
+      <div class="field-label" style="display:flex;justify-content:space-between;align-items:center;">WHEN <span style="font-weight:400;color:var(--text-3);text-transform:none;letter-spacing:0;">· ${escapeHtml(trip.travelLabel)} time</span><label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><span style="font-size:10px;font-weight:600;letter-spacing:1px;color:var(--text-2);">ALL DAY</span><button type="button" class="toggle ${e.allDay ? 'on' : ''}" id="ev-allday"><div class="thumb"></div></button></label></div>
+      <div id="ev-time-fields" style="${e.allDay ? 'display:none' : ''}">
+        <div class="row" style="margin-top: 6px;"><div class="col"><input type="datetime-local" id="ev-start" value="${e.allDay ? '' : (e.start && !e.start.endsWith('Z') ? e.start.slice(0,16) : isoLocal(new Date(e.start)))}"><div class="input-hint" id="ev-start-hint"></div></div></div>
+        <div class="divider"></div>
+        <div class="row"><div class="col"><div class="field-label">DURATION</div><div class="row" style="gap: 8px; margin-top: 4px;"><div class="col"><input type="number" id="ev-dur-h" min="0" max="23" step="1" placeholder="0" value="${Math.floor(e.durationMin / 60)}" style="text-align:center;"><div style="text-align:center;font-size:10px;color:var(--text-2);margin-top:2px;letter-spacing:1px;">HR</div></div><div style="display:flex;align-items:center;padding:0 2px;font-size:18px;color:var(--text-2);">:</div><div class="col"><input type="number" id="ev-dur-m" min="0" max="59" step="5" placeholder="0" value="${e.durationMin % 60}" style="text-align:center;"><div style="text-align:center;font-size:10px;color:var(--text-2);margin-top:2px;letter-spacing:1px;">MIN</div></div></div></div></div>
+      </div>
+      <div id="ev-date-fields" style="${e.allDay ? 'margin-top:6px' : 'display:none'}">
+        <input type="date" id="ev-start-date" value="${e.allDay ? e.start.slice(0,10) : isoLocal(new Date(now.getTime() + 3600000)).slice(0,10)}">
+      </div>
     </div>
     <div class="input-card"><div class="field-label">WHERE</div><input type="text" id="ev-location" placeholder="Tsukiji Outer Market" value="${escapeAttr(e.location || '')}"></div>
     <div class="input-card"><div class="field-label">PRICE <span style="font-weight: 400; color: var(--text-3); text-transform: none; letter-spacing: 0;">· syncs to Money</span></div>
@@ -1254,7 +1264,16 @@ function openAddEventModal(existingEvent) {
     ${existingEvent ? `<div style="text-align: center; padding: 8px 16px;"><button class="btn-ghost" id="delete-event" style="color: var(--accent-text); border-color: var(--accent-bg);">Delete event</button></div>` : ''}`;
 
   const updHint = () => {}; // no timezone conversion — what you type is what gets saved
-  document.getElementById('ev-start').addEventListener('input', updHint);
+  const evStartEl = document.getElementById('ev-start');
+  if (evStartEl) evStartEl.addEventListener('input', updHint);
+
+  document.getElementById('ev-allday').addEventListener('click', () => {
+    e.allDay = !e.allDay;
+    document.getElementById('ev-allday').classList.toggle('on', e.allDay);
+    document.getElementById('ev-time-fields').style.display = e.allDay ? 'none' : '';
+    document.getElementById('ev-date-fields').style.display = e.allDay ? '' : 'none';
+    if (e.allDay) document.getElementById('ev-date-fields').style.marginTop = '6px';
+  });
 
   const rerender = ev => { document.getElementById('reminders-edit').innerHTML = ev.reminders.map(r => `<span class="pill">${fmtReminder(r)}<span class="x" data-mod-remove="${r}">×</span></span>`).join('') + `<button class="pill-add" id="mod-add-reminder"><i class="ti ti-plus"></i> add</button>`; bind(ev); applyIcons(document.getElementById('modal-body')); };
   const bind = ev => {
@@ -1278,10 +1297,17 @@ function saveEventModal() {
   const isNew = body.__isNew;
   const title = document.getElementById('ev-title').value.trim();
   if (!title) { alert('Title is required'); return; }
-  const startStr = document.getElementById('ev-start').value;
-  if (!startStr) { alert('Start time is required'); return; }
-  // Store exactly as typed — no timezone conversion
-  const startISO = startStr;
+  const allDay = !!e.allDay;
+  let startISO;
+  if (allDay) {
+    const dateVal = document.getElementById('ev-start-date').value;
+    if (!dateVal) { alert('Date is required'); return; }
+    startISO = dateVal + 'T00:00';
+  } else {
+    const startStr = document.getElementById('ev-start').value;
+    if (!startStr) { alert('Start time is required'); return; }
+    startISO = startStr;
+  }
   const pv = document.getElementById('ev-price').value;
   const data = {
     id: isNew ? newId() : e.id,
@@ -1290,7 +1316,8 @@ function saveEventModal() {
     bookingRef: document.getElementById('ev-booking').value.trim(),
     notes: document.getElementById('ev-notes').value.trim(),
     start: startISO,
-    durationMin: (parseInt(document.getElementById('ev-dur-h').value, 10) || 0) * 60 + (parseInt(document.getElementById('ev-dur-m').value, 10) || 0) || 60,
+    allDay,
+    durationMin: allDay ? 1440 : ((parseInt(document.getElementById('ev-dur-h').value, 10) || 0) * 60 + (parseInt(document.getElementById('ev-dur-m').value, 10) || 0) || 60),
     reminders: [...e.reminders],
     checkedOff: isNew ? false : e.checkedOff,
     price: pv ? parseFloat(pv) : null,
