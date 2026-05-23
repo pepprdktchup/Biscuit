@@ -653,21 +653,21 @@ function computeCatState() {
   const next = sorted.find(e => e.sd > now && !e.allDay);
   if (next && (next.sd - now) / 60000 <= headsupMins) return { state: 'headsup', event: next };
 
-  // GO: event currently in progress
-  const goEvents = sorted.filter(e => {
-    const m = (e.sd - now) / 60000;
-    const dur = e.allDay ? 1440 : (e.durationMin || 60);
-    return m <= 0 && m > -dur;
-  });
-  if (goEvents.length > 0) return { state: 'go', event: goEvents[goEvents.length - 1] };
+  // GO: timed events in progress take full priority
+  const goTimed = sorted.filter(e => !e.allDay && (() => { const m = (e.sd - now) / 60000; return m <= 0 && m > -(e.durationMin || 60); })());
+  if (goTimed.length > 0) return { state: 'go', event: goTimed[goTimed.length - 1] };
 
-  // OOPS: most recent event ended within oopsMins
+  // OOPS: timed events only — all-day events never go oops
   const oops = sorted.find(e => {
-    const dur = e.allDay ? 1440 : (e.durationMin || 60);
-    const endMinsAgo = -(e.sd - now) / 60000 - dur;
+    if (e.allDay) return false;
+    const endMinsAgo = -(e.sd - now) / 60000 - (e.durationMin || 60);
     return endMinsAgo >= 0 && endMinsAgo < oopsMins;
   });
   if (oops) return { state: 'oops', event: oops };
+
+  // GO fallback: all-day event covering today (only if no timed events had GO/OOPS)
+  const goAllDay = sorted.find(e => e.allDay && (() => { const m = (e.sd - now) / 60000; return m <= 0 && m > -1440; })());
+  if (goAllDay) return { state: 'go', event: goAllDay };
 
   // Priority 4 — IDLE
   if (next) return { state: 'idle', event: next };
