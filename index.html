@@ -674,8 +674,7 @@ function computeCatState() {
   return { state: 'idle', event: null };
 }
 function isQuietHoursNow() {
-  const trip = getActiveTrip();
-  const zone = trip ? trip.travelZone : state.settings.homeZone;
+  const zone = state.settings.homeZone;
   const h = getHourInZone(new Date(), zone);
   const qs = state.settings.quietStartHour, qe = state.settings.quietEndHour;
   if (qs > qe) return h >= qs || h < qe;
