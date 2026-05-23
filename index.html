@@ -658,10 +658,7 @@ function computeCatState() {
   });
   if (goEvents.length > 0) return { state: 'go', event: goEvents[goEvents.length - 1] };
 
-  // Priority 3 — HEADSUP: next event >0 but within 30 min (no overlap)
-  if (next && (next.sd - now) / 60000 <= 30) return { state: 'headsup', event: next };
-
-  // Priority 3 — OOPS: most recent event ended within last 10 min
+  // OOPS: most recent event ended within last 10 min
   const oops = sorted.find(e => {
     const dur = e.allDay ? 1440 : (e.durationMin || 60);
     const endMinsAgo = -(e.sd - now) / 60000 - dur;
