@@ -715,7 +715,7 @@ function renderTrip() {
   if (!trip) { document.getElementById('screen-content').innerHTML = `<div class="empty" style="padding: 60px 24px;">No trips yet. Create one from the Money tab.</div>`; return; }
   const now = new Date();
   const tz = trip.travelZone;
-  const dateKey = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+  const dateKey = (d) => new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
   const todayKey = dateKey(now);
   const sorted = [...trip.events].sort((a, b) => new Date(a.start) - new Date(b.start));
   const upcoming = sorted.find(e => !e.checkedOff && (e.allDay || new Date(e.start) > now));
@@ -741,7 +741,7 @@ function renderTrip() {
       <div class="up-next-header"><div class="up-next-dot"></div><div class="lbl" style="color: var(--accent-text);">UP NEXT · ${label}</div></div>
       <div class="up-next-title">${escapeHtml(upcoming.title)}</div>
       <div class="up-next-meta">
-        <div>${upcoming.allDay ? 'All day' : escapeHtml(fmtTimeInZone(new Date(upcoming.start), tz))}${upcoming.location ? ' · ' + escapeHtml(upcoming.location) : ''}</div>
+        <div>${upcoming.allDay ? 'All day' : escapeHtml(new Date(upcoming.start).toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit',hour12:true}))}${upcoming.location ? ' · ' + escapeHtml(upcoming.location) : ''}</div>
         ${upcoming.bookingRef ? `<div>Booking <span class="pixel-font" style="color: var(--text);">${escapeHtml(upcoming.bookingRef)}</span></div>` : ''}
         ${upcoming.price ? `<div>Cost <span class="pixel-font" style="color: var(--text);">${escapeHtml(fmtMoneyNative(upcoming.price, upcoming.priceCurrency))}</span></div>` : ''}
       </div>
@@ -769,7 +769,7 @@ function renderTrip() {
     if (isToday && evs.length === 0 && tripFilter === 'upcoming') return;
 
     const sampleDate = isToday ? now : (evs.length > 0 ? new Date(evs[0].start) : new Date(k + 'T12:00:00'));
-    const dateLabel = fmtFullDate(sampleDate, tz).toUpperCase();
+    const dateLabel = fmtFullDate(sampleDate, Intl.DateTimeFormat().resolvedOptions().timeZone).toUpperCase();
     const headerLabel = isToday ? `TODAY · ${dateLabel}` : dateLabel;
 
     // Past days in ALL mode are collapsed by default; store expanded state in a Set
@@ -790,7 +790,7 @@ function renderTrip() {
         const ck = e.checkedOff ? 'checked' : '';
         html += `<div class="evt-row ${ck}" data-event-id="${escapeAttr(e.id)}">
           <button class="evt-check" data-toggle="${escapeAttr(e.id)}" aria-label="Toggle done"><i class="ti ti-check"></i></button>
-          <div class="evt-time pixel-font">${e.allDay ? 'All day' : escapeHtml(fmtTimeInZone(new Date(e.start), tz))}</div>
+          <div class="evt-time pixel-font">${e.allDay ? 'All day' : escapeHtml(new Date(e.start).toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit',hour12:true}))}</div>
           <div style="flex: 1; min-width: 0;"><div class="evt-title">${escapeHtml(e.title)}</div><div class="evt-meta">${e.allDay ? '' : fmtDuration(e.durationMin) + ' '}${e.location ? (e.allDay ? '' : '· ') + escapeHtml(e.location) : ''}</div></div>
           ${e.price ? `<div class="evt-price">${escapeHtml(fmtMoneyNative(e.price, e.priceCurrency))}</div>` : ''}
         </div>`;
@@ -1174,8 +1174,8 @@ function openAddEventModal(existingEvent) {
     <div class="input-card"><div class="field-label">NOTES</div><textarea id="ev-notes" rows="8" placeholder="Anything else...">${escapeHtml(e.notes || '')}</textarea></div>
     ${existingEvent ? `<div style="text-align: center; padding: 8px 16px;"><button class="btn-ghost" id="delete-event" style="color: var(--accent-text); border-color: var(--accent-bg);">Delete event</button></div>` : ''}`;
 
-  const updHint = () => { const v = document.getElementById('ev-start').value; if (!v) return; const d = new Date(v); const bo = -new Date().getTimezoneOffset()/60; const to = zoneOffsetHours(trip.travelZone, new Date()); const adj = new Date(d.getTime() + (bo - to)*3600000); document.getElementById('ev-start-hint').textContent = `${fmtDayShort(adj, state.settings.homeZone)} ${fmtTimeInZone(adj, state.settings.homeZone)} ${state.settings.homeLabel}`; };
-  document.getElementById('ev-start').addEventListener('input', updHint); updHint();
+  const updHint = () => {}; // no timezone conversion — what you type is what gets saved
+  document.getElementById('ev-start').addEventListener('input', updHint);
 
   const rerender = ev => { document.getElementById('reminders-edit').innerHTML = ev.reminders.map(r => `<span class="pill">${fmtReminder(r)}<span class="x" data-mod-remove="${r}">×</span></span>`).join('') + `<button class="pill-add" id="mod-add-reminder"><i class="ti ti-plus"></i> add</button>`; bind(ev); applyIcons(document.getElementById('modal-body')); };
   const bind = ev => {
@@ -1201,10 +1201,8 @@ function saveEventModal() {
   if (!title) { alert('Title is required'); return; }
   const startStr = document.getElementById('ev-start').value;
   if (!startStr) { alert('Start time is required'); return; }
-  const d = new Date(startStr);
-  const bo = -new Date().getTimezoneOffset()/60;
-  const to = zoneOffsetHours(trip.travelZone, d);
-  const adj = new Date(d.getTime() + (bo - to)*3600000);
+  // Store exactly as entered — no timezone conversion. What you type is what you get.
+  const startISO = new Date(startStr).toISOString();
   const pv = document.getElementById('ev-price').value;
   const data = {
     id: isNew ? newId() : e.id,
@@ -1212,7 +1210,7 @@ function saveEventModal() {
     location: document.getElementById('ev-location').value.trim(),
     bookingRef: document.getElementById('ev-booking').value.trim(),
     notes: document.getElementById('ev-notes').value.trim(),
-    start: adj.toISOString(),
+    start: startISO,
     durationMin: (parseInt(document.getElementById('ev-dur-h').value, 10) || 0) * 60 + (parseInt(document.getElementById('ev-dur-m').value, 10) || 0) || 60,
     reminders: [...e.reminders],
     checkedOff: isNew ? false : e.checkedOff,
