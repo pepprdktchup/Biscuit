@@ -455,6 +455,8 @@ function loadState() {
     const d = JSON.parse(raw);
     if (!d || !Array.isArray(d.trips) || d.trips.length === 0) return false;
     state.trips = d.trips;
+    // Migrate UTC event starts (legacy Z-suffix) to naive travel-zone strings
+    state.trips.forEach(t => { (t.events || []).forEach(e => { if (e.start && e.start.endsWith('Z')) e.start = toNaiveLocal(new Date(e.start), t.travelZone); }); });
     // Heal stale travelLabels — single source of truth is the TIMEZONES table.
     state.trips.forEach(t => {
       const z = TIMEZONES.find(z => z.tz === t.travelZone);
@@ -486,7 +488,7 @@ function seedTrips() {
   const now = today.getTime();
   const mkEvt = (mins, title, dur, loc, ref, opts = {}) => ({
     id: newId(), title, location: loc, bookingRef: ref, notes: opts.notes || '',
-    start: new Date(now + mins * 60000).toISOString(),
+    start: toNaiveLocal(new Date(now + mins * 60000), 'Asia/Seoul'),
     durationMin: dur, reminders: [...state.settings.defaultReminders],
     checkedOff: false, price: opts.price || null,
     priceCurrency: opts.priceCurrency || 'KRW', category: opts.category || 'activity',
@@ -532,7 +534,7 @@ function seedTrips() {
   const jStart = new Date(japanTrip.tripStart + 'T09:00:00').getTime();
   const mkJ = (offsetHrs, title, dur, loc, ref, opts = {}) => ({
     id: newId(), title, location: loc, bookingRef: ref, notes: opts.notes || '',
-    start: new Date(jStart + offsetHrs * 3600000).toISOString(),
+    start: toNaiveLocal(new Date(jStart + offsetHrs * 3600000), 'Asia/Tokyo'),
     durationMin: dur, reminders: [...state.settings.defaultReminders],
     checkedOff: false, price: opts.price || null,
     priceCurrency: opts.priceCurrency || 'JPY', category: opts.category || 'activity',
@@ -564,6 +566,27 @@ function fmtTimeInZone(d, z) {
     .format(d)
     .replace(/[\s\u202F\u00A0]+(AM|PM)/i, '\u2009$1');
 }
+// Read time directly from a naive ISO string — no timezone conversion
+function fmtTimeNaive(iso) {
+  const m = iso && iso.match(/T(\d{2}):(\d{2})/);
+  if (!m) return '--:--';
+  let h = parseInt(m[1], 10), min = parseInt(m[2], 10);
+  const ap = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}\u2009${ap}`;
+}
+// Convert a UTC Date to naive ISO string in a given timezone (YYYY-MM-DDTHH:MM)
+function toNaiveLocal(utcDate, tz) {
+  const p = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12: false }).formatToParts(utcDate);
+  const o = {}; p.forEach(x => o[x.type] = x.value);
+  return `${o.year}-${o.month}-${o.day}T${o.hour === '24' ? '00' : o.hour}:${o.minute}`;
+}
+// Current wall-clock time in a timezone as a naive Date (for comparing against naive event starts)
+function nowNaive(tz) {
+  const p = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12: false }).formatToParts(new Date());
+  const o = {}; p.forEach(x => o[x.type] = x.value);
+  return new Date(`${o.year}-${o.month}-${o.day}T${o.hour === '24' ? '00' : o.hour}:${o.minute}:${o.second}`);
+}
 function fmtDateInZone(d, z) { return new Intl.DateTimeFormat('en-US', { timeZone: z, weekday: 'short', month: 'short', day: 'numeric' }).format(d); }
 function fmtDayShort(d, z) { return new Intl.DateTimeFormat('en-US', { timeZone: z, weekday: 'short' }).format(d); }
 function fmtFullDate(d, z) { return new Intl.DateTimeFormat('en-US', { timeZone: z, weekday: 'long', month: 'long', day: 'numeric' }).format(d); }
@@ -576,7 +599,7 @@ function zoneOffsetHours(z, d) {
   return (Date.UTC(yr, mo-1, da, hr === 24 ? 0 : hr, mi, se) - d.getTime()) / 3600000;
 }
 function offsetDeltaLabel(hz, tz, d) { const r = Math.round(zoneOffsetHours(tz, d) - zoneOffsetHours(hz, d)); if (r === 0) return '0h'; return (r > 0 ? '+' : '') + r + 'h'; }
-function minutesUntil(iso) { return (new Date(iso) - new Date()) / 60000; }
+function minutesUntil(iso, tz) { const ref = tz ? nowNaive(tz) : new Date(); return (new Date(iso) - ref) / 60000; }
 function fmtDuration(m) { m = Math.max(0, Math.round(m)); if (m < 60) return `${m}m`; const h = Math.floor(m/60), x = m%60; return x === 0 ? `${h}h` : `${h}h ${x}m`; }
 function fmtRelativeTime(ts) { const dm = (Date.now() - ts) / 60000; if (dm < 1) return 'just now'; if (dm < 60) return Math.round(dm) + ' min ago'; return Math.round(dm/60) + ' h ago'; }
 function computeTripDay() {
@@ -608,7 +631,7 @@ function computeCatState() {
   const trip = getActiveTrip();
   const events = trip ? trip.events : [];
   if (state.debugStateOverride) { const n = events.find(e => !e.checkedOff); return { state: state.debugStateOverride, event: n || null }; }
-  const now = new Date();
+  const now = trip ? nowNaive(trip.travelZone) : new Date();
   if (state.settings.catQuiet && isQuietHoursNow()) return { state: 'sleeping', event: null };
 
   const sorted = events
@@ -716,9 +739,10 @@ function renderTrip() {
   const now = new Date();
   const tz = trip.travelZone;
   const dateKey = (d) => new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
-  const todayKey = dateKey(now);
+  const todayKey = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit' }).format(now);
   const sorted = [...trip.events].sort((a, b) => new Date(a.start) - new Date(b.start));
-  const upcoming = sorted.find(e => !e.checkedOff && (e.allDay || new Date(e.start) > now));
+  const nowTz = nowNaive(tz);
+  const upcoming = sorted.find(e => !e.checkedOff && (e.allDay || new Date(e.start) > nowTz));
   const tripFilter = state.tripFilter || 'upcoming'; // 'upcoming' or 'all'
 
   let html = '';
@@ -735,13 +759,13 @@ function renderTrip() {
 
   // Up next card
   if (upcoming) {
-    const m = upcoming.allDay ? null : Math.max(0, Math.round(minutesUntil(upcoming.start)));
+    const m = upcoming.allDay ? null : Math.max(0, Math.round(minutesUntil(upcoming.start, tz)));
     const label = upcoming.allDay ? 'TODAY' : (m < 1 ? 'NOW' : 'IN ' + fmtDuration(m).toUpperCase());
     html += `<div class="up-next">
       <div class="up-next-header"><div class="up-next-dot"></div><div class="lbl" style="color: var(--accent-text);">UP NEXT · ${label}</div></div>
       <div class="up-next-title">${escapeHtml(upcoming.title)}</div>
       <div class="up-next-meta">
-        <div>${upcoming.allDay ? 'All day' : escapeHtml(new Date(upcoming.start).toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit',hour12:true}))}${upcoming.location ? ' · ' + escapeHtml(upcoming.location) : ''}</div>
+        <div>${upcoming.allDay ? 'All day' : escapeHtml(fmtTimeNaive(upcoming.start))}${upcoming.location ? ' · ' + escapeHtml(upcoming.location) : ''}</div>
         ${upcoming.bookingRef ? `<div>Booking <span class="pixel-font" style="color: var(--text);">${escapeHtml(upcoming.bookingRef)}</span></div>` : ''}
         ${upcoming.price ? `<div>Cost <span class="pixel-font" style="color: var(--text);">${escapeHtml(fmtMoneyNative(upcoming.price, upcoming.priceCurrency))}</span></div>` : ''}
       </div>
@@ -751,7 +775,7 @@ function renderTrip() {
   // Group events by day
   const byDay = new Map();
   sorted.forEach(e => {
-    const k = dateKey(new Date(e.start));
+    const k = e.start.slice(0, 10);
     if (!byDay.has(k)) byDay.set(k, []);
     byDay.get(k).push(e);
   });
@@ -768,8 +792,8 @@ function renderTrip() {
     // Skip today if no events and not filtering to upcoming
     if (isToday && evs.length === 0 && tripFilter === 'upcoming') return;
 
-    const sampleDate = isToday ? now : (evs.length > 0 ? new Date(evs[0].start) : new Date(k + 'T12:00:00'));
-    const dateLabel = fmtFullDate(sampleDate, Intl.DateTimeFormat().resolvedOptions().timeZone).toUpperCase();
+    const sampleDate = new Date(k + 'T12:00:00Z');
+    const dateLabel = fmtFullDate(sampleDate, 'UTC').toUpperCase();
     const headerLabel = isToday ? `TODAY · ${dateLabel}` : dateLabel;
 
     // Past days in ALL mode are collapsed by default; store expanded state in a Set
@@ -790,7 +814,7 @@ function renderTrip() {
         const ck = e.checkedOff ? 'checked' : '';
         html += `<div class="evt-row ${ck}" data-event-id="${escapeAttr(e.id)}">
           <button class="evt-check" data-toggle="${escapeAttr(e.id)}" aria-label="Toggle done"><i class="ti ti-check"></i></button>
-          <div class="evt-time pixel-font">${e.allDay ? 'All day' : escapeHtml(new Date(e.start).toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit',hour12:true}))}</div>
+          <div class="evt-time pixel-font">${e.allDay ? 'All day' : escapeHtml(fmtTimeNaive(e.start))}</div>
           <div style="flex: 1; min-width: 0;"><div class="evt-title">${escapeHtml(e.title)}</div><div class="evt-meta">${e.allDay ? '' : fmtDuration(e.durationMin) + ' '}${e.location ? (e.allDay ? '' : '· ') + escapeHtml(e.location) : ''}</div></div>
           ${e.price ? `<div class="evt-price">${escapeHtml(fmtMoneyNative(e.price, e.priceCurrency))}</div>` : ''}
         </div>`;
@@ -1190,12 +1214,12 @@ function openAddEventModal(existingEvent) {
   const tz = trip.travelZone;
   const ds = existingEvent ? new Date(existingEvent.start) : new Date(now.getTime() + 3600000);
   const isoLocal = d => { const p = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12: false }).formatToParts(d); const o = {}; p.forEach(x => o[x.type] = x.value); return `${o.year}-${o.month}-${o.day}T${o.hour === '24' ? '00' : o.hour}:${o.minute}`; };
-  const e = existingEvent || { title: '', start: ds.toISOString(), durationMin: 60, location: '', reminders: [...state.settings.defaultReminders], bookingRef: '', notes: '', price: null, priceCurrency: trip.travelCurrency, category: 'activity' };
+  const e = existingEvent || { title: '', start: isoLocal(new Date(now.getTime() + 3600000)), durationMin: 60, location: '', reminders: [...state.settings.defaultReminders], bookingRef: '', notes: '', price: null, priceCurrency: trip.travelCurrency, category: 'activity' };
   const currencyOpts = `<option value="${trip.travelCurrency}" ${(e.priceCurrency || trip.travelCurrency) === trip.travelCurrency ? 'selected' : ''}>${trip.travelCurrency} ${trip.travelCurrencySymbol}</option><option value="USD" ${e.priceCurrency === 'USD' ? 'selected' : ''}>USD $</option>`;
 
   body.innerHTML = `<div class="input-card"><div class="field-label">TITLE</div><input type="text" id="ev-title" placeholder="Tsukiji food tour" value="${escapeAttr(e.title)}"></div>
     <div class="input-card"><div class="field-label">WHEN <span style="font-weight: 400; color: var(--text-3); text-transform: none; letter-spacing: 0;">· ${escapeHtml(trip.travelLabel)} time</span></div>
-      <div class="row" style="margin-top: 6px;"><div class="col"><input type="datetime-local" id="ev-start" value="${isoLocal(new Date(e.start))}"><div class="input-hint" id="ev-start-hint"></div></div></div>
+      <div class="row" style="margin-top: 6px;"><div class="col"><input type="datetime-local" id="ev-start" value="${e.start && !e.start.endsWith('Z') ? e.start.slice(0,16) : isoLocal(new Date(e.start))}"><div class="input-hint" id="ev-start-hint"></div></div></div>
       <div class="divider"></div>
       <div class="row"><div class="col"><div class="field-label">DURATION</div><div class="row" style="gap: 8px; margin-top: 4px;"><div class="col"><input type="number" id="ev-dur-h" min="0" max="23" step="1" placeholder="0" value="${Math.floor(e.durationMin / 60)}" style="text-align:center;"><div style="text-align:center;font-size:10px;color:var(--text-2);margin-top:2px;letter-spacing:1px;">HR</div></div><div style="display:flex;align-items:center;padding:0 2px;font-size:18px;color:var(--text-2);">:</div><div class="col"><input type="number" id="ev-dur-m" min="0" max="59" step="5" placeholder="0" value="${e.durationMin % 60}" style="text-align:center;"><div style="text-align:center;font-size:10px;color:var(--text-2);margin-top:2px;letter-spacing:1px;">MIN</div></div></div></div></div>
     </div>
@@ -1238,8 +1262,8 @@ function saveEventModal() {
   if (!title) { alert('Title is required'); return; }
   const startStr = document.getElementById('ev-start').value;
   if (!startStr) { alert('Start time is required'); return; }
-  // Store exactly as entered — no timezone conversion. What you type is what you get.
-  const startISO = new Date(startStr).toISOString();
+  // Store exactly as typed — no timezone conversion
+  const startISO = startStr;
   const pv = document.getElementById('ev-price').value;
   const data = {
     id: isNew ? newId() : e.id,
