@@ -965,9 +965,31 @@ function renderNotes() {
   document.querySelectorAll('[data-note-type]').forEach(b => b.addEventListener('click', () => { const n = trip.notes.find(x => x.id === b.getAttribute('data-note-id')); const t = b.getAttribute('data-note-type'); if (n && n.type !== t) { n.type = t; renderNotes(); } }));
   document.querySelectorAll('[data-note-delete]').forEach(b => b.addEventListener('click', () => { const id = b.getAttribute('data-note-delete'); const n = trip.notes.find(x => x.id === id); if (!n) return; if (confirm(`Delete category "${n.title || 'Untitled'}"?`)) { trip.notes = trip.notes.filter(x => x.id !== id); renderNotes(); } }));
   document.querySelectorAll('[data-note-text]').forEach(el => el.addEventListener('input', () => { const n = trip.notes.find(x => x.id === el.getAttribute('data-note-text')); if (n) n.text = el.value; }));
-  document.querySelectorAll('[data-check-toggle]').forEach(b => b.addEventListener('click', () => { const [nid, iid] = b.getAttribute('data-check-toggle').split('__'); const n = trip.notes.find(x => x.id === nid); const it = n && n.items.find(x => x.id === iid); if (it) { it.checked = !it.checked; renderNotes(); } }));
+  document.querySelectorAll('[data-check-toggle]').forEach(b => b.addEventListener('click', () => {
+    const [nid, iid] = b.getAttribute('data-check-toggle').split('__');
+    const n = trip.notes.find(x => x.id === nid);
+    const it = n && n.items.find(x => x.id === iid);
+    if (it) {
+      it.checked = !it.checked;
+      saveState();
+      // Preserve scroll position — don't call renderNotes which resets scroll
+      const row = b.closest('.check-row');
+      if (row) row.classList.toggle('checked', it.checked);
+      const textEl = row && row.querySelector('.check-text');
+      if (textEl) textEl.style.textDecoration = it.checked ? 'line-through' : '';
+    }
+  }));
   document.querySelectorAll('[data-check-text]').forEach(el => {
     el.addEventListener('input', () => { const [nid, iid] = el.getAttribute('data-check-text').split('__'); const n = trip.notes.find(x => x.id === nid); const it = n && n.items.find(x => x.id === iid); if (it) it.text = el.value; });
+    // Auto-delete empty items on blur
+    el.addEventListener('blur', () => {
+      if (el.value.trim() !== '') return;
+      const [nid, iid] = el.getAttribute('data-check-text').split('__');
+      const n = trip.notes.find(x => x.id === nid);
+      if (!n) return;
+      const idx = n.items.findIndex(x => x.id === iid);
+      if (idx >= 0) { n.items.splice(idx, 1); saveState(); renderNotes(); }
+    });
     el.addEventListener('keydown', ev => {
       const [nid, iid] = el.getAttribute('data-check-text').split('__');
       const n = trip.notes.find(x => x.id === nid);
@@ -979,7 +1001,10 @@ function renderNotes() {
         n.items.splice(idx + 1, 0, newItem);
         saveState(); renderNotes();
         const newInput = document.querySelector(`[data-check-text="${nid}__${newItem.id}"]`);
-        if (newInput) newInput.focus();
+        if (newInput) {
+          newInput.focus();
+          setTimeout(() => newInput.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
+        }
       } else if (ev.key === 'Backspace' && el.value === '') {
         ev.preventDefault();
         const idx = n.items.findIndex(x => x.id === iid);
@@ -992,7 +1017,19 @@ function renderNotes() {
     });
   });
   document.querySelectorAll('[data-check-delete]').forEach(b => b.addEventListener('click', () => { const [nid, iid] = b.getAttribute('data-check-delete').split('__'); const n = trip.notes.find(x => x.id === nid); if (!n) return; n.items = n.items.filter(x => x.id !== iid); renderNotes(); }));
-  document.querySelectorAll('[data-add-item]').forEach(b => b.addEventListener('click', () => { const id = b.getAttribute('data-add-item'); const n = trip.notes.find(x => x.id === id); if (!n) return; n.items.push({ id: newId(), text: '', checked: false }); renderNotes(); const inputs = document.querySelectorAll(`[data-note-id="${id}"] .check-text`); if (inputs.length) inputs[inputs.length-1].focus(); }));
+  document.querySelectorAll('[data-add-item]').forEach(b => b.addEventListener('click', () => {
+    const id = b.getAttribute('data-add-item');
+    const n = trip.notes.find(x => x.id === id);
+    if (!n) return;
+    n.items.push({ id: newId(), text: '', checked: false });
+    saveState(); renderNotes();
+    const inputs = document.querySelectorAll(`[data-note-id="${id}"] .check-text`);
+    if (inputs.length) {
+      const last = inputs[inputs.length - 1];
+      last.focus();
+      setTimeout(() => last.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
+    }
+  }));
   // Swipe-to-delete for note cards only (not checklist items)
   document.querySelectorAll('.note-card').forEach(card => {
     addSwipeToDelete(card, () => {
