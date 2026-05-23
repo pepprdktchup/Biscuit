@@ -421,6 +421,7 @@ const state = {
     fxRates: { 'JPY': 0.0067, 'KRW': 0.00073 },
     showCat: true, catQuiet: true,
     quietStartHour: 23, quietEndHour: 7,
+    headsupMins: 30, oopsMins: 10,
     pushOn: true, autoUpdateZone: true,
     defaultReminders: [30, 60], fxLastRefresh: Date.now(),
   },
@@ -645,12 +646,14 @@ function computeCatState() {
     .map(e => ({ ...e, sd: new Date(e.start) }))
     .sort((a, b) => a.sd - b.sd);
 
-  // Priority 1 — HEADSUP overrides GO if next event starts within 30 min
-  // You need the warning more than a reminder you're already in something
-  const next = sorted.find(e => e.sd > now);
-  if (next && (next.sd - now) / 60000 <= 30) return { state: 'headsup', event: next };
+  const headsupMins = state.settings.headsupMins ?? 30;
+  const oopsMins = state.settings.oopsMins ?? 10;
 
-  // Priority 2 — GO: event in progress, pick most recently started
+  // HEADSUP: next event starts within headsupMins — takes priority over everything
+  const next = sorted.find(e => e.sd > now);
+  if (next && (next.sd - now) / 60000 <= headsupMins) return { state: 'headsup', event: next };
+
+  // GO: event currently in progress
   const goEvents = sorted.filter(e => {
     const m = (e.sd - now) / 60000;
     const dur = e.allDay ? 1440 : (e.durationMin || 60);
@@ -658,11 +661,11 @@ function computeCatState() {
   });
   if (goEvents.length > 0) return { state: 'go', event: goEvents[goEvents.length - 1] };
 
-  // OOPS: most recent event ended within last 10 min
+  // OOPS: most recent event ended within oopsMins
   const oops = sorted.find(e => {
     const dur = e.allDay ? 1440 : (e.durationMin || 60);
     const endMinsAgo = -(e.sd - now) / 60000 - dur;
-    return endMinsAgo >= 0 && endMinsAgo < 10;
+    return endMinsAgo >= 0 && endMinsAgo < oopsMins;
   });
   if (oops) return { state: 'oops', event: oops };
 
@@ -1146,6 +1149,8 @@ function renderSettings() {
   <div class="card-block">
     <div class="field-row"><div class="field-icon"><i class="ti ti-paw"></i></div><div class="field-content"><div class="field-label">SHOW CAT</div><div class="field-hint">The chubby pixel one</div></div><button class="toggle ${s.showCat ? 'on' : ''}" data-toggle-setting="showCat"><div class="thumb"></div></button></div>
     <div class="field-row"><div class="field-icon"><i class="ti ti-moon-stars"></i></div><div class="field-content"><div class="field-label">CAT GOES QUIET AT NIGHT</div><div class="field-hint">Match quiet hours · no speech bubbles</div></div><button class="toggle ${s.catQuiet ? 'on' : ''}" data-toggle-setting="catQuiet"><div class="thumb"></div></button></div>
+    <div class="field-row"><div class="field-icon"><i class="ti ti-bell"></i></div><div class="field-content"><div class="field-label">HEADS UP WINDOW</div><div class="field-hint">Cat alerts this many minutes before an event</div></div><div style="display:flex;align-items:center;gap:4px;"><input type="number" id="setting-headsup" min="5" max="120" step="5" value="${s.headsupMins ?? 30}" style="width:52px;text-align:center;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-family:inherit;font-size:13px;background:var(--bg);color:var(--text);"><span style="font-size:12px;color:var(--text-2);">min</span></div></div>
+    <div class="field-row"><div class="field-icon"><i class="ti ti-clock-x"></i></div><div class="field-content"><div class="field-label">OOPS WINDOW</div><div class="field-hint">Cat shows missed state this long after an event ends</div></div><div style="display:flex;align-items:center;gap:4px;"><input type="number" id="setting-oops" min="1" max="60" step="1" value="${s.oopsMins ?? 10}" style="width:52px;text-align:center;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-family:inherit;font-size:13px;background:var(--bg);color:var(--text);"><span style="font-size:12px;color:var(--text-2);">min</span></div></div>
   </div>
 
   <div class="lbl section-label">ABOUT</div>
@@ -1197,6 +1202,18 @@ function renderSettings() {
     else if (a === 'fx-rates') openFxRatesSheet();
   }));
   document.getElementById('reset-demo').addEventListener('click', () => { if (confirm('Wipe all trips, events, expenses, and notes? This re-seeds demo data.')) { try { localStorage.removeItem(STORAGE_KEY); } catch (e) {} seedTrips(); state.debugStateOverride = null; render(); } });
+  const wireNum = (id, key, min, max) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('change', () => {
+      const v = Math.max(min, Math.min(max, parseInt(el.value, 10) || min));
+      el.value = v;
+      state.settings[key] = v;
+      saveState();
+    });
+  };
+  wireNum('setting-headsup', 'headsupMins', 5, 120);
+  wireNum('setting-oops', 'oopsMins', 1, 60);
 }
 function fmtReminder(r) {
   if (r === 0) return 'At time of event';
