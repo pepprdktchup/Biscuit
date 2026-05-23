@@ -581,6 +581,12 @@ function toNaiveLocal(utcDate, tz) {
   const o = {}; p.forEach(x => o[x.type] = x.value);
   return `${o.year}-${o.month}-${o.day}T${o.hour === '24' ? '00' : o.hour}:${o.minute}`;
 }
+// Convert a naive ISO string to UTC epoch using the trip's travel timezone
+// "10:00 AM Korea" → epoch for 01:00 UTC regardless of where device is
+function naiveToEpoch(naiveIso, tz) {
+  const offset = zoneOffsetHours(tz, new Date(naiveIso + 'Z'));
+  return new Date(naiveIso + 'Z').getTime() - offset * 3600000;
+}
 // Current wall-clock time in a timezone as a naive Date (for comparing against naive event starts)
 function nowNaive(tz) {
   const p = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12: false }).formatToParts(new Date());
@@ -1680,7 +1686,7 @@ function computeReminderSchedule() {
   state.trips.forEach(trip => {
     trip.events.forEach(e => {
       if (e.checkedOff) return;
-      const startMs = new Date(e.start).getTime();
+      const startMs = naiveToEpoch(e.start, trip.travelZone);
       (e.reminders || []).forEach(r => {
         const fireAt = startMs - r * 60000;
         // Include reminders up to 2 min in the past — covers clock drift and
@@ -1737,7 +1743,7 @@ function scheduleNextReminder() {
   state.trips.forEach(trip => {
     trip.events.forEach(e => {
       if (e.checkedOff) return;
-      const startMs = new Date(e.start).getTime();
+      const startMs = naiveToEpoch(e.start, trip.travelZone);
       (e.reminders || []).forEach(rMin => {
         const fireAt = startMs - rMin * 60000;
         const key = `${e.id}:${rMin}`;
@@ -1775,7 +1781,7 @@ function checkAndFireReminders() {
   state.trips.forEach(trip => {
     trip.events.forEach(e => {
       if (e.checkedOff) return;
-      const startMs = new Date(e.start).getTime();
+      const startMs = naiveToEpoch(e.start, trip.travelZone);
       (e.reminders || []).forEach(rMin => {
         const fireAt = startMs - rMin * 60000;
         // Unique tag: eventId + reminderMin + fireAt timestamp prevents collision between events
